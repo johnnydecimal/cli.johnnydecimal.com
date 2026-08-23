@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "systems": [
+    {
+      "sys": "D25",
+      "title": "My business system",
+      "root": "/Users/you/Documents/D25 My business system",
+      "jdex": "/Users/you/Documents/D25 JDex",
+      "default": true
+    },
+    {
+      "sys": "P76",
+      "title": "My personal system",
+      "root": "/Users/you/Documents/P76 My personal system"
+    }
+  ]
+}
