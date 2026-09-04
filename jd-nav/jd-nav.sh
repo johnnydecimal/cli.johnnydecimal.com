@@ -1,5 +1,5 @@
 # jd-nav.sh - Johnny.Decimal shell navigation
-# Version 1.1
+# Part of cli.johnnydecimal.com. Version 1.1.0.
 #
 # Source this file from .zshrc or .bashrc:
 #   source ~/.jd/cli/jd-nav/jd-nav.sh
@@ -10,12 +10,21 @@
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
-_JD_NAV_VERSION="1.1"
+# The version of this repo, shared by every tool in it. Semver.
+_JD_CLI_VERSION="1.1.0"
 _JD_NAV_CONFIG_URL="https://cli.johnnydecimal.com/"  # TODO: real help URL
 
 _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
 
 _jd_nav_err() { printf 'jd-nav: %s\n' "$*" >&2; return 1; }
+
+# Print the version if $1 asks for it. Returns 0 if it did.
+_jd_nav_is_version() {
+  case $1 in
+    -v|--version|version) printf 'jd-nav %s\n' "$_JD_CLI_VERSION"; return 0 ;;
+  esac
+  return 1
+}
 
 _jd_nav_usage() {
   cat <<'EOF'
@@ -30,6 +39,7 @@ usage: <system> [jdex] [target]
   <system> 21. tripsy   search inside category 21 (bare '21' also works)
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
+  <system> version      print the version
 
 Two or more matches are listed, not entered. Word search ignores case.
 An ID with a JDex entry but no folder gets its folder made for it.
@@ -115,6 +125,7 @@ _jd_nav_search_in() {
 _jd_nav() {
   local sys=$1 cfg row tab root jdex tree mode type a c id m wm t
   shift
+  _jd_nav_is_version "$1" && return 0
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_NAV_CONFIG_URL"; return 1; }
@@ -214,16 +225,25 @@ _jd_nav_setup() {
   local cfg n sys fn
   cfg=$(_jd_nav_config)
   if [ ! -f "$cfg" ]; then
-    jd() { _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_NAV_CONFIG_URL"; }
+    jd() {
+      _jd_nav_is_version "$1" && return 0
+      _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_NAV_CONFIG_URL"
+    }
     return 0
   fi
   if ! command -v jq >/dev/null 2>&1; then
-    jd() { _jd_nav_err "jq is not installed"; }
+    jd() {
+      _jd_nav_is_version "$1" && return 0
+      _jd_nav_err "jq is not installed"
+    }
     return 0
   fi
   n=$(jq -r '.systems | length' "$cfg" 2>/dev/null)
   if [ -z "$n" ] || [ "$n" = 0 ] || [ "$n" = null ]; then
-    jd() { _jd_nav_err "no systems in $(_jd_nav_config)"; }
+    jd() {
+      _jd_nav_is_version "$1" && return 0
+      _jd_nav_err "no systems in $(_jd_nav_config)"
+    }
     return 0
   fi
 

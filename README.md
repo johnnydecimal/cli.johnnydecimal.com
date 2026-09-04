@@ -43,6 +43,14 @@ See [jdcm.al/jdhq/configuration](https://jdcm.al/jdhq/configuration)
 git -C ~/.jd/cli pull
 ```
 
+## Versions
+
+- The repo has one version number. Every tool in it shares that number.
+- Versions follow [semantic versioning](https://semver.org).
+- Each release is a git tag, for example `v1.1.0`.
+- `jd version` prints the version you have.
+- [CHANGELOG.md](CHANGELOG.md) lists what changed in each release.
+
 ## The config file
 
 - `version`: the config format version. Currently `1`.

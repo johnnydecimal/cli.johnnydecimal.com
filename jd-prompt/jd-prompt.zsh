@@ -1,5 +1,5 @@
 # jd-prompt.zsh - Johnny.Decimal prompt path for zsh
-# Version 1.0
+# Part of cli.johnnydecimal.com. Version 1.1.0.
 #
 # Source this file from .zshrc, then use $(_jd_pwd) in your PROMPT in place
 # of %~. Outside a Johnny.Decimal system it prints the normal path. Inside
@@ -8,6 +8,9 @@
 #
 # It reads the systems from ~/.jd/config.json (override with $JD_CONFIG).
 # Needs jq. The config is read once, when this file is sourced.
+
+# The version of this repo, shared by every tool in it. Semver.
+_JD_CLI_VERSION="1.1.0"
 
 _jd_prompt_sys=()
 _jd_prompt_root=()

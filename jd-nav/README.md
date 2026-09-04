@@ -31,6 +31,7 @@ p76 21. tripsy   # search inside category 21 (`21` also works)
 p76 20-29 word   # search inside area 20-29
 p76 jdex 11.11   # same targets, in the JDex instead of the filesystem
 p76 help         # this list
+p76 version      # print the version
 ```
 
 ## Rules
