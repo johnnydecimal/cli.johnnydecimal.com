@@ -40,3 +40,11 @@ p76 help         # this list
 - An ID matches at the correct depth only, so a deeper folder also named `11.11` cannot match.
 - `11.11` matches `11.11 Title`, not `11.11+ Extension`.
 - A JDex ID is a text/Markdown file. You're taken to its folder.
+
+## Missing folders
+
+- An ID can have a JDex entry but no folder. This is normal – you make the folder when you first need it.
+- In that case `jd-nav` makes the folder for you, then goes to it. It prints a line to say what it made.
+- It takes the folder name from the JDex entry.
+- Your config needs a `jdex` path, and the JDex must have one match for the ID.
+- The category folder must exist. `jd-nav` does not make areas or categories.

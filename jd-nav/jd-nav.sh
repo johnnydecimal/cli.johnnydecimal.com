@@ -1,5 +1,5 @@
 # jd-nav.sh - Johnny.Decimal shell navigation
-# Version 1.0
+# Version 1.1
 #
 # Source this file from .zshrc or .bashrc:
 #   source ~/.jd/cli/jd-nav/jd-nav.sh
@@ -10,7 +10,7 @@
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
-_JD_NAV_VERSION="1.0"
+_JD_NAV_VERSION="1.1"
 _JD_NAV_CONFIG_URL="https://cli.johnnydecimal.com/"  # TODO: real help URL
 
 _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
@@ -32,6 +32,7 @@ usage: <system> [jdex] [target]
   <system> jdex ...     same targets, in the JDex instead of the filesystem
 
 Two or more matches are listed, not entered. Word search ignores case.
+An ID with a JDex entry but no folder gets its folder made for it.
 EOF
 }
 
@@ -69,6 +70,30 @@ _jd_nav_go() {
     } >&2
     return 1
   fi
+}
+
+# An ID is in the JDex but has no folder: make the folder from the JDex
+# entry's name. $1 root, $2 jdex, $3 ID. Prints the new path on stdout.
+# Returns 1 if it does not apply, 2 if it applies but failed.
+_jd_nav_make_id() {
+  local root=$1 jdex=$2 id=$3 jm name cnum cm
+  [ -n "$jdex" ] && [ -d "$jdex" ] || return 1
+  jm=$(_jd_nav_find "$jdex" 3 a -name "$id" -o -name "$id *" -o -name "$id.md")
+  [ "$(printf '%s' "$jm" | grep -c '^')" -eq 1 ] || return 1
+  name=$(basename -- "$jm")
+  case $name in
+    *.md) name=${name%.md} ;;
+    *.txt) name=${name%.txt} ;;
+  esac
+  cnum=${id%%.*}
+  cm=$(_jd_nav_find "$root" 2 d -name "$cnum" -o -name "$cnum *")
+  if [ "$(printf '%s' "$cm" | grep -c '^')" -ne 1 ]; then
+    _jd_nav_err "the JDex has $id but there is no folder for category $cnum"
+    return 2
+  fi
+  mkdir -- "$cm/$name" || return 2
+  printf 'jd-nav: created %s from the JDex\n' "$name" >&2
+  printf '%s' "$cm/$name"
 }
 
 # Word search for IDs inside one area or category. $1 tree, $2 mode,
@@ -150,6 +175,10 @@ _jd_nav() {
       [ $# -eq 0 ] || { _jd_nav_err "unexpected words after '$id'"; return 1; }
       # Depth 3 = area/category/ID. Deeper folders named '11.11' cannot match.
       m=$(_jd_nav_find "$tree" 3 "$type" -name "$id" -o -name "$id *" -o -name "$id.md")
+      if [ -z "$m" ] && [ "$mode" = fs ]; then
+        m=$(_jd_nav_make_id "$root" "$jdex" "$id")
+        case $? in 2) return 1 ;; esac
+      fi
       _jd_nav_go "$tree" "$mode" "$id" "$m"
       ;;
     [Ww][0-9][0-9][0-9][0-9])
