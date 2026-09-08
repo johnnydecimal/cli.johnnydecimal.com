@@ -53,6 +53,67 @@ _jd_nav_find() {
   fi
 }
 
+# Draw a sorted match list as a tree. Reads paths on stdin, one per
+# line, relative to the tree. Each match is shown under the folder that
+# holds it, and a folder is printed once however many matches it holds:
+#
+#   ├─ 21 Products & services
+#   │  ├─ 21.42 CLI tools
+#   │  └─ 21.43 Another one
+#   └─ W0000-9999 Work packages
+#      └─ W0213~31.13 A work package
+#
+# The area is dropped, because the ID number already says which area it
+# is in. A path with no folder above the match, like an area, prints on
+# its own.
+#
+# It needs awk, which is POSIX and on every machine. Without it the list
+# prints plain, which is what the tool did before 2.1.0.
+_jd_nav_tree() {
+  if ! command -v awk >/dev/null 2>&1; then
+    while IFS= read -r _jd_p; do printf '  %s\n' "$_jd_p"; done
+    return 0
+  fi
+  awk '
+    # Keep the match and the folder that holds it. Nothing above that.
+    {
+      m = split($0, p, "/")
+      from = (m > 2) ? m - 1 : 1
+      s = p[from]
+      for (k = from + 1; k <= m; k++) s = s "/" p[k]
+      line[NR] = s
+    }
+    END {
+      for (i = 1; i <= NR; i++) {
+        m = split(line[i], p, "/")
+        for (d = 1; d <= m; d++) {
+          pre = ""
+          for (k = 1; k < d; k++) pre = pre p[k] "/"
+          # A folder is printed once, however many matches sit in it.
+          if (seen[pre p[d]]++) continue
+
+          # Last of its siblings? Then the branch closes, and the level
+          # below it needs no upright bar. The list is sorted, so a name
+          # that has changed never comes back.
+          last = 1
+          for (j = i + 1; j <= NR; j++) {
+            mj = split(line[j], q, "/")
+            if (mj < d) continue
+            qpre = ""
+            for (k = 1; k < d; k++) qpre = qpre q[k] "/"
+            if (qpre == pre && q[d] != p[d]) { last = 0; break }
+          }
+          lastat[d] = last
+
+          bar = ""
+          for (k = 1; k < d; k++) bar = bar (lastat[k] ? "   " : "│  ")
+          printf "  %s%s %s\n", bar, (last ? "└─" : "├─"), p[d]
+        }
+      }
+    }
+  '
+}
+
 # Act on a match list: cd if one, report if several, error if none.
 # $1 tree, $2 mode fs|jdex, $3 label for messages, $4 matches
 _jd_nav_go() {
@@ -70,8 +131,8 @@ _jd_nav_go() {
     {
       printf 'jd: %s matches for %s:\n' "$n" "$label"
       printf '%s\n' "$m" | while IFS= read -r p; do
-        printf '  %s\n' "${p#"$tree"/}"
-      done
+        printf '%s\n' "${p#"$tree"/}"
+      done | _jd_nav_tree
     } >&2
     return 1
   fi

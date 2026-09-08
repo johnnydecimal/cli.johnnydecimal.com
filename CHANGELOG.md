@@ -1,9 +1,51 @@
 # Changelog
 
+> AI generated. Not edited by Johnny.
+
 This repo uses [semantic versioning](https://semver.org). One version covers
 every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
+
+## 2.1.0 – 2026-09-09
+
+### Added
+
+- `lib/theme.zsh`, the whole prompt Johnny uses, for anyone who does not
+  want to write their own. It is zsh only, and `jd.sh` does not load it.
+  You get it with one more source line in `.zshrc`, after the `jd.sh` one:
+
+  ```zsh
+  source ~/.jd/cli/lib/theme.zsh
+  ```
+
+  It sets `PROMPT` only when you have not set one yourself. Any `PROMPT`
+  that is not a stock zsh one is yours, so the theme says one line and
+  leaves it alone. Git status is not part of it: the prompt calls
+  `gitprompt`, and the theme defines a do-nothing one, so
+  [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) is yours to
+  add or leave out.
+
+### Changed
+
+- A search that finds more than one thing draws its list as a tree.
+  Each match sits under the folder that holds it, and that folder is
+  named once however many matches are in it. The area is not shown,
+  because the ID number already says which area it is in.
+
+  ```
+  jd: 3 matches for 'cli':
+    ├─ 21 Products & services
+    │  └─ 21.42 CLI tools
+    ├─ 33 Customers & clients
+    │  └─ 33.11 List of all customers & clients
+    └─ W0000-9999 Work packages
+       └─ W0213~31.13 Video showing JD CLI changes and setup
+  ```
+
+  It was one full path per line, which wrapped. The tree is drawn by
+  `awk`, which is POSIX and on every machine the tools run on. Without
+  `awk` the list prints the old way.
 
 ## 2.0.5 – 2026-09-08
 

@@ -142,12 +142,14 @@ _jd_t_status 'many matches: exit status is 1' 1
 _jd_t_at 'many matches: we do not move' "$JD_T_TMP"
 _jd_t_eq 'many matches: nothing on stdout' '' "$JD_T_OUT"
 _jd_t_contains 'many matches: counts them' "jd: 2 matches for 'tripsy':" "$JD_T_ERR"
-_jd_t_contains 'many matches: lists the first, relative to the root' \
-  '10-19 Area one/11 Category eleven/11.13 Tripsy travel' "$JD_T_ERR"
+_jd_t_contains 'many matches: lists the first' \
+  '11.13 Tripsy travel' "$JD_T_ERR"
 _jd_t_contains 'many matches: lists the second' \
-  '20-29 Area two/21 Category twentyone/21.11 Tripsy notes' "$JD_T_ERR"
+  '21.11 Tripsy notes' "$JD_T_ERR"
 _jd_t_lacks 'many matches: the list is relative, not absolute' \
   "$JD_FX_ROOT/10-19" "$JD_T_ERR"
+
+# The shape of the list is test/cases/tree.sh.
 
 _jd_t_run jd widget
 _jd_t_status 'many matches: widget too' 1

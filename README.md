@@ -35,16 +35,53 @@ This repo documents installation. Usage is documented at [johnnydecimal.com/jdhq
 
    It loads the navigation in any shell, and the prompt under zsh only.
 
-5. For the zsh prompt, also add these lines to `.zshrc`, after the `source` line. `_jd_pwd` needs single quotes or `prompt_subst`:
+5. For the zsh prompt, pick one of the two and add it to `.zshrc`, after the `source` line.
+
+   Your own prompt, with the Johnny.Decimal path in it. `_jd_pwd` needs single quotes or `prompt_subst`:
 
    ```zsh
    setopt prompt_subst
    PROMPT='%B$(_jd_pwd)%b %# '
    ```
 
+   Or the whole prompt Johnny uses, which is one more source line. See [The prompt theme](#the-prompt-theme):
+
+   ```zsh
+   source ~/.jd/cli/lib/theme.zsh
+   ```
+
 6. Start a new shell.
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
+
+## The prompt theme
+
+`lib/theme.zsh` is the whole prompt Johnny uses. It is zsh only, and `jd.sh`
+does not load it, so you get it only if you source it.
+
+```
+┏╸D25:…/11.11 Structure & registrations
+┗╸mymac ❯❯
+```
+
+- Line one is the Johnny.Decimal path. In front of it, when the last command
+  failed, is its exit status.
+- Line two is the host name, then the chevrons you type after.
+- It sets `PROMPT` only if you have not set one. Any `PROMPT` that is not a
+  stock zsh one is yours, so it says one line and leaves it alone.
+- Set the chevron colours before the source line:
+
+  ```zsh
+  JD_CHEVRON1=yellow
+  JD_CHEVRON2=red
+  ```
+
+- Git status is not part of it. The prompt calls `gitprompt`, and the theme
+  has a do-nothing `gitprompt` so it works without one. Load
+  [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme
+  and the prompt picks up the real one.
+- The symbols need a font with box drawing in it. Every current terminal
+  font has one.
 
 ## Configuration
 
