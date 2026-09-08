@@ -199,7 +199,7 @@ _jd_nav() {
       id=$1
       shift
       [ $# -eq 0 ] || { _jd_nav_err "unexpected words after '$id'"; return 1; }
-      m=$(_jd_nav_find "$tree" 2 "$type" -iname "$id" -o -iname "$id *")
+      m=$(_jd_nav_find "$tree" 2 "$type" -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
       _jd_nav_go "$tree" "$mode" "$id" "$m"
       ;;
     *)
@@ -208,7 +208,7 @@ _jd_nav() {
       tests=(-name '[0-9][0-9].[0-9][0-9]*')
       for t in "$@"; do tests=("${tests[@]}" -iname "*$t*"); done
       m=$(_jd_nav_find "$tree" 3 "$type" "${tests[@]}")
-      tests=(-iname 'w[0-9][0-9][0-9][0-9] *')
+      tests=(-iname 'w[0-9][0-9][0-9][0-9][ ~]*')
       for t in "$@"; do tests=("${tests[@]}" -iname "*$t*"); done
       wm=$(_jd_nav_find "$tree" 2 "$type" "${tests[@]}")
       if [ -n "$wm" ]; then

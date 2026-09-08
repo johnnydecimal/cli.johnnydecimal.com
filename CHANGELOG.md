@@ -5,6 +5,18 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.4 – 2026-09-08
+
+### Fixed
+
+- Work packages whose name carries a `~` are now found. That is the
+  normal form – `W0212~21.35 Some title` – but the direct lookup
+  matched only `W0212` or `W0212 *`, and the word search required a
+  space after the number. In a real system this meant `jd` could see
+  1 of 40 work packages, and `jd W0212` reported no match. The direct
+  lookup now also accepts `$id~*` and `$id.md`. Extend-the-ends are
+  still excluded: `+` and `)` do not match.
+
 ## 2.0.3 – 2026-09-08
 
 ### Fixed
