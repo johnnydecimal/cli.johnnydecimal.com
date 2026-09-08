@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# The test suite runs on macOS, because that is where bash 3.2 is. The
+# runner image already has jq and zsh.
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show the shells
+        run: |
+          /bin/bash --version | head -1
+          zsh --version
+          jq --version
+      - name: Run the suite
+        run: test/run.sh

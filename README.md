@@ -67,6 +67,18 @@ Coming from 1.x, replace your two `source` lines with the single line in
 work, but they print a reminder each time your shell starts, and they will be
 deleted at 3.0.0.
 
+## Tests
+
+```sh
+test/run.sh
+```
+
+It runs the whole suite under bash and zsh, and exits non-zero if anything
+failed. It needs `jq` and nothing else. The tests run against fake systems in a
+temp folder, never against your own.
+
+See [test/README.md](test/README.md) to add a test.
+
 ## Versions
 
 - Versions follow [semantic versioning](https://semver.org).
