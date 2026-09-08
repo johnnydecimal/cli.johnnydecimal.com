@@ -7,6 +7,28 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.2.0 – 2026-09-09
+
+### Changed
+
+- `lib/theme.zsh` now sets `PROMPT` whenever you source it. Sourcing the
+  file is the request, so it does what you asked and says nothing.
+
+  2.1.0 tried to leave a prompt of your own alone, by comparing `PROMPT`
+  against the prompts zsh and its usual hosts set. That cannot work. A
+  prompt library sets a `PROMPT` of its own, and the theme read that as
+  yours and stood down. `git-prompt.zsh` does it, and so do starship and
+  powerlevel10k. The check failed for the people most likely to source
+  the file.
+
+  Source the line last, after anything else that touches the prompt. To
+  keep a prompt of your own, do not source the file: put `$(_jd_pwd)` in
+  your own `PROMPT` and you have the Johnny.Decimal path without the
+  rest of it.
+
+  Gone with the check: the one-line message it printed, and the
+  `_JD_THEME_PROMPT` variable it left in your shell.
+
 ## 2.1.0 – 2026-09-09
 
 ### Added

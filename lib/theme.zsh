@@ -15,10 +15,17 @@
 # the last command failed, is its exit status. Line two is the host name
 # and the chevrons you type after.
 #
-# It sets PROMPT only when you have not set one. Any PROMPT that is not a
-# stock zsh one is yours, so it says one line and leaves it alone.
+# It sets PROMPT, whatever PROMPT you had. Sourcing this file is the
+# request, so put the line last, after anything else that touches the
+# prompt. A prompt library usually sets one of its own, and the last one
+# to run wins.
 #
-# The chevron colours are yours. Set them before you source this file:
+# To keep a prompt of your own, do not source this file. Put $(_jd_pwd)
+# in your own PROMPT instead, with setopt prompt_subst, and you have the
+# Johnny.Decimal path without the rest of this.
+#
+# The chevron colours are yours. They are read at every prompt, so set
+# them before this line or after it:
 #
 #   JD_CHEVRON1=yellow
 #   JD_CHEVRON2=red
@@ -47,28 +54,8 @@ if ! typeset -f gitprompt >/dev/null 2>&1; then
   gitprompt() { :; }
 fi
 
-# The prompts zsh and the systems it ships on set for you. Anything else
-# in PROMPT is the user's own, and we do not touch it. Our own prompt is
-# ours, so sourcing this file twice is quiet.
-_jd_theme_is_stock() {
-  case ${PROMPT-} in
-    ''|'%#'|'%# '|'%m%#'|'%m%# '|'%m# '|'%n@%m %1~ %#'|'%n@%m %1~ %# '|'%n@%m:%~%#'|'%n@%m:%~%# ')
-      return 0
-      ;;
-  esac
-  [[ -n "${_JD_THEME_PROMPT-}" && "$PROMPT" == "$_JD_THEME_PROMPT" ]] && return 0
-  return 1
-}
-
-if _jd_theme_is_stock; then
-  # $(_jd_pwd) and $(gitprompt) run at every prompt, which needs this.
-  setopt prompt_subst
-  : ${JD_CHEVRON1:=yellow}
-  : ${JD_CHEVRON2:=red}
-  PROMPT=$'┏╸%(?..%F{red}%?%f · )%B$(_jd_pwd)%b$(gitprompt)\n┗╸%m %F{$JD_CHEVRON1}❯%f%F{$JD_CHEVRON2}❯%f '
-  _JD_THEME_PROMPT=$PROMPT
-else
-  printf 'jd: you have your own PROMPT, so the theme did not load. Use $(_jd_pwd) in it.\n' >&2
-fi
-
-unset -f _jd_theme_is_stock
+# $(_jd_pwd) and $(gitprompt) run at every prompt, which needs this.
+setopt prompt_subst
+: ${JD_CHEVRON1:=yellow}
+: ${JD_CHEVRON2:=red}
+PROMPT=$'┏╸%(?..%F{red}%?%f · )%B$(_jd_pwd)%b$(gitprompt)\n┗╸%m %F{$JD_CHEVRON1}❯%f%F{$JD_CHEVRON2}❯%f '
