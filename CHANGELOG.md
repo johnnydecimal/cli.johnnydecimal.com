@@ -5,6 +5,17 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.3 – 2026-09-08
+
+### Fixed
+
+- The zsh prompt (`_jd_pwd`) now shortens the path for a single system
+  with no `sys` too. It read config rows with `IFS=$'\t' read`, which
+  treats a tab as ordinary IFS whitespace and silently drops a leading
+  empty field — so a missing `sys` lost the system's root along with it,
+  and `_jd_pwd` fell back to printing the full, unshortened path with no
+  error. It now reads each row whole and slices it by hand.
+
 ## 2.0.2 – 2026-09-08
 
 ### Fixed
