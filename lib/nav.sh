@@ -124,8 +124,16 @@ _jd_nav() {
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
-  row=$(jq -r --arg s "$sys" \
-    '.systems[] | select(.sys == $s) | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
+  case $sys in
+    '#'*)
+      row=$(jq -r --argjson i "${sys#'#'}" \
+        '.systems[$i] | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
+      ;;
+    *)
+      row=$(jq -r --arg s "$sys" \
+        '.systems[] | select(.sys == $s) | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
+      ;;
+  esac
   [ -n "$row" ] || { _jd_nav_err "system '$sys' is not in $cfg"; return 1; }
   tab=$(printf '\t')
   root=${row%%"$tab"*}
@@ -242,10 +250,15 @@ _jd_nav_setup() {
     return 0
   fi
 
-  # One function per system, named by its lowercase sys id.
+  # One function per system, named by its lowercase sys id. More than one
+  # system means every entry needs a sys, so a missing one is an error,
+  # not a skip.
   if [ "$n" -gt 1 ]; then
     while IFS= read -r sys; do
-      [ -n "$sys" ] || continue
+      if [ -z "$sys" ] || [ "$sys" = null ]; then
+        _jd_nav_err "a system in $cfg has no 'sys' - every entry needs one when there is more than one system"
+        continue
+      fi
       fn=$(printf '%s' "$sys" | tr 'A-Z' 'a-z')
       case $fn in
         *[!a-z0-9_]*|[0-9]*) _jd_nav_err "cannot make a function for sys id '$sys'"; continue ;;
@@ -256,10 +269,14 @@ $(jq -r '.systems[].sys' "$cfg")
 EOF
   fi
 
-  # jd acts on the default system, or the only one.
-  sys=$(jq -r '.systems | (map(select(.default == true))[0] // .[0]).sys // empty' "$cfg")
+  # jd acts on the default system, or the only one. Fall back to its
+  # array index when it has no sys - a single system does not need one.
+  sys=$(jq -r '(.systems | (map(select(.default == true))[0] // .[0])).sys // empty' "$cfg")
   if [ -n "$sys" ]; then
     eval "jd() { _jd_nav '$sys' \"\$@\"; }"
+  else
+    idx=$(jq -r '(.systems | to_entries | (map(select(.value.default == true))[0] // .[0])).key' "$cfg")
+    eval "jd() { _jd_nav '#$idx' \"\$@\"; }"
   fi
 }
 

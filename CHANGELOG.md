@@ -5,6 +5,18 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.2 – 2026-09-08
+
+### Fixed
+
+- A single system with no `sys` in its config entry now gets a working `jd`
+  command. The docs always said `sys` is only needed for more than one
+  system, but the code silently skipped defining `jd` at all when it was
+  missing, with no error. `jd` now falls back to the entry's position in
+  the config.
+- More than one system with an entry missing `sys` now prints an error at
+  shell start, instead of silently leaving that system with no command.
+
 ## 2.0.1 – 2026-09-08
 
 ### Added
