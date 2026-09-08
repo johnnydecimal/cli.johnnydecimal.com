@@ -5,6 +5,16 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.1 – 2026-09-08
+
+### Added
+
+- `jd-nav/jd-nav.sh` and `jd-prompt/jd-prompt.zsh` are back, as shims. Each
+  one loads `jd.sh` and prints a line telling you to update your shell
+  config. 2.0.0 deleted these paths, so a 1.x user who pulled lost the `jd`
+  command, and lost the path from their zsh prompt. Nothing breaks now.
+  The shims go at 3.0.0.
+
 ## 2.0.0 – 2026-09-07
 
 ### Added

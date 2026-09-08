@@ -62,6 +62,11 @@ See [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/config
 git -C ~/.jd/cli pull
 ```
 
+Coming from 1.x, replace your two `source` lines with the single line in
+[Installation](#installation). The old `jd-nav` and `jd-prompt` paths still
+work, but they print a reminder each time your shell starts, and they will be
+deleted at 3.0.0.
+
 ## Versions
 
 - Versions follow [semantic versioning](https://semver.org).
