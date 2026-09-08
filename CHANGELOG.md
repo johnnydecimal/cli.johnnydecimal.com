@@ -5,6 +5,21 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.5 – 2026-09-08
+
+### Fixed
+
+- `jd` no longer leaves an `idx` variable behind in your shell. The setup
+  function assigned it without declaring it local, so it escaped and stayed
+  there. It happened on the path a single system with no `sys` takes, which
+  is the config shape most people have.
+- A bare `jd` no longer dies under `set -u` (bash) or `setopt nounset`
+  (zsh). It read `$1` before it had checked there was one, so it failed
+  with `1: parameter not set` instead of going to the system root. Any
+  `jd` with an argument was unaffected, which is how the fault was found.
+  All six unguarded reads are now `${1-}`, including the three error paths
+  that run when there is no config.
+
 ## 2.0.4 – 2026-09-08
 
 ### Fixed

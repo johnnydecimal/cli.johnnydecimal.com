@@ -153,4 +153,29 @@ _jd_t_run jd widget
 _jd_t_status 'many matches: widget too' 1
 _jd_t_contains 'many matches: two widgets' "jd: 2 matches for 'widget':" "$JD_T_ERR"
 
+# ------------------------------------------------------------- under set -u
+
+# _jd_nav read $1 before it had checked there was one, so a bare jd died
+# on an unbound variable instead of going to the system root. Every jd
+# with an argument was fine, which is how the fault was found.
+# Fixed in 2.0.5.
+#
+# A subshell, so the option does not escape into the harness. The cd stays
+# in the subshell too, so these read the path jd prints, not $JD_T_PWD.
+_jd_t_nounset_jd() ( set -u; jd "$@" )
+
+_jd_t_run _jd_t_nounset_jd
+_jd_t_eq 'bare jd works under set -u' "$JD_FX_ROOT" "$JD_T_OUT"
+_jd_t_eq 'bare jd under set -u says nothing on stderr' '' "$JD_T_ERR"
+
+_jd_t_run _jd_t_nounset_jd 11.11
+_jd_t_eq 'jd with an argument works under set -u' \
+  "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" "$JD_T_OUT"
+
+_jd_t_run _jd_t_nounset_jd version
+_jd_t_status 'jd version works under set -u' 0
+
+_jd_t_run _jd_t_nounset_jd jdex 11.11
+_jd_t_status 'jd jdex works under set -u' 0
+
 _jd_t_summary

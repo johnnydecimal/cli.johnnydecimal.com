@@ -15,7 +15,7 @@ _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 
 # Print the version if $1 asks for it. Returns 0 if it did.
 _jd_nav_is_version() {
-  case $1 in
+  case ${1-} in
     -v|--version|version) printf 'jd %s\n' "$_JD_CLI_VERSION"; return 0 ;;
   esac
   return 1
@@ -120,7 +120,7 @@ _jd_nav_search_in() {
 _jd_nav() {
   local sys=$1 cfg row tab root jdex tree mode type a c id m wm t
   shift
-  _jd_nav_is_version "$1" && return 0
+  _jd_nav_is_version "${1-}" && return 0
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
@@ -141,7 +141,7 @@ _jd_nav() {
 
   mode=fs
   tree=$root
-  if [ "$1" = jdex ]; then
+  if [ "${1-}" = jdex ]; then
     shift
     [ -n "$jdex" ] || { _jd_nav_err "no jdex path for $sys in $cfg"; return 1; }
     mode=jdex
@@ -225,18 +225,18 @@ $wm"
 }
 
 _jd_nav_setup() {
-  local cfg n sys fn
+  local cfg n sys fn idx
   cfg=$(_jd_nav_config)
   if [ ! -f "$cfg" ]; then
     jd() {
-      _jd_nav_is_version "$1" && return 0
+      _jd_nav_is_version "${1-}" && return 0
       _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_CLI_HELP_URL"
     }
     return 0
   fi
   if ! command -v jq >/dev/null 2>&1; then
     jd() {
-      _jd_nav_is_version "$1" && return 0
+      _jd_nav_is_version "${1-}" && return 0
       _jd_nav_err "jq is not installed"
     }
     return 0
@@ -244,7 +244,7 @@ _jd_nav_setup() {
   n=$(jq -r '.systems | length' "$cfg" 2>/dev/null)
   if [ -z "$n" ] || [ "$n" = 0 ] || [ "$n" = null ]; then
     jd() {
-      _jd_nav_is_version "$1" && return 0
+      _jd_nav_is_version "${1-}" && return 0
       _jd_nav_err "no systems in $(_jd_nav_config)"
     }
     return 0

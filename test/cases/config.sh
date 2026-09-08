@@ -141,4 +141,15 @@ else
   PATH=$_jd_t_path
 fi
 
+# ------------------------------------------------- no leaks into the shell
+
+# _jd_nav_setup used to assign idx without declaring it local, so idx was
+# left behind in the user's shell. It only happened on the path a single
+# system with no sys takes, which is the common one-system config.
+# Fixed in 2.0.5.
+
+unset idx
+_jd_t_load "$JD_T_TMP/single-nosys.json"
+_jd_t_eq 'nav.sh does not leave $idx in the shell' 'unset' "${idx-unset}"
+
 _jd_t_summary
