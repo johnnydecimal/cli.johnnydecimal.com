@@ -1,52 +1,50 @@
 # The JD CLI utilities
 
-Tools that help you work at your command-line. They're compatible with bash (3.2+) and zsh and are MIT licensed so you're free to adapt them for other shells.[^pr]
+Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, and in zsh. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
 
 [^pr]: PRs welcome if you do.
 
-This repo documents installation. Usage is documented at [johnnydecimal.com/jdhq/jd-cli](https://johnnydecimal.com/jdhq/jd-cli).
+This repository documents installation. Usage is documented at [johnnydecimal.com/jdhq/jd-cli](https://johnnydecimal.com/jdhq/jd-cli).
 
 ## Requirements
 
 - [Configuration file](https://johnnydecimal.com/jdhq/configuration).
-  - This repo contains a template.
+  - This repository contains a template.
 - [jq](https://jqlang.github.io/jq/).
 
 ## Installation
 
-1. Install `jq` if you do not have it. On macOS: `brew install jq`.[^homebrew]
-2. Clone this repo to `~/.jd/cli`:
+1. Install `jq` if it is not installed. On macOS: `brew install jq`.[^homebrew]
+2. Clone this repository to `~/.jd/cli`:
 
    ```sh
    git clone https://github.com/johnnydecimal/cli.johnnydecimal.com ~/.jd/cli
    ```
 
-3. If you don't have `~/.jd/config.json` yet, copy the example and edit it for your systems:
+3. If `~/.jd/config.json` does not exist, copy the template and edit it for your systems:
 
    ```sh
    cp ~/.jd/cli/config.example.json ~/.jd/config.json
    ```
 
-4. Add this line to `.zshrc` (or `.bashrc`):
+4. Add this line to `.zshrc`, or to `.bashrc`:
 
    ```sh
    source ~/.jd/cli/jd.sh
    ```
 
-   It loads the navigation in any shell, and the prompt under zsh only.
+   It loads the navigation in all shells. It loads the prompt in zsh only.
 
-5. For the zsh prompt, pick one of the two and add it to `.zshrc`, after the `source` line.
+5. For the zsh prompt, add one of these two to `.zshrc`, after the `source` line.
 
-   Your own prompt, with the Johnny.Decimal path in it. `_jd_pwd` needs single quotes or `prompt_subst`:
+   A prompt of your own, with the Johnny.Decimal path in it. `_jd_pwd` needs single quotes, or `prompt_subst`:
 
    ```zsh
    setopt prompt_subst
    PROMPT='%B$(_jd_pwd)%b %# '
    ```
 
-   Or the whole prompt Johnny uses, which is one more source line. It sets
-   `PROMPT`, so put it last, after anything else that touches your prompt.
-   See [The prompt theme](#the-prompt-theme):
+   Or Johnny's prompt. It sets `PROMPT`, so put the line after all other lines that set `PROMPT`. Refer to [The prompt theme](#the-prompt-theme):
 
    ```zsh
    source ~/.jd/cli/lib/theme.zsh
@@ -58,37 +56,38 @@ This repo documents installation. Usage is documented at [johnnydecimal.com/jdhq
 
 ## The prompt theme
 
-`lib/theme.zsh` is Johnny's prompt. It is zsh only, and `jd.sh` does not load
-it, so you get it only if you source it.
+`lib/theme.zsh` is Johnny's prompt. It is for zsh only. `jd.sh` does not load it.
 
 ```
 ┏╸D25:…/11.11 Structure & registrations
 ┗╸mymac ❯❯
 ```
 
-- Set the chevron colours before the source line:
+Add this line to `.zshrc`, after all other lines that set `PROMPT`:
+
+```zsh
+source ~/.jd/cli/lib/theme.zsh
+```
+
+- Chevron colours. The prompt reads these variables at each prompt, so put them before or after the source line:
 
   ```zsh
   JD_CHEVRON1=yellow
   JD_CHEVRON2=red
   ```
 
-- Git status is not part of it. The prompt calls `gitprompt`, and the theme
-  has a do-nothing `gitprompt` so it works without one. Load
-  [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme
-  and the prompt picks up the real one.
-- The symbols need a font with box drawing in it. Every current terminal
-  font has one.
+- For git status, load [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme. If it is not loaded, the theme's own `gitprompt` function operates and prints nothing.
+- The symbols need a font that contains box-drawing characters.
 
 ## Configuration
 
-Everything reads the standard config file at `~/.jd/config.json`.
+All the tools read the configuration file at `~/.jd/config.json`.
 
-Override the location with `$JD_CONFIG`.
+`$JD_CONFIG` overrides its location.
 
-The config is read once, when your shell starts. New or moved systems need a new shell.
+The tools read the configuration once, at shell start. A new system, or a system that has moved, needs a new shell.
 
-See [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for more info.
+Refer to [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for the fields.
 
 ## Update
 
@@ -96,10 +95,12 @@ See [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/config
 git -C ~/.jd/cli pull
 ```
 
-Coming from 1.x, replace your two `source` lines with the single line in
-[Installation](#installation). The old `jd-nav` and `jd-prompt` paths still
-work, but they print a reminder each time your shell starts, and they will be
-deleted at 3.0.0.
+### Migration from 1.x
+
+Replace the two `source` lines with the single line in
+[Installation](#installation). v1.x `jd-nav` and `jd-prompt` paths still
+operate. They print a reminder at each shell start. They'll be deleted in
+a future version.
 
 ## Tests
 
@@ -107,19 +108,19 @@ deleted at 3.0.0.
 test/run.sh
 ```
 
-It runs the whole suite under bash and zsh, and exits non-zero if anything
-failed. It needs `jq` and nothing else. The tests run against fake systems in a
-temp folder, never against your own.
+The suite runs in bash and in zsh. It exits non-zero if a test fails. It
+needs `jq`, and nothing else. It runs against fixture systems in a temporary
+folder, not against your system.
 
-See [test/README.md](test/README.md) to add a test.
+Refer to [test/README.md](test/README.md) to add a test.
 
 ## Versions
 
 - Versions follow [semantic versioning](https://semver.org).
-- The repo has a single version, which all tools share.
-- Each release is a git tag, for example `v2.0.0`.
-- `jd version` prints the version you have.
-- [CHANGELOG.md](CHANGELOG.md) lists what changed in each release.
+- One version applies to all the tools in the repository.
+- Each release has a git tag, for example `v2.0.0`.
+- `jd version` prints the installed version.
+- [CHANGELOG.md](CHANGELOG.md) lists the changes in each release.
 
 ## Licence
 

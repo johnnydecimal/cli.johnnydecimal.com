@@ -7,6 +7,15 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.2.2 – 2026-09-09
+
+### Changed
+
+- The README is written as instructions. No contractions, one name for
+  one thing, and a sentence for each fact. The prompt theme section now
+  shows the line that loads it, which it referred to but did not print.
+  Nothing in the tools changed.
+
 ## 2.2.1 – 2026-09-09
 
 ### Changed
