@@ -7,6 +7,14 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.2.1 – 2026-09-09
+
+### Changed
+
+- The README's prompt theme section is shorter. Nothing in the tools
+  changed. The version moves because a `git pull` is how you get the
+  repo, so every push is a release.
+
 ## 2.2.0 – 2026-09-09
 
 ### Changed

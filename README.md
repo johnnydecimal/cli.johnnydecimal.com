@@ -58,24 +58,14 @@ This repo documents installation. Usage is documented at [johnnydecimal.com/jdhq
 
 ## The prompt theme
 
-`lib/theme.zsh` is the whole prompt Johnny uses. It is zsh only, and `jd.sh`
-does not load it, so you get it only if you source it.
+`lib/theme.zsh` is Johnny's prompt. It is zsh only, and `jd.sh` does not load
+it, so you get it only if you source it.
 
 ```
 ┏╸D25:…/11.11 Structure & registrations
 ┗╸mymac ❯❯
 ```
 
-- Line one is the Johnny.Decimal path. In front of it, when the last command
-  failed, is its exit status.
-- Line two is the host name, then the chevrons you type after.
-- Sourcing the file is the request, so it sets `PROMPT`, whatever `PROMPT`
-  you had. Put the line last, after anything else that touches the prompt.
-  A prompt library usually sets one of its own, and the last one to run
-  wins.
-- To keep a prompt of your own, do not source this file. Use `$(_jd_pwd)` in
-  your own `PROMPT` instead, as in step 5 above. You get the Johnny.Decimal
-  path without the rest of this.
 - Set the chevron colours before the source line:
 
   ```zsh
