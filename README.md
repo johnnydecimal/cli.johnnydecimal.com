@@ -1,17 +1,18 @@
-# cli.johnnydecimal.com
+# The JD CLI utilities
 
-Shell utilities for your [Johnny.Decimal](https://johnnydecimal.com) system.
+Tools that help you work at your command-line. They're compatible with bash (3.2+) and zsh and are MIT licensed so you're free to adapt them for other shells.[^pr]
 
-- [`jd-nav`](jd-nav/): `cd` around your system by number or word. bash 3.2+ and zsh.
-- [`jd-prompt`](jd-prompt/): a nicer Johnny.Decimal prompt. zsh.
+[^pr]: PRs welcome if you do.
 
-## Config
+This repo documents installation. Usage is documented at [johnnydecimal.com/jdhq/jd-cli](https://johnnydecimal.com/jdhq/jd-cli).
 
-Everything reads the standard config file at `~/.jd/config.json`. An example file is provided.
+## Requirements
 
-See [jdcm.al/jdhq/configuration](https://jdcm.al/jdhq/configuration)
+- [Configuration file](https://johnnydecimal.com/jdhq/configuration).
+  - This repo contains a template.
+- [jq](https://jqlang.github.io/jq/).
 
-## Install
+## Installation
 
 1. Install `jq` if you do not have it. On macOS: `brew install jq`.[^homebrew]
 2. Clone this repo to `~/.jd/cli`:
@@ -20,22 +21,40 @@ See [jdcm.al/jdhq/configuration](https://jdcm.al/jdhq/configuration)
    git clone https://github.com/johnnydecimal/cli.johnnydecimal.com ~/.jd/cli
    ```
 
-3. If you do not have `~/.jd/config.json` yet, copy the example and edit it for your systems:
+3. If you don't have `~/.jd/config.json` yet, copy the example and edit it for your systems:
 
    ```sh
    cp ~/.jd/cli/config.example.json ~/.jd/config.json
    ```
 
-4. Source the utilities you want from `.zshrc` (or `.bashrc`):
+4. Add this line to `.zshrc` (or `.bashrc`):
 
    ```sh
-   source ~/.jd/cli/jd-nav/jd-nav.sh
-   source ~/.jd/cli/jd-prompt/jd-prompt.zsh
+   source ~/.jd/cli/jd.sh
    ```
 
-5. Start a new shell.
+   It loads the navigation in any shell, and the prompt under zsh only.
+
+5. For the zsh prompt, also add these lines to `.zshrc`, after the `source` line. `_jd_pwd` needs single quotes or `prompt_subst`:
+
+   ```zsh
+   setopt prompt_subst
+   PROMPT='%B$(_jd_pwd)%b %# '
+   ```
+
+6. Start a new shell.
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
+
+## Configuration
+
+Everything reads the standard config file at `~/.jd/config.json`.
+
+Override the location with `$JD_CONFIG`.
+
+The config is read once, when your shell starts. New or moved systems need a new shell.
+
+See [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for more info.
 
 ## Update
 
@@ -45,27 +64,22 @@ git -C ~/.jd/cli pull
 
 ## Versions
 
-- The repo has one version number. Every tool in it shares that number.
 - Versions follow [semantic versioning](https://semver.org).
-- Each release is a git tag, for example `v1.1.0`.
+- The repo has a single version, which all tools share.
+- Each release is a git tag, for example `v2.0.0`.
 - `jd version` prints the version you have.
 - [CHANGELOG.md](CHANGELOG.md) lists what changed in each release.
 
-## The config file
+## Licence
 
-- `version`: the config format version. Currently `1`.
-- `systems`: one entry per system. See [multiple systems](https://johnnydecimal.com/documentation/multiple-systems-overview).
+The code in this repository is [MIT](LICENSE), copyright Coruscade Pty Ltd.
 
-For each system:
-
-- `sys`: the [system identifier](https://johnnydecimal.com/documentation/acid-notation#sysacid).
-- `title`: a name for the system.
-- `root`: the filesystem root – the folder that holds your areas.
-- `jdex`: the root of your JDex, if it is on your filesystem (e.g. an Obsidian vault). Optional.[^obsidian]
-- `default: true`: the system a tool acts on when you do not name one. Optional. Without it, the first system is the default.
-
-[^obsidian]: Noting that your Obsidian vault should live at `00.00` in your Johnny.Decimal system. That makes the path long so I simplified the example code. See [blog/0182](https://johnnydecimal.com/blog/0182-jdex-data-and-storage) for a deep-dive. If your JDex isn't filesystem-accessible, e.g. Apple Notes or Bear, omit this value.
+The Johnny.Decimal system, its documentation, and the name are separate. See [johnnydecimal.com/licence](https://johnnydecimal.com/licence). Johnny.Decimal is a trademark of Coruscade Pty Ltd.
 
 ## AI attribution
 
-Concept and words by Johnny. Code by Claude.
+- Johnny:
+  - Designs the utility, i.e. decides what it does and how it behaves.
+- Claude:
+  - Writes the code.
+  - Writes the text in the repository, e.g. the installation instructions, which Johnny then edits to save you from reading too much Claude 🫠.

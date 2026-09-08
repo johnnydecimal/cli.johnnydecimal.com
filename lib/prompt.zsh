@@ -1,16 +1,14 @@
-# jd-prompt.zsh - Johnny.Decimal prompt path for zsh
-# Part of cli.johnnydecimal.com. Version 1.1.0.
+# SPDX-License-Identifier: MIT
+# prompt.zsh - Johnny.Decimal prompt path for zsh
+# Part of the Johnny.Decimal command line. Loaded by jd.sh under zsh only.
 #
-# Source this file from .zshrc, then use $(_jd_pwd) in your PROMPT in place
-# of %~. Outside a Johnny.Decimal system it prints the normal path. Inside
-# one it anchors at the deepest numbered folder and prints, for example:
+# Use $(_jd_pwd) in your PROMPT in place of %~. Outside a Johnny.Decimal
+# system it prints the normal path. Inside one it anchors at the deepest
+# numbered folder and prints, for example:
 #   D25:…/11.11 Structure & registrations
 #
 # It reads the systems from ~/.jd/config.json (override with $JD_CONFIG).
 # Needs jq. The config is read once, when this file is sourced.
-
-# The version of this repo, shared by every tool in it. Semver.
-_JD_CLI_VERSION="1.1.0"
 
 _jd_prompt_sys=()
 _jd_prompt_root=()

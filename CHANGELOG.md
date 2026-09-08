@@ -5,6 +5,36 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.0.0 – 2026-09-07
+
+### Added
+
+- `LICENSE`, the MIT text the code has always been under.
+
+### Changed
+
+- One source line replaces two. In `.zshrc` or `.bashrc`, replace:
+
+  ```sh
+  source ~/.jd/cli/jd-nav/jd-nav.sh
+  source ~/.jd/cli/jd-prompt/jd-prompt.zsh
+  ```
+
+  with:
+
+  ```sh
+  source ~/.jd/cli/jd.sh
+  ```
+
+  `jd.sh` loads the navigation in any shell, and the prompt under zsh only.
+
+- The scripts moved to `lib/nav.sh` and `lib/prompt.zsh`. Source `jd.sh`, not
+  these.
+- Messages and `jd version` say `jd`, not `jd-nav`.
+- `jd-nav/README.md` and `jd-prompt/README.md` are gone. This repo documents
+  installation. Usage is documented at
+  [johnnydecimal.com/jdhq/jd-cli](https://johnnydecimal.com/jdhq/jd-cli).
+
 ## 1.1.0 – 2026-09-04
 
 ### Added

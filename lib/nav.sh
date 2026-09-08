@@ -1,8 +1,7 @@
-# jd-nav.sh - Johnny.Decimal shell navigation
-# Part of cli.johnnydecimal.com. Version 1.1.0.
-#
-# Source this file from .zshrc or .bashrc:
-#   source ~/.jd/cli/jd-nav/jd-nav.sh
+# SPDX-License-Identifier: MIT
+# nav.sh - Johnny.Decimal shell navigation
+# Part of the Johnny.Decimal command line. Loaded by jd.sh, which sets
+# $_JD_CLI_VERSION and $_JD_CLI_HELP_URL.
 #
 # It reads ~/.jd/config.json (override with $JD_CONFIG) and defines:
 #   - one function per system, named by its lowercase sys id: d25, p76
@@ -10,18 +9,14 @@
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
-# The version of this repo, shared by every tool in it. Semver.
-_JD_CLI_VERSION="1.1.0"
-_JD_NAV_CONFIG_URL="https://cli.johnnydecimal.com/"  # TODO: real help URL
-
 _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
 
-_jd_nav_err() { printf 'jd-nav: %s\n' "$*" >&2; return 1; }
+_jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 
 # Print the version if $1 asks for it. Returns 0 if it did.
 _jd_nav_is_version() {
   case $1 in
-    -v|--version|version) printf 'jd-nav %s\n' "$_JD_CLI_VERSION"; return 0 ;;
+    -v|--version|version) printf 'jd %s\n' "$_JD_CLI_VERSION"; return 0 ;;
   esac
   return 1
 }
@@ -73,7 +68,7 @@ _jd_nav_go() {
     cd -- "$m" && pwd
   else
     {
-      printf 'jd-nav: %s matches for %s:\n' "$n" "$label"
+      printf 'jd: %s matches for %s:\n' "$n" "$label"
       printf '%s\n' "$m" | while IFS= read -r p; do
         printf '  %s\n' "${p#"$tree"/}"
       done
@@ -102,7 +97,7 @@ _jd_nav_make_id() {
     return 2
   fi
   mkdir -- "$cm/$name" || return 2
-  printf 'jd-nav: created %s from the JDex\n' "$name" >&2
+  printf 'jd: created %s from the JDex\n' "$name" >&2
   printf '%s' "$cm/$name"
 }
 
@@ -128,7 +123,7 @@ _jd_nav() {
   _jd_nav_is_version "$1" && return 0
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
-  [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_NAV_CONFIG_URL"; return 1; }
+  [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
   row=$(jq -r --arg s "$sys" \
     '.systems[] | select(.sys == $s) | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
   [ -n "$row" ] || { _jd_nav_err "system '$sys' is not in $cfg"; return 1; }
@@ -227,7 +222,7 @@ _jd_nav_setup() {
   if [ ! -f "$cfg" ]; then
     jd() {
       _jd_nav_is_version "$1" && return 0
-      _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_NAV_CONFIG_URL"
+      _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_CLI_HELP_URL"
     }
     return 0
   fi
