@@ -1,0 +1,23 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    // Palette: one OKLCH hue, 118. Lightness and chroma stay fixed.
+    // VS Code reads hex only, so the hex below is generated from the
+    // oklch() value in each comment. To change the theme, pick a new
+    // hue and convert all six.
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "#9fb240", // oklch(73% 0.140 118)
+      "titleBar.activeForeground": "#fff",
+      "titleBar.inactiveBackground": "#d7e1b5", // oklch(89% 0.059 118)
+      "window.activeBorder": "#9fb240", // oklch(73% 0.140 118)
+      "sideBar.background": "#f5f8ec", // oklch(97% 0.015 118)
+      "commandCenter.background": "#cdd9a2", // oklch(86% 0.074 118)
+      "commandCenter.foreground": "#20240e", // oklch(25% 0.038 118)
+      "commandCenter.debuggingBackground": "#ebf0da60", // oklch(94% 0.030 118) + 60
+    },
+  },
+}
