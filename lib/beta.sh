@@ -19,6 +19,8 @@ usage: <system> beta [status|on|off]
 
   jd beta             say whether beta is on
   jd beta on          turn beta on: write "beta": true to the config
+                      BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA
+                      YOU PROBABLY SHOULDN'T USE THEM :-)
   jd beta off         turn beta off: write "beta": false to the config
 
 Beta features may change, or go, without notice. There is one flag for

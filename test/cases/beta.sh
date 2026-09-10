@@ -25,6 +25,8 @@ _jd_t_beta() { jq -r '.beta' "$1"; }
 _jd_t_run jd beta --help
 _jd_t_status 'help: exit status' 0
 _jd_t_contains 'help: prints the usage line' 'usage: <system> beta' "$JD_T_OUT"
+_jd_t_contains 'help: warns before you turn beta on' \
+  'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_OUT"
 
 _jd_t_run jd beta
 _jd_t_status 'status: exit status' 0
