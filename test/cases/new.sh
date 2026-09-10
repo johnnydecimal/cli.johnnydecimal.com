@@ -185,4 +185,196 @@ else
   _jd_t_ok 'adapter: makes nothing when it cannot start'
 fi
 
+# ------------------------------------------------------------- --json
+
+_jd_fx_reset
+_jd_fx_build_templates
+_jd_fx_config_new "$JD_T_TMP/json.json"
+_jd_t_load "$JD_T_TMP/json.json"
+
+_jd_t_run jd new --peek
+_jd_t_status 'peek: exit status' 0
+_jd_t_eq 'peek: prints the next free number' 'W0301' "$JD_T_OUT"
+if [ -e "$_jd_t_fw/W0301~21.35 A dry run" ]; then
+  _jd_t_bad 'peek: makes nothing' 'no folder' 'a folder'
+else
+  _jd_t_ok 'peek: makes nothing'
+fi
+
+_jd_t_run jd new --peek --json
+_jd_t_status 'peek --json: exit status' 0
+if printf '%s' "$JD_T_OUT" | jq -e . >/dev/null 2>&1; then
+  _jd_t_ok 'peek --json: parses'
+else
+  _jd_t_bad 'peek --json: parses' 'valid JSON' "$JD_T_OUT"
+fi
+_jd_t_eq 'peek --json: the right num' 'W0301' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
+
+# W0301, made for real. Every path the object names must exist.
+_jd_t_run jd new --json 21.35 A JSON title
+_jd_t_status 'json make: exit status' 0
+if printf '%s' "$JD_T_OUT" | jq -e . >/dev/null 2>&1; then
+  _jd_t_ok 'json make: parses'
+else
+  _jd_t_bad 'json make: parses' 'valid JSON' "$JD_T_OUT"
+fi
+_jd_t_eq 'json make: ok is true' 'true' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.ok')"
+_jd_t_eq 'json make: dryRun is false' 'false' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.dryRun')"
+_jd_t_eq 'json make: toFill is empty, the template has no tokens' '[]' \
+  "$(printf '%s' "$JD_T_OUT" | jq -c '.toFill')"
+_jd_t_note_path=$(printf '%s' "$JD_T_OUT" | jq -r '.note')
+_jd_t_folder_path=$(printf '%s' "$JD_T_OUT" | jq -r '.folder')
+if [ -f "$_jd_t_note_path" ]; then
+  _jd_t_ok 'json make: the note path exists'
+else
+  _jd_t_bad 'json make: the note path exists' "$_jd_t_note_path" 'nothing'
+fi
+if [ -d "$_jd_t_folder_path" ]; then
+  _jd_t_ok 'json make: the folder path exists'
+else
+  _jd_t_bad 'json make: the folder path exists' "$_jd_t_folder_path" 'nothing'
+fi
+
+# W0302 is next. -n makes nothing, in JSON or not.
+_jd_t_run jd new -n --json 21.35 A dry run in JSON
+_jd_t_status 'json dry run: exit status' 0
+if printf '%s' "$JD_T_OUT" | jq -e . >/dev/null 2>&1; then
+  _jd_t_ok 'json dry run: parses'
+else
+  _jd_t_bad 'json dry run: parses' 'valid JSON' "$JD_T_OUT"
+fi
+_jd_t_eq 'json dry run: dryRun is true' 'true' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.dryRun')"
+_jd_t_eq 'json dry run: still names the right num' 'W0302' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
+if [ -e "$_jd_t_fw/W0302~21.35 A dry run in JSON" ]; then
+  _jd_t_bad 'json dry run: makes nothing' 'no folder' 'a folder'
+else
+  _jd_t_ok 'json dry run: makes nothing'
+fi
+
+_jd_t_run jd new --json banana A title
+_jd_t_status 'json refuse: a bad ID, exit status' 1
+if printf '%s' "$JD_T_OUT" | jq -e . >/dev/null 2>&1; then
+  _jd_t_ok 'json refuse: parses'
+else
+  _jd_t_bad 'json refuse: parses' 'valid JSON' "$JD_T_OUT"
+fi
+_jd_t_eq 'json refuse: ok is false' 'false' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.ok')"
+_jd_t_eq 'json refuse: the code is not_an_id' 'not_an_id' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+
+# A title with a literal double quote and a literal backslash in it. It
+# is still W0302, since the dry run above made nothing and the bad ID
+# above used no number.
+_jd_t_title='A title with a " quote and a \ backslash'
+_jd_t_run jd new --json 21.35 A title with a '"' quote and a '\' backslash
+_jd_t_status 'json quoting: exit status' 0
+if printf '%s' "$JD_T_OUT" | jq -e . >/dev/null 2>&1; then
+  _jd_t_ok 'json quoting: parses'
+else
+  _jd_t_bad 'json quoting: parses' 'valid JSON' "$JD_T_OUT"
+fi
+_jd_t_eq 'json quoting: the title survives the quote and the backslash' \
+  "$_jd_t_title" "$(printf '%s' "$JD_T_OUT" | jq -r '.title')"
+
+# ---------------------------------------------------- a missing template
+
+_jd_fx_reset
+_jd_fx_config_new "$JD_T_TMP/notpl.json"
+_jd_t_load "$JD_T_TMP/notpl.json"
+
+_jd_t_run jd new --json 21.35 No template here
+_jd_t_status 'no template: exit status' 1
+_jd_t_eq 'no template: the code is no_note_template' 'no_note_template' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+_jd_t_eq 'no template: the path is the template' \
+  "$_jd_t_jw/W0003 Template.md" \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.path')"
+
+# ---------------------------------------------------------- already exists
+#
+# The real scan always numbers past whatever is already on disk, so a
+# normal call never reaches this guard - the same title twice just gets
+# the next free number, as 'twice' above shows. The only way in is a
+# race between the scan and the write, which this forces by fixing the
+# number that _jd_new_next_number returns.
+
+_jd_fx_reset
+_jd_fx_config_new "$JD_T_TMP/exists.json"
+_jd_t_load "$JD_T_TMP/exists.json"
+
+mkdir -p "$_jd_t_fw/W0301~21.35 Already there"
+_jd_new_next_number() { printf 'W0301'; }
+
+_jd_t_run jd new --json 21.35 Already there
+_jd_t_status 'exists: exit status' 1
+_jd_t_eq 'exists: the code is exists' 'exists' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+
+unset -f _jd_new_next_number
+
+# ------------------------------------------------------------- {{?TOKEN}}
+
+_jd_fx_reset
+_jd_fx_build_templates_tokens
+_jd_fx_config_new_tokens "$JD_T_TMP/tokens.json"
+_jd_t_load "$JD_T_TMP/tokens.json"
+
+_jd_t_run jd new --json 21.35 A work package with tokens
+_jd_t_status 'tokens: exit status' 0
+_jd_t_note=$(cat "$_jd_t_jw/W0301~21.35 A work package with tokens.md" 2>/dev/null)
+_jd_t_contains 'tokens: SCOPE stays in the note as written' \
+  '{{?SCOPE}}' "$_jd_t_note"
+_jd_t_contains 'tokens: DELIVERABLE stays in the note as written' \
+  '{{?DELIVERABLE What we hand over}}' "$_jd_t_note"
+_jd_t_eq 'tokens: toFill names both, in order' 'SCOPE,DELIVERABLE' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.toFill | map(.token) | join(",")')"
+_jd_t_eq 'tokens: the brief on SCOPE is empty' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.toFill[0].brief')"
+_jd_t_eq 'tokens: the brief on DELIVERABLE is kept' 'What we hand over' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.toFill[1].brief')"
+
+# Plain output, no --json: one 'to fill' line on stderr, naming both.
+_jd_fx_reset
+_jd_fx_build_templates_tokens
+_jd_t_load "$JD_T_TMP/tokens.json"
+
+_jd_t_run jd new 21.35 A second one with tokens
+_jd_t_status 'tokens plain: exit status' 0
+_jd_t_contains 'tokens plain: says which tokens to fill' \
+  'to fill  SCOPE, DELIVERABLE' "$JD_T_ERR"
+
+# ------------------------------------------- a code on every failure
+#
+# An agent branches on 'code', so it is never empty, even when the
+# failure came from an adapter that knows no code of its own.
+
+_jd_fx_reset
+_jd_fx_build
+_jd_fx_build_templates
+_jd_fx_config_new "$JD_T_TMP/new.json"
+_jd_t_load "$JD_T_TMP/new.json"
+
+_jd_t_run jd new --json
+_jd_t_status 'no id: exit status' 1
+_jd_t_eq 'no id: the code is no_id' 'no_id' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+
+# The 'none' task adapter passes its check and refuses the refresh, so
+# this is refresh_failed. The adapter printed the message, not new.sh,
+# so the message field falls back rather than staying empty.
+_jd_t_run jd new --json --refresh
+_jd_t_status 'refresh with no task app: exit status' 1
+_jd_t_eq 'refresh with no task app: the code is refresh_failed' \
+  'refresh_failed' "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+_jd_t_eq 'refresh with no task app: the message is not empty' 'yes' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r 'if .message == "" then "no" else "yes" end')"
+_jd_t_contains 'refresh with no task app: the adapter said why on stderr' \
+  'no task app is set for this system' "$JD_T_ERR"
+
 _jd_t_summary

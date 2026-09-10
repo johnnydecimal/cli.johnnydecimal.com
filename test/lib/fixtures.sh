@@ -121,6 +121,27 @@ _jd_fx_build_templates() {
 EOT
 }
 
+# A template note that holds '{{?TOKEN}}' tokens, for the toFill tests.
+# Separate from _jd_fx_build_templates, so a case that does not need it
+# does not get it.
+#   $JD_FX_JDEX/W0000-9999 .../W0004 Template with tokens.md
+_jd_fx_build_templates_tokens() {
+  cat >"$JD_FX_JDEX/W0000-9999 Work packages/W0004 Template with tokens.md" <<'EOT'
+- Permalink:
+	- ^{{w}}
+
+---
+
+## Scope
+
+{{?SCOPE}}
+
+## Deliverable
+
+{{?DELIVERABLE What we hand over}}
+EOT
+}
+
 # A $PATH with no jq on it, so the "jq is not installed" branch can be
 # tested. Some machines carry jq in /usr/bin, so hiding it by trimming
 # $PATH is not reliable. Build a bin folder instead and link in only the
@@ -247,6 +268,29 @@ _jd_fx_config_new() {
       "sys": "P76",
       "title": "Second system",
       "root": "$JD_FX_ROOT2"
+    }
+  ]
+}
+EOF
+}
+
+# The same as _jd_fx_config_new, but the note template is the one with
+# '{{?TOKEN}}' tokens in it, and there is no folder template.
+_jd_fx_config_new_tokens() {
+  cat >"$1" <<EOF
+{
+  "version": 1,
+  "systems": [
+    {
+      "sys": "D25",
+      "title": "Test system",
+      "root": "$JD_FX_ROOT",
+      "jdex": "$JD_FX_JDEX",
+      "default": true,
+      "workPackages": {
+        "noteTemplate": "W0004 Template with tokens.md",
+        "notes": { "adapter": "obsidian", "vault": "D25 JDex" }
+      }
     }
   ]
 }

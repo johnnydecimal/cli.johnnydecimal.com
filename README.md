@@ -89,6 +89,24 @@ The tools read the configuration once, at shell start. A new system, or a system
 
 Refer to [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for the fields.
 
+## `jd new`
+
+`jd new <ID> <title>` makes a work package: the next free W number, the
+project in your task app, the JDex note, and the folder. Run `jd new
+--help` for the full list of flags.
+
+- `--json` prints one JSON object on stdout, in place of the usual
+  lines. `{ "ok": true, ... }` on success, `{ "ok": false, "code": "...",
+  "message": "...", "path": "..." }` on error. stderr still carries the
+  human lines.
+  `code` is the stable part, and it is never empty. Match on it. The
+  `message` is written for a person to read, so it may be reworded.
+- `--peek` prints the next free W number and makes nothing.
+- A template note can hold a token jd does not fill in, for example
+  `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`. jd new leaves
+  it in the note as written, and names it, in `toFill` with `--json`
+  or on stderr otherwise, so a human or an agent can fill it in after.
+
 ## Update
 
 ```sh
