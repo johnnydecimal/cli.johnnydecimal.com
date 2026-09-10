@@ -7,6 +7,16 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.5.1 – 2026-09-10
+
+> AI generated. Reviewed by Johnny.
+
+### Changed
+
+- `jd beta on` warns you that beta features are unstable and modify
+  your data. You also see the warning in `jd beta --help`, and when you
+  run a beta feature with beta off.
+
 ## 2.5.0 – 2026-09-10
 
 > AI generated. Reviewed by Johnny.
