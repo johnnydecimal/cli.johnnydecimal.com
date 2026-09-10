@@ -42,7 +42,7 @@ jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
 
 Two or more matches are listed, not entered. Word search ignores case.
-An ID with a JDex entry but no folder gets its folder made for it.
+An ID or work package in the JDex with no folder gets its folder made.
 EOF
 }
 
@@ -146,20 +146,43 @@ _jd_nav_go() {
 # An ID is in the JDex but has no folder: make the folder from the JDex
 # entry's name. $1 root, $2 jdex, $3 ID. Prints the new path on stdout.
 # Returns 1 if it does not apply, 2 if it applies but failed.
+#
+# A normal ID goes in its category, which its own number names. A work
+# package goes in an area, and its number does not say which one, so the
+# area is read from the JDex entry's parent folder.
 _jd_nav_make_id() {
-  local root=$1 jdex=$2 id=$3 jm name cnum cm
+  local root=$1 jdex=$2 id=$3 jm name up num what depth cm
   [ -n "$jdex" ] && [ -d "$jdex" ] || return 1
-  jm=$(_jd_nav_find "$jdex" 3 a -name "$id" -o -name "$id *" -o -name "$id.md")
+  case $id in
+    [Ww][0-9][0-9][0-9][0-9])
+      jm=$(_jd_nav_find "$jdex" 2 a -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
+      depth=1
+      ;;
+    *)
+      jm=$(_jd_nav_find "$jdex" 3 a -name "$id" -o -name "$id *" -o -name "$id.md")
+      depth=2
+      ;;
+  esac
   [ "$(printf '%s' "$jm" | grep -c '^')" -eq 1 ] || return 1
   name=$(basename -- "$jm")
   case $name in
     *.md) name=${name%.md} ;;
     *.txt) name=${name%.txt} ;;
   esac
-  cnum=${id%%.*}
-  cm=$(_jd_nav_find "$root" 2 d -name "$cnum" -o -name "$cnum *")
+  case $id in
+    [Ww][0-9][0-9][0-9][0-9])
+      up=$(basename -- "$(dirname -- "$jm")")
+      num=${up%% *}
+      what="area $num"
+      ;;
+    *)
+      num=${id%%.*}
+      what="category $num"
+      ;;
+  esac
+  cm=$(_jd_nav_find "$root" "$depth" d -name "$num" -o -name "$num *")
   if [ "$(printf '%s' "$cm" | grep -c '^')" -ne 1 ]; then
-    _jd_nav_err "the JDex has $id but there is no folder for category $cnum"
+    _jd_nav_err "the JDex has $id but there is no folder for $what"
     return 2
   fi
   mkdir -- "$cm/$name" || return 2
@@ -271,6 +294,10 @@ _jd_nav() {
       shift
       [ $# -eq 0 ] || { _jd_nav_err "unexpected words after '$id'"; return 1; }
       m=$(_jd_nav_find "$tree" 2 "$type" -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
+      if [ -z "$m" ] && [ "$mode" = fs ]; then
+        m=$(_jd_nav_make_id "$root" "$jdex" "$id")
+        case $? in 2) return 1 ;; esac
+      fi
       _jd_nav_go "$tree" "$mode" "$id" "$m"
       ;;
     *)

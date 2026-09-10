@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # jd.sh - the Johnny.Decimal command line
-# Version 2.3.0.
+# Version 2.4.0.
 #
 # Source this file from .zshrc or .bashrc:
 #   source ~/.jd/cli/jd.sh
@@ -10,7 +10,7 @@
 # Needs jq. Works in bash 3.2+ and zsh.
 
 # The version of this repo, shared by every tool in it. Semver.
-_JD_CLI_VERSION="2.3.0"
+_JD_CLI_VERSION="2.4.0"
 _JD_CLI_HELP_URL="https://jdcm.al/jdhq/jd-cli"
 
 # The folder this file is in, however it was sourced. The zsh form is

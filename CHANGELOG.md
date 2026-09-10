@@ -7,7 +7,24 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.4.0 – 2026-09-10
+
+> AI generated.
+
+### Added
+
+- A work package that is in the JDex but has no folder gets its folder
+  made for it, the same as an ID does. `jd W0189` makes
+  `W0189~21.41 Some title` from the JDex entry of that name, then goes
+  to it.
+
+  A work package number does not say which area it belongs to, so the
+  area comes from the JDex entry's parent folder. If the filesystem has
+  no folder for that area, `jd` says so and makes nothing.
+
 ## 2.3.0 – 2026-09-10
+
+> AI generated.
 
 ### Added
 
@@ -30,6 +47,8 @@ Run `jd version` to see which version you have.
 
 ## 2.2.2 – 2026-09-09
 
+> AI generated.
+
 ### Changed
 
 - The README is written as instructions. No contractions, one name for
@@ -39,6 +58,8 @@ Run `jd version` to see which version you have.
 
 ## 2.2.1 – 2026-09-09
 
+> AI generated.
+
 ### Changed
 
 - The README's prompt theme section is shorter. Nothing in the tools
@@ -46,6 +67,8 @@ Run `jd version` to see which version you have.
   repo, so every push is a release.
 
 ## 2.2.0 – 2026-09-09
+
+> AI generated.
 
 ### Changed
 
@@ -68,6 +91,8 @@ Run `jd version` to see which version you have.
   `_JD_THEME_PROMPT` variable it left in your shell.
 
 ## 2.1.0 – 2026-09-09
+
+> AI generated.
 
 ### Added
 
@@ -109,6 +134,8 @@ Run `jd version` to see which version you have.
 
 ## 2.0.5 – 2026-09-08
 
+> AI generated.
+
 ### Fixed
 
 - `jd` no longer leaves an `idx` variable behind in your shell. The setup
@@ -124,6 +151,8 @@ Run `jd version` to see which version you have.
 
 ## 2.0.4 – 2026-09-08
 
+> AI generated.
+
 ### Fixed
 
 - Work packages whose name carries a `~` are now found. That is the
@@ -136,6 +165,8 @@ Run `jd version` to see which version you have.
 
 ## 2.0.3 – 2026-09-08
 
+> AI generated.
+
 ### Fixed
 
 - The zsh prompt (`_jd_pwd`) now shortens the path for a single system
@@ -146,6 +177,8 @@ Run `jd version` to see which version you have.
   error. It now reads each row whole and slices it by hand.
 
 ## 2.0.2 – 2026-09-08
+
+> AI generated.
 
 ### Fixed
 
@@ -159,6 +192,8 @@ Run `jd version` to see which version you have.
 
 ## 2.0.1 – 2026-09-08
 
+> AI generated.
+
 ### Added
 
 - `jd-nav/jd-nav.sh` and `jd-prompt/jd-prompt.zsh` are back, as shims. Each
@@ -168,6 +203,8 @@ Run `jd version` to see which version you have.
   The shims go at 3.0.0.
 
 ## 2.0.0 – 2026-09-07
+
+> AI generated.
 
 ### Added
 
@@ -199,6 +236,8 @@ Run `jd version` to see which version you have.
 
 ## 1.1.0 – 2026-09-04
 
+> AI generated.
+
 ### Added
 
 - `jd-nav`: an ID that has a JDex entry but no folder now gets its folder
@@ -215,6 +254,8 @@ Run `jd version` to see which version you have.
   `_JD_CLI_VERSION`. This replaces `_JD_NAV_VERSION`, which nothing read.
 
 ## 1.0.0 – 2026-08-23
+
+> AI generated.
 
 ### Added
 
