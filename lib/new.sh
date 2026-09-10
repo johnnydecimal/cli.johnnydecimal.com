@@ -46,6 +46,9 @@ The title needs no quotes. Everything after the ID is the title.
       --peek          print the next free W number, and make nothing.
                        needs no ID and no title
 
+This is a beta feature. 'jd beta on' turns beta on. JD_BETA=1 turns it
+on for one shell.
+
 The system's 'workPackages' block in the config says which templates and
 which adapters to use.
 
@@ -306,6 +309,13 @@ _jd_new_inner() {
   command -v jq >/dev/null 2>&1 || { _jd_new_fail no_jq '' "jq is not installed"; return 1; }
   [ -f "$_JD_NEW_CFG" ] || {
     _jd_new_fail no_config "$_JD_NEW_CFG" "no config at $_JD_NEW_CFG - see $_JD_CLI_HELP_URL"
+    return 1
+  }
+
+  # 'jd new' is a beta feature, gated by the one flag in lib/beta.sh.
+  # --help still works with beta off, because the flags are read above.
+  _jd_beta_on || {
+    _jd_new_fail beta_off "$_JD_NEW_CFG" "'jd new' is a beta feature - turn beta on with 'jd beta on'"
     return 1
   }
 

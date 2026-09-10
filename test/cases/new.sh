@@ -13,6 +13,11 @@
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
 
+# 'jd new' is a beta feature. Every test runs with beta on, except the
+# ones at the end that turn it off.
+JD_BETA=1
+export JD_BETA
+
 _jd_fx_build
 _jd_fx_build_templates
 _jd_fx_config_new "$JD_T_TMP/new.json"
@@ -376,5 +381,32 @@ _jd_t_eq 'refresh with no task app: the message is not empty' 'yes' \
   "$(printf '%s' "$JD_T_OUT" | jq -r 'if .message == "" then "no" else "yes" end')"
 _jd_t_contains 'refresh with no task app: the adapter said why on stderr' \
   'no task app is set for this system' "$JD_T_ERR"
+
+# ------------------------------------------------------------------ beta
+
+_jd_fx_reset
+_jd_fx_build
+_jd_fx_build_templates
+_jd_fx_config_new "$JD_T_TMP/new.json"
+_jd_t_load "$JD_T_TMP/new.json"
+unset JD_BETA
+
+_jd_t_run jd new --json 21.35 Beta is off
+_jd_t_status 'beta off: exit status' 1
+_jd_t_eq 'beta off: the code is beta_off' 'beta_off' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+_jd_t_contains 'beta off: says how to turn it on' "jd beta on" "$JD_T_ERR"
+
+_jd_t_run jd new --help
+_jd_t_status 'beta off: help still works' 0
+
+jq '{version} + {beta: true} + del(.version)' "$JD_T_TMP/new.json" \
+  >"$JD_T_TMP/beta.json"
+_jd_t_load "$JD_T_TMP/beta.json"
+_jd_t_run jd new --peek
+_jd_t_status 'beta in the config: turns it on' 0
+
+JD_BETA=1
+export JD_BETA
 
 _jd_t_summary

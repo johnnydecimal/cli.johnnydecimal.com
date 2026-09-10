@@ -101,11 +101,24 @@ project in your task app, the JDex note, and the folder. Run `jd new
   human lines.
   `code` is the stable part, and it is never empty. Match on it. The
   `message` is written for a person to read, so it may be reworded.
+- `jd new` is a beta feature. Turn beta on first. See [Beta](#beta).
 - `--peek` prints the next free W number and makes nothing.
 - A template note can hold a token jd does not fill in, for example
   `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`. jd new leaves
   it in the note as written, and names it, in `toFill` with `--json`
   or on stderr otherwise, so a human or an agent can fill it in after.
+
+## Beta
+
+Some features are in beta. They may change, or go, without notice. One flag turns all of them on.
+
+```sh
+jd beta          # say whether beta is on
+jd beta on       # turn it on
+jd beta off      # turn it off
+```
+
+The flag is `"beta": true` at the top level of `~/.jd/config.json`. `JD_BETA=1` turns beta on for one shell, and writes nothing.
 
 ## Update
 

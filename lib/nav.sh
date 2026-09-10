@@ -41,7 +41,10 @@ usage: <system> [jdex] [target]
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
   <system> new 21.41 A title
-                        make a new work package. 'jd new --help' says more
+                        make a new work package (beta). 'jd new --help'
+                        says more
+  <system> beta on|off  turn beta features on or off. 'jd beta' says
+                        which
 
 jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
@@ -222,6 +225,18 @@ _jd_nav() {
     shift
   fi
   _jd_nav_is_version "${1-}" && return 0
+  # 'beta' reads and writes one flag in the config, and no system, so it
+  # is taken before the system is looked up. A root folder that is not
+  # mounted does not stop 'jd beta off'.
+  if [ "${1-}" = beta ]; then
+    shift
+    if command -v _jd_beta >/dev/null 2>&1; then
+      _jd_beta "$@"
+      return
+    fi
+    _jd_nav_err "lib/beta.sh is not loaded - source jd.sh, not lib/nav.sh"
+    return 1
+  fi
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
