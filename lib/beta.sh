@@ -82,6 +82,14 @@ _jd_beta_write() {
   fi
 }
 
+# The warning, on stderr. Printed when beta is turned on, and when a beta
+# feature is used with beta off. The help text holds the same two lines.
+_jd_beta_warn() {
+  printf '    %s\n' \
+    'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' \
+    "YOU PROBABLY SHOULDN'T USE THEM :-)" >&2
+}
+
 # Say whether beta is on, and why. On stdout, because it is the answer.
 _jd_beta_say() {
   if _jd_beta_in_config; then
@@ -121,6 +129,7 @@ _jd_beta() {
       if ! _jd_beta_in_config; then
         _jd_beta_write true || { _jd_nav_err "could not write $cfg"; return 1; }
       fi
+      _jd_beta_warn
       ;;
     off)
       if _jd_beta_in_config; then

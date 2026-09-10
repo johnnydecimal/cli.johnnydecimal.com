@@ -30,6 +30,7 @@ _jd_t_contains 'help: warns before you turn beta on' \
 
 _jd_t_run jd beta
 _jd_t_status 'status: exit status' 0
+_jd_t_lacks 'status: gives no warning' 'UNSTABLE' "$JD_T_ERR"
 _jd_t_eq 'status: a config with no beta key is off' 'beta is off' "$JD_T_OUT"
 
 _jd_t_run jd beta status
@@ -41,6 +42,8 @@ _jd_t_run jd beta on
 _jd_t_status 'on: exit status' 0
 _jd_t_eq 'on: says so' 'beta is on' "$JD_T_OUT"
 _jd_t_eq 'on: writes true' 'true' "$(_jd_t_beta "$_jd_t_cfg")"
+_jd_t_contains 'on: warns' 'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_ERR"
+_jd_t_contains 'on: warns, second line' "YOU PROBABLY SHOULDN'T USE THEM :-)" "$JD_T_ERR"
 _jd_t_eq 'on: the key goes straight after version' 'version,beta' \
   "$(jq -r 'keys_unsorted | .[0:2] | join(",")' "$_jd_t_cfg")"
 _jd_t_eq 'on: keeps the systems' 'D25' "$(jq -r '.systems[0].sys' "$_jd_t_cfg")"
@@ -52,6 +55,7 @@ _jd_t_run jd beta off
 _jd_t_status 'off: exit status' 0
 _jd_t_eq 'off: says so' 'beta is off' "$JD_T_OUT"
 _jd_t_eq 'off: writes false' 'false' "$(_jd_t_beta "$_jd_t_cfg")"
+_jd_t_lacks 'off: gives no warning' 'UNSTABLE' "$JD_T_ERR"
 
 # A config already in the state asked for is not rewritten, so its own
 # layout survives.

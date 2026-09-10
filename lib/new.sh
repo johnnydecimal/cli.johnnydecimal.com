@@ -316,6 +316,7 @@ _jd_new_inner() {
   # --help still works with beta off, because the flags are read above.
   _jd_beta_on || {
     _jd_new_fail beta_off "$_JD_NEW_CFG" "'jd new' is a beta feature - turn beta on with 'jd beta on'"
+    _jd_beta_warn
     return 1
   }
 

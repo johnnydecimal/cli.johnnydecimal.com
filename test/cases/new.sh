@@ -396,6 +396,9 @@ _jd_t_status 'beta off: exit status' 1
 _jd_t_eq 'beta off: the code is beta_off' 'beta_off' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
 _jd_t_contains 'beta off: says how to turn it on' "jd beta on" "$JD_T_ERR"
+_jd_t_contains 'beta off: warns' 'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_ERR"
+_jd_t_lacks 'beta off: the JSON message stays one line, with no warning' 'UNSTABLE' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.message')"
 
 _jd_t_run jd new --help
 _jd_t_status 'beta off: help still works' 0
