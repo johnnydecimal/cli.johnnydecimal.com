@@ -95,6 +95,32 @@ _jd_fx_build_root2() {
 
 _jd_fx_note() { printf 'fixture note\n' >"$1"; }
 
+# The templates 'jd new' copies. Not part of _jd_fx_build, because the
+# filesystem work package area is empty on purpose: other cases look in
+# it to see what jd put there. A case that tests 'jd new' calls this.
+#
+#   $JD_FX_JDEX/W0000-9999 .../W0003 Template.md   the template note
+#   $JD_FX_ROOT/W0000-9999 .../W0003 Templates/Copy me   the folders
+_jd_fx_build_templates() {
+  local tpl
+  tpl="$JD_FX_ROOT/W0000-9999 Work packages/W0003 Templates/Copy me"
+  mkdir -p "$tpl/05 Planning" "$tpl/20 Words"
+  printf 'fixture\n' >"$tpl/05 Planning/a file.txt"
+  # A .DS_Store in a template must not reach the new work package.
+  printf 'junk\n' >"$tpl/.DS_Store"
+  cat >"$JD_FX_JDEX/W0000-9999 Work packages/W0003 Template.md" <<'EOT'
+- Permalink:
+	- ^{{w}}
+- Related:
+	- [Obsidian]({{NOTES_URL}})
+	- [Things]({{TASKS_URL}})
+
+---
+
+## Scope for {{NAME}}
+EOT
+}
+
 # A $PATH with no jq on it, so the "jq is not installed" branch can be
 # tested. Some machines carry jq in /usr/bin, so hiding it by trimming
 # $PATH is not reliable. Build a bin folder instead and link in only the
@@ -191,6 +217,57 @@ _jd_fx_config_second_only() {
       "sys": "P76",
       "title": "Second system",
       "root": "$JD_FX_ROOT2"
+    }
+  ]
+}
+EOF
+}
+
+# Two systems, and D25 knows how to make a work package. The tasks
+# adapter is left out, so it is 'none': the suite never talks to a task
+# app.
+_jd_fx_config_new() {
+  cat >"$1" <<EOF
+{
+  "version": 1,
+  "systems": [
+    {
+      "sys": "D25",
+      "title": "Test system",
+      "root": "$JD_FX_ROOT",
+      "jdex": "$JD_FX_JDEX",
+      "default": true,
+      "workPackages": {
+        "noteTemplate": "W0003 Template.md",
+        "folderTemplate": "W0003 Templates/Copy me",
+        "notes": { "adapter": "obsidian", "vault": "D25 JDex" }
+      }
+    },
+    {
+      "sys": "P76",
+      "title": "Second system",
+      "root": "$JD_FX_ROOT2"
+    }
+  ]
+}
+EOF
+}
+
+# The same, but the adapter names are wrong.
+_jd_fx_config_new_badadapter() {
+  cat >"$1" <<EOF
+{
+  "version": 1,
+  "systems": [
+    {
+      "sys": "D25",
+      "title": "Test system",
+      "root": "$JD_FX_ROOT",
+      "jdex": "$JD_FX_JDEX",
+      "default": true,
+      "workPackages": {
+        "notes": { "adapter": "nosuchapp" }
+      }
     }
   ]
 }

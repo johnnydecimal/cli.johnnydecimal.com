@@ -8,6 +8,9 @@
 #   - jd, which acts on the default system (or the only system)
 #   - jdex, which is jd in the JDex of that same system
 #
+# 'jd new' is a word this file does not act on. It hands the rest of the
+# line to _jd_new, in lib/new.sh.
+#
 # Needs jq. Works in bash 3.2+ and zsh.
 
 _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
@@ -37,6 +40,8 @@ usage: <system> [jdex] [target]
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
+  <system> new 21.41 A title
+                        make a new work package. 'jd new --help' says more
 
 jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
@@ -248,6 +253,15 @@ _jd_nav() {
   fi
   case $1 in
     -h|--help|help) _jd_nav_usage; return 0 ;;
+    new)
+      shift
+      if command -v _jd_new >/dev/null 2>&1; then
+        _jd_new "$sys" "$@"
+        return
+      fi
+      _jd_nav_err "lib/new.sh is not loaded - source jd.sh, not lib/nav.sh"
+      return 1
+      ;;
   esac
 
   # In the JDex an ID can be a note file, not a folder.

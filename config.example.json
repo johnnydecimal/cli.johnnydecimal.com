@@ -6,7 +6,20 @@
       "title": "My business system",
       "root": "/Users/you/Documents/D25 My business system",
       "jdex": "/Users/you/Documents/D25 JDex",
-      "default": true
+      "default": true,
+      "workPackages": {
+        "noteTemplate": "W0003 Template.md",
+        "folderTemplate": "W0003 Templates/Copy me",
+        "notes": {
+          "adapter": "obsidian",
+          "vault": "D25 JDex"
+        },
+        "tasks": {
+          "adapter": "things",
+          "template": "W0003 Templates/Template project.json",
+          "source": "B3W2orf9oNBi3gmttjPT4Y"
+        }
+      }
     },
     {
       "sys": "P76",

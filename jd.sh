@@ -5,7 +5,8 @@
 # Source this file from .zshrc or .bashrc:
 #   source ~/.jd/cli/jd.sh
 #
-# It loads lib/nav.sh in any shell, and lib/prompt.zsh under zsh only.
+# It loads lib/nav.sh and lib/new.sh in any shell, and lib/prompt.zsh
+# under zsh only.
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
@@ -22,7 +23,11 @@ else
 fi
 _jd_cli_dir=$(cd -- "$(dirname -- "$_jd_cli_self")" && pwd)
 
+# The tools read this at call time, to find the adapters in lib.
+_JD_CLI_DIR=$_jd_cli_dir
+
 . "$_jd_cli_dir/lib/nav.sh"
+. "$_jd_cli_dir/lib/new.sh"
 if [ -n "${ZSH_VERSION-}" ]; then
   . "$_jd_cli_dir/lib/prompt.zsh"
 fi
