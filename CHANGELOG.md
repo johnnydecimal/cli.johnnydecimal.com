@@ -7,6 +7,44 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.5.0 – 2026-09-10
+
+> AI generated. Reviewed by Johnny.
+
+### Added
+
+- Beta features, and one flag that turns them all on.
+  - `jd beta` says whether beta is on. `jd beta on` and `jd beta off`
+    turn it on and off.
+  - The flag is `"beta": true` at the top level of `~/.jd/config.json`.
+    `JD_BETA=1` turns beta on for one shell, and writes nothing.
+  - Beta features may change, or go, without notice.
+- `jd new 21.41 A title` makes a whole work package with one command.
+  It is a beta feature.
+  - It takes the next free W number from the JDex and the filesystem.
+  - It writes the JDex note from your template note.
+  - It makes the folder, and copies your template folder into it.
+  - It makes the project in your task app, and writes the links both
+    ways. Things is the first task app. Obsidian is the first note app.
+  - The `workPackages` block in `~/.jd/config.json` names the templates
+    and the apps. `config.example.json` shows the block.
+- `jd new -n` says what it would make, and makes nothing.
+- `jd new --no-tasks` makes the work package without the task app.
+- `jd new --refresh` reads the template project out of Things and writes
+  it to the template file.
+- `jd new --json` prints one JSON object on stdout, for an agent. Every
+  failure has a `code` that does not change.
+- `jd new --peek` prints the next free W number, and makes nothing.
+- A template note can hold a blank, such as `{{?SCOPE}}` or
+  `{{?DELIVERABLE What we hand over}}`. `jd new` leaves the blank in the
+  note and names it, so that you or your agent can fill it in.
+
+### Changed
+
+- `new` and `beta` are command words in first position. `jd new` and
+  `jd beta` no longer search for a folder with that word in its name. A
+  scoped search, such as `jd 21 new`, still does.
+
 ## 2.4.1 – 2026-09-10
 
 > AI generated. Reviewed by Johnny.
