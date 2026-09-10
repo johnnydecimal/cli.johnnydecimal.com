@@ -27,9 +27,9 @@
 #   12.99 Made by jd.md    in the JDex only, so jd makes its folder
 #   19.99 No category.md   in the JDex only, and its category is missing
 #   W0300~21.35 ...        in the JDex only, so jd makes its folder
-#   W0399 No area.md       in the JDex only, and its area is missing
-#   30-39 Area three       in the JDex only, so W0399 has no area to
-#                          go in
+#   W0000-9999 Work ...    the area a work package folder is made in.
+#                          Empty in the filesystem, so a test can see
+#                          what jd puts there.
 #   13 Odds & ends         a name with the characters a shell minds:
 #                          '&', a comma, and more than one space
 
@@ -60,6 +60,7 @@ _jd_fx_build_root() {
     "$JD_FX_ROOT/20-29 Area two/22 Category twentytwo/22.12 Widget two" \
     "$JD_FX_ROOT/20-29 Area two/W0212~21.35 Kettle rebuild" \
     "$JD_FX_ROOT/20-29 Area two/W0212+ Kettle child" \
+    "$JD_FX_ROOT/W0000-9999 Work packages" \
     "$JD_FX_ROOT/notes"
   # A folder named like an ID, but too deep to be one. 'jd 11.11' must
   # not find it.
@@ -73,7 +74,7 @@ _jd_fx_build_jdex() {
     "$JD_FX_JDEX/10-19 Area one/19 Category nineteen" \
     "$JD_FX_JDEX/20-29 Area two/21 Category twentyone" \
     "$JD_FX_JDEX/20-29 Area two/22 Category twentytwo" \
-    "$JD_FX_JDEX/30-39 Area three"
+    "$JD_FX_JDEX/W0000-9999 Work packages"
   _jd_fx_note "$JD_FX_JDEX/10-19 Area one/11 Category eleven/11.11 First ID.md"
   _jd_fx_note "$JD_FX_JDEX/10-19 Area one/11 Category eleven/11.12 Second ID.md"
   _jd_fx_note "$JD_FX_JDEX/10-19 Area one/11 Category eleven/11.13 Tripsy travel.md"
@@ -85,8 +86,7 @@ _jd_fx_build_jdex() {
   _jd_fx_note "$JD_FX_JDEX/20-29 Area two/22 Category twentytwo/22.11 Widget one.md"
   _jd_fx_note "$JD_FX_JDEX/20-29 Area two/22 Category twentytwo/22.12 Widget two.md"
   _jd_fx_note "$JD_FX_JDEX/20-29 Area two/W0212~21.35 Kettle rebuild.md"
-  _jd_fx_note "$JD_FX_JDEX/20-29 Area two/W0300~21.35 Made by jd.md"
-  _jd_fx_note "$JD_FX_JDEX/30-39 Area three/W0399 No area.md"
+  _jd_fx_note "$JD_FX_JDEX/W0000-9999 Work packages/W0300~21.35 Made by jd.md"
 }
 
 _jd_fx_build_root2() {

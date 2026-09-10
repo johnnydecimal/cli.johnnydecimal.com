@@ -3,7 +3,7 @@
 #
 # 1.1.0 added this: ask for an ID that has a JDex entry but no folder and
 # jd makes the folder, named from the JDex entry, then goes to it. 2.4.0
-# does the same for a work package.
+# does the same for a work package, in the W0000-9999 area.
 #
 # These tests write to the fixture tree, so this case file is on its own
 # and calls _jd_fx_reset when it is done making things.
@@ -58,31 +58,35 @@ _jd_fx_reset
 
 # ------------------------------------------------------- work packages
 #
-# 2.4.0 added this. A work package number does not say which area it is
-# in, so the area comes from the JDex entry's parent folder.
+# 2.4.0 added this. A work package always lives in the W0000-9999 area,
+# so that is where its folder is made. 2.4.1 finds that area by the
+# start of its number, not by its whole name.
 
-# W0399 is in the JDex, in area 30-39. The filesystem has no 30-39.
-_jd_t_run jd W0399
-_jd_t_status 'make wp: no area folder is an error' 1
+# The filesystem has no W0000-9999 folder, so there is nowhere to put it.
+rm -rf "$JD_FX_ROOT/W0000-9999 Work packages"
+_jd_t_run jd W0300
+_jd_t_status 'make wp: no work package area is an error' 1
 _jd_t_contains 'make wp: says the area is missing' \
-  'the JDex has W0399 but there is no folder for area 30-39' "$JD_T_ERR"
-_jd_t_at 'make wp: no area folder, so we do not move' "$JD_T_TMP"
+  'the JDex has W0300 but there is no folder for the W0000-9999 work package area' \
+  "$JD_T_ERR"
+_jd_t_at 'make wp: no work package area, so we do not move' "$JD_T_TMP"
+_jd_fx_reset
 
 # P76 has no jdex path, so there is nothing to make a name from.
-_jd_t_run p76 W0399
+_jd_t_run p76 W0300
 _jd_t_status 'make wp: no jdex path, so no match' 1
 _jd_t_contains 'make wp: falls back to the normal no-match error' \
-  'no match for W0399' "$JD_T_ERR"
+  'no match for W0300' "$JD_T_ERR"
 
-# W0300 is in the JDex, in area 20-29, and that area has a folder. The
-# name carries a '~', which the JDex entry keeps and the folder does too.
+# W0300 is in the JDex and the W0000-9999 folder is there. The name
+# carries a '~', which the folder keeps.
 _jd_t_run jd W0300
 _jd_t_status 'make wp: exit status' 0
 _jd_t_at 'make wp: goes to the folder it made' \
-  "$JD_FX_ROOT/20-29 Area two/W0300~21.35 Made by jd"
+  "$JD_FX_ROOT/W0000-9999 Work packages/W0300~21.35 Made by jd"
 _jd_t_contains 'make wp: says what it made' \
   'jd: created W0300~21.35 Made by jd from the JDex' "$JD_T_ERR"
-if [ -d "$JD_FX_ROOT/20-29 Area two/W0300~21.35 Made by jd" ]; then
+if [ -d "$JD_FX_ROOT/W0000-9999 Work packages/W0300~21.35 Made by jd" ]; then
   _jd_t_ok 'make wp: the folder is really there'
 else
   _jd_t_bad 'make wp: the folder is really there' 'a directory' 'nothing'
@@ -92,7 +96,7 @@ fi
 # nothing is made or said.
 _jd_t_run jd W0300
 _jd_t_at 'make wp: the second time it is just a match' \
-  "$JD_FX_ROOT/20-29 Area two/W0300~21.35 Made by jd"
+  "$JD_FX_ROOT/W0000-9999 Work packages/W0300~21.35 Made by jd"
 _jd_t_eq 'make wp: the second time it says nothing' '' "$JD_T_ERR"
 
 # A lowercase number finds the same JDex entry, and the folder keeps the
@@ -100,16 +104,24 @@ _jd_t_eq 'make wp: the second time it says nothing' '' "$JD_T_ERR"
 _jd_fx_reset
 _jd_t_run jd w0300
 _jd_t_at 'make wp: a lowercase number makes the same folder' \
-  "$JD_FX_ROOT/20-29 Area two/W0300~21.35 Made by jd"
+  "$JD_FX_ROOT/W0000-9999 Work packages/W0300~21.35 Made by jd"
+
+# Only the start of the area number is matched, so a renamed area still
+# works. This one has lost the '-9999' and gained a different title.
+_jd_fx_reset
+mv "$JD_FX_ROOT/W0000-9999 Work packages" "$JD_FX_ROOT/W0000 My work"
+_jd_t_run jd W0300
+_jd_t_at 'make wp: a renamed work package area still works' \
+  "$JD_FX_ROOT/W0000 My work/W0300~21.35 Made by jd"
+_jd_fx_reset
 
 # The JDex already holds the entry, so 'jdex W0300' is a plain match. It
 # makes no folder in the filesystem.
-_jd_fx_reset
 _jd_t_run jdex W0300
 _jd_t_status 'make wp: jdex mode exit status' 0
 _jd_t_at 'make wp: jdex mode goes to the note folder' \
-  "$JD_FX_JDEX/20-29 Area two"
-if [ -d "$JD_FX_ROOT/20-29 Area two/W0300~21.35 Made by jd" ]; then
+  "$JD_FX_JDEX/W0000-9999 Work packages"
+if [ -d "$JD_FX_ROOT/W0000-9999 Work packages/W0300~21.35 Made by jd" ]; then
   _jd_t_bad 'make wp: jdex mode makes no folder' 'nothing' 'a directory'
 else
   _jd_t_ok 'make wp: jdex mode makes no folder'

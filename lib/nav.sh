@@ -148,19 +148,19 @@ _jd_nav_go() {
 # Returns 1 if it does not apply, 2 if it applies but failed.
 #
 # A normal ID goes in its category, which its own number names. A work
-# package goes in an area, and its number does not say which one, so the
-# area is read from the JDex entry's parent folder.
+# package always goes in the W0000-9999 area. Its own number does not
+# say so, so the area is found by its number, and only the start of that
+# number is matched: a system that has renamed the rest of the folder
+# still works.
 _jd_nav_make_id() {
-  local root=$1 jdex=$2 id=$3 jm name up num what depth cm
+  local root=$1 jdex=$2 id=$3 jm name num what cm
   [ -n "$jdex" ] && [ -d "$jdex" ] || return 1
   case $id in
     [Ww][0-9][0-9][0-9][0-9])
       jm=$(_jd_nav_find "$jdex" 2 a -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
-      depth=1
       ;;
     *)
       jm=$(_jd_nav_find "$jdex" 3 a -name "$id" -o -name "$id *" -o -name "$id.md")
-      depth=2
       ;;
   esac
   [ "$(printf '%s' "$jm" | grep -c '^')" -eq 1 ] || return 1
@@ -171,16 +171,15 @@ _jd_nav_make_id() {
   esac
   case $id in
     [Ww][0-9][0-9][0-9][0-9])
-      up=$(basename -- "$(dirname -- "$jm")")
-      num=${up%% *}
-      what="area $num"
+      cm=$(_jd_nav_find "$root" 1 d -iname 'W0000*')
+      what='the W0000-9999 work package area'
       ;;
     *)
       num=${id%%.*}
+      cm=$(_jd_nav_find "$root" 2 d -name "$num" -o -name "$num *")
       what="category $num"
       ;;
   esac
-  cm=$(_jd_nav_find "$root" "$depth" d -name "$num" -o -name "$num *")
   if [ "$(printf '%s' "$cm" | grep -c '^')" -ne 1 ]; then
     _jd_nav_err "the JDex has $id but there is no folder for $what"
     return 2

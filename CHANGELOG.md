@@ -1,11 +1,25 @@
 # Changelog
 
-> AI generated. Not edited by Johnny.
+> AI generated.
 
 This repo uses [semantic versioning](https://semver.org). One version covers
 every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
+
+## 2.4.1 – 2026-09-10
+
+> AI generated. Reviewed by Johnny.
+
+### Changed
+
+- `jd` finds the work package area by the start of its number. It looks
+  for a folder named `W0000...` at the top of the system. It used to
+  read the area from the JDex entry's parent folder, and match the whole
+  number, so a renamed area stopped it.
+
+  A work package always lives in `W0000-9999`, so there is nothing to
+  work out. The linked ID in a name like `W0214~00.00` is not read.
 
 ## 2.4.0 – 2026-09-10
 
