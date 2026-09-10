@@ -71,4 +71,27 @@ _jd_t_run jd jdex help
 _jd_t_contains 'help: works in jdex mode too' \
   'usage: <system> [jdex] [target]' "$JD_T_OUT"
 
+_jd_t_contains 'help: lists the jdex command' 'jdex [target]' "$JD_T_OUT"
+
+# ----------------------------------------------- the jdex command
+
+_jd_t_run jdex version
+_jd_t_status 'jdex command: version exit status' 0
+_jd_t_eq 'jdex command: jdex version' "jd $_jd_t_version" "$JD_T_OUT"
+_jd_t_at 'jdex command: version does not move us' "$JD_T_TMP"
+
+_jd_t_run jdex -v
+_jd_t_eq 'jdex command: jdex -v' "jd $_jd_t_version" "$JD_T_OUT"
+
+_jd_t_run jd jdex version
+_jd_t_eq 'jdex command: jd jdex version' "jd $_jd_t_version" "$JD_T_OUT"
+
+_jd_t_run jdex help
+_jd_t_contains 'jdex command: jdex help' \
+  'usage: <system> [jdex] [target]' "$JD_T_OUT"
+
+_jd_t_run jdex --help
+_jd_t_contains 'jdex command: jdex --help' \
+  'usage: <system> [jdex] [target]' "$JD_T_OUT"
+
 _jd_t_summary

@@ -52,6 +52,14 @@ _jd_t_run jd version
 _jd_t_status 'no config: jd version still works' 0
 _jd_t_contains 'no config: jd version still prints a version' 'jd ' "$JD_T_OUT"
 
+_jd_t_run jdex
+_jd_t_status 'no config: jdex is an error' 1
+_jd_t_contains 'no config: jdex names the file it looked for' \
+  "no config at $JD_T_TMP/nothing-here.json" "$JD_T_ERR"
+
+_jd_t_run jdex version
+_jd_t_status 'no config: jdex version still works' 0
+
 # ------------------------------------------------------ config is not JSON
 
 _jd_t_load "$JD_T_TMP/malformed.json"
@@ -69,6 +77,11 @@ _jd_t_load "$JD_T_TMP/empty.json"
 _jd_t_run jd
 _jd_t_status 'empty config: jd is an error' 1
 _jd_t_contains 'empty config: says there are no systems' \
+  "no systems in $JD_T_TMP/empty.json" "$JD_T_ERR"
+
+_jd_t_run jdex
+_jd_t_status 'empty config: jdex is an error' 1
+_jd_t_contains 'empty config: jdex says there are no systems' \
   "no systems in $JD_T_TMP/empty.json" "$JD_T_ERR"
 
 # -------------------------------------------------------------- no sys key
@@ -138,6 +151,11 @@ else
   _jd_t_run jd version
   _jd_t_status 'no jq: jd version still works' 0
   _jd_t_contains 'no jq: jd version still prints a version' 'jd ' "$JD_T_OUT"
+  _jd_t_run jdex
+  _jd_t_status 'no jq: jdex is an error' 1
+  _jd_t_contains 'no jq: jdex says so' 'jq is not installed' "$JD_T_ERR"
+  _jd_t_run jdex version
+  _jd_t_status 'no jq: jdex version still works' 0
   PATH=$_jd_t_path
 fi
 

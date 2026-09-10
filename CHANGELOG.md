@@ -7,6 +7,27 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.3.0 – 2026-09-10
+
+### Added
+
+- `jdex` is a command of its own, next to `jd`. It goes to the JDex of
+  the system `jd` acts on, which is the default system, or the only one.
+  `jdex 11.11` and `jd jdex 11.11` are the same command.
+
+  `jdex` takes every target `jd` takes: an area, a category, an ID, a
+  work package, a word search, and a search inside an area or category.
+  A system with no `jdex` path in the config gives an error that names
+  the system.
+
+  For a system that is not the default, the older form still applies:
+  `p76 jdex 11.11`.
+
+### Fixed
+
+- `jd jdex version`, `jd jdex -v` and `jd jdex --version` print the
+  version. They used to search the JDex for the word.
+
 ## 2.2.2 – 2026-09-09
 
 ### Changed

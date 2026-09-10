@@ -6,6 +6,7 @@
 # It reads ~/.jd/config.json (override with $JD_CONFIG) and defines:
 #   - one function per system, named by its lowercase sys id: d25, p76
 #   - jd, which acts on the default system (or the only system)
+#   - jdex, which is jd in the JDex of that same system
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
@@ -24,6 +25,7 @@ _jd_nav_is_version() {
 _jd_nav_usage() {
   cat <<'EOF'
 usage: <system> [jdex] [target]
+       jdex [target]
 
   <system>              cd to the system root
   <system> 20-29        cd to an area
@@ -35,6 +37,9 @@ usage: <system> [jdex] [target]
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
+
+jd is the default system, or the only one. jdex is its JDex, so 'jdex
+11.11' and 'jd jdex 11.11' are the same command.
 
 Two or more matches are listed, not entered. Word search ignores case.
 An ID with a JDex entry but no folder gets its folder made for it.
@@ -181,6 +186,14 @@ _jd_nav_search_in() {
 _jd_nav() {
   local sys=$1 cfg row tab root jdex tree mode type a c id m wm t
   shift
+  # 'jdex' as the first word is the JDex, whether the user typed it or
+  # the jdex command passed it. It is read here so that 'jdex version'
+  # and 'jdex --help' answer the same as the jd forms.
+  mode=fs
+  if [ "${1-}" = jdex ]; then
+    mode=jdex
+    shift
+  fi
   _jd_nav_is_version "${1-}" && return 0
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
@@ -200,12 +213,9 @@ _jd_nav() {
   root=${row%%"$tab"*}
   jdex=${row#*"$tab"}
 
-  mode=fs
   tree=$root
-  if [ "${1-}" = jdex ]; then
-    shift
+  if [ "$mode" = jdex ]; then
     [ -n "$jdex" ] || { _jd_nav_err "no jdex path for $sys in $cfg"; return 1; }
-    mode=jdex
     tree=$jdex
   fi
   [ -d "$tree" ] || { _jd_nav_err "folder does not exist: $tree"; return 1; }
@@ -285,29 +295,42 @@ $wm"
   esac
 }
 
+# The tool cannot start. jd and jdex both say why, and both still print
+# the version, because someone with a broken config still needs to be
+# able to tell which version they have. The reason is read at call time,
+# so a $JD_CONFIG that changes after the shell started names the file the
+# user is looking at now.
+# $1 reason: config, jq or systems. $2+ the user's words.
+_jd_nav_stub_run() {
+  local why=$1
+  shift
+  _jd_nav_is_version "${1-}" && return 0
+  case $why in
+    jq) _jd_nav_err "jq is not installed" ;;
+    systems) _jd_nav_err "no systems in $(_jd_nav_config)" ;;
+    *) _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_CLI_HELP_URL" ;;
+  esac
+}
+
+_jd_nav_stub() {
+  eval "jd() { _jd_nav_stub_run $1 \"\$@\"; }"
+  eval "jdex() { _jd_nav_stub_run $1 \"\$@\"; }"
+}
+
 _jd_nav_setup() {
   local cfg n sys fn idx
   cfg=$(_jd_nav_config)
   if [ ! -f "$cfg" ]; then
-    jd() {
-      _jd_nav_is_version "${1-}" && return 0
-      _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_CLI_HELP_URL"
-    }
+    _jd_nav_stub config
     return 0
   fi
   if ! command -v jq >/dev/null 2>&1; then
-    jd() {
-      _jd_nav_is_version "${1-}" && return 0
-      _jd_nav_err "jq is not installed"
-    }
+    _jd_nav_stub jq
     return 0
   fi
   n=$(jq -r '.systems | length' "$cfg" 2>/dev/null)
   if [ -z "$n" ] || [ "$n" = 0 ] || [ "$n" = null ]; then
-    jd() {
-      _jd_nav_is_version "${1-}" && return 0
-      _jd_nav_err "no systems in $(_jd_nav_config)"
-    }
+    _jd_nav_stub systems
     return 0
   fi
 
@@ -330,15 +353,19 @@ $(jq -r '.systems[].sys' "$cfg")
 EOF
   fi
 
-  # jd acts on the default system, or the only one. Fall back to its
-  # array index when it has no sys - a single system does not need one.
+  # jd acts on the default system, or the only one. jdex is the same
+  # system, in its JDex. Fall back to the array index when the system has
+  # no sys - a single system does not need one.
+  #
+  # Both are defined after the loop above, so a system whose sys id is
+  # 'jd' or 'jdex' does not take the name from the root command.
   sys=$(jq -r '(.systems | (map(select(.default == true))[0] // .[0])).sys // empty' "$cfg")
-  if [ -n "$sys" ]; then
-    eval "jd() { _jd_nav '$sys' \"\$@\"; }"
-  else
+  if [ -z "$sys" ]; then
     idx=$(jq -r '(.systems | to_entries | (map(select(.value.default == true))[0] // .[0])).key' "$cfg")
-    eval "jd() { _jd_nav '#$idx' \"\$@\"; }"
+    sys="#$idx"
   fi
+  eval "jd() { _jd_nav '$sys' \"\$@\"; }"
+  eval "jdex() { _jd_nav '$sys' jdex \"\$@\"; }"
 }
 
 _jd_nav_setup
