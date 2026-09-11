@@ -91,22 +91,69 @@ Refer to [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/c
 
 ## `jd new`
 
-`jd new <ID> <title>` makes a work package: the next free W number, the
-project in your task app, the JDex note, and the folder. Run `jd new
---help` for the full list of flags.
+`jd new` makes a new thing. The word after `new` says what to make. It is required.
 
-- `--json` prints one JSON object on stdout, in place of the usual
-  lines. `{ "ok": true, ... }` on success, `{ "ok": false, "code": "...",
-  "message": "...", "path": "..." }` on error. stderr still carries the
-  human lines.
-  `code` is the stable part, and it is never empty. Match on it. The
-  `message` is written for a person to read, so it may be reworded.
+The title needs no quotes. It is every word after the category or ID, up to the first word that starts with `--`. A `-` anywhere else is part of the title, for example `SBS video - 14.20 Syncthing` or `Cut costs -20%`. Flags can go before the noun, after it, or after the title.
+
+```sh
+jd new id 21 A title        # the next free ID in category 21
+jd new id 21.34 A title     # exactly ID 21.34, if it is not used
+jd new wp 21.34 A title     # a work package for ID 21.34
+```
+
 - `jd new` is a beta feature. Turn beta on first. See [Beta](#beta).
-- `--peek` prints the next free W number and makes nothing.
-- A template note can hold a token jd does not fill in, for example
-  `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`. jd new leaves
-  it in the note as written, and names it, in `toFill` with `--json`
-  or on stderr otherwise, so a human or an agent can fill it in after.
+- Run `jd new id --help` or `jd new wp --help` for the full list of flags.
+
+### `jd new id`
+
+- It makes the JDex note and the folder.
+- The next free ID is one more than the highest ID in the category.
+  - It counts the IDs in the JDex: the entries directly in the category, and directly in its archive, the .09 ID. For category 21, that is `21` and `21.09`.
+  - A folder with no JDex entry is not an ID, so it is not counted. Nor is anything deeper inside an ID.
+  - If the filesystem already has a folder with the new ID's number, jd stops, and names the folder.
+  - It is never lower than .11.
+  - A gap is not filled.
+
+### `jd new wp`
+
+- It makes the next free W number, the project in your task app, the JDex note, and the folder.
+- The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd stops, and names the folder.
+- The system's `workPackages` block in the config names the adapters. Refer to [lib/adapters/README.md](lib/adapters/README.md).
+
+### Templates
+
+Templates are in the filesystem. jd finds them by number, so the config does not name them.
+
+| Template | Where jd looks | If there is none |
+| --- | --- | --- |
+| `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd says so. |
+| `Work package template.md` | `W0003` | The note is blank, and jd says so. |
+| `Work package template/` | `W0003`. jd copies its contents into the new folder. | The folder is empty. |
+| `Work package template.things.json` | `W0003` | jd makes it from Things. |
+
+- The first `ID template.md` that jd finds is the one it uses. To give one category its own template, put a copy in that category's .03.
+- If there are two folders with the same templates number, jd stops. It cannot tell which folder to use.
+- The note never holds `{{`.
+  - `{{ID}}`, `{{TITLE}}` and `{{NAME}}` are filled in. A work package also has `{{W}}`, `{{w}}`, `{{NOTES_URL}}` and `{{TASKS_URL}}`.
+  - Anything else in double braces that jd does not know is left out of the note, and jd warns.
+- A template note can hold a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.
+  - Its flag is its name in lower case, with `-` for `_`: `--scope`, `--deliverable`.
+  - Give the value after the title: `jd new wp 21.41 A title --scope "What we do" --deliverable=Video`.
+  - A token with no value becomes its brief, `What we hand over`, or nothing.
+  - jd names each flag you did not set: in `toFill` with `--json`, or on stderr otherwise.
+  - A flag for a token that the template does not have is an error. The error lists the flags the template has.
+- The Things template: you edit the template project in Things.
+  - Before it makes each work package, jd reads that project out of Things. If the project has changed, jd rewrites the file.
+  - `jd new wp --refresh` does the same, and makes nothing.
+  - `workPackages.tasks.source` in the config is the project's ID in Things.
+
+### For agents
+
+- `--json` prints one JSON object on stdout, in place of the usual lines. `{ "ok": true, ... }` on success, `{ "ok": false, "code": "...", "message": "...", "path": "..." }` on error. stderr still carries the human lines.
+  - `code` is the stable part, and it is never empty. Match on it. The `message` is written for a person to read, so it may be reworded.
+  - `warnings` lists the codes for problems that did not stop the command, for example `no_template`.
+- To fill in the tokens, first run a dry run with `--json`. `toFill` lists each token with its `brief` and its `flag`. Then run the command again with a value for each flag.
+- `--dry-run` says what jd would make, and which templates it would use.
 
 ## Beta
 

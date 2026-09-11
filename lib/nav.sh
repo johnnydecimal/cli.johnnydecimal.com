@@ -41,9 +41,12 @@ usage: <system> [jdex] [target]
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
-  <system> new 21.41 A title
-                        make a new work package (beta). 'jd new --help'
-                        says more
+  <system> new id 21 A title
+                        make the next free ID in category 21 (beta).
+                        'jd new id --help' says more
+  <system> new wp 21.41 A title
+                        make a new work package (beta). 'jd new wp
+                        --help' says more
   <system> beta on|off  turn beta features on or off. 'jd beta' says
                         which
 

@@ -1,6 +1,6 @@
 # Adapters
 
-`jd new` makes a work package in more than one place: a note in the
+`jd new wp` makes a work package in more than one place: a note in the
 JDex, a folder in the filesystem, and a project in a task app. The
 folder and the note are the same on every machine. The apps are not.
 
@@ -24,9 +24,13 @@ whatever that adapter needs:
 ```json
 "workPackages": {
   "notes": { "adapter": "obsidian", "vault": "D25 JDex" },
-  "tasks": { "adapter": "things", "template": "W0003 Templates/Template project.json" }
+  "tasks": { "adapter": "things", "source": "B3W2orf9oNBi3gmttjPT4Y" }
 }
 ```
+
+The config does not name the templates. They are in the `W0003` folder
+in the filesystem. A tasks adapter's template file is named for the
+adapter: `Work package template.things.json`.
 
 `"adapter": "things"` loads `tasks/things.sh`. A name with no file is an
 error that names the folder.
@@ -36,9 +40,10 @@ error that names the folder.
 | Function | What it does |
 | --- | --- |
 | `jd_tasks_check` | Return 0 if the app can be used on this machine. Print why not, and return 1, if it cannot. |
+| `jd_tasks_prepare` | Get ready to make the project, for example refresh the template file. Return 1 to stop. It runs in the same shell as `jd new`, not in a subshell, so it can call `_jd_new_warn`. |
 | `jd_tasks_create` | Make the project. `$1` is its name. Print its URL on stdout. |
 | `jd_tasks_link` | Write the links into the project. `$1` is the URL that `jd_tasks_create` printed. |
-| `jd_tasks_refresh` | Read the template project out of the app and write it to the template file. Only `jd new --refresh` calls it. |
+| `jd_tasks_refresh` | Read the template project out of the app and write it to the template file. Only `jd new wp --refresh` calls it. |
 
 ## What a notes adapter defines
 
@@ -61,7 +66,7 @@ them. It does not set them, except for a default of its own.
 | `_JD_NEW_NOTES_URL` | the note app's link. Empty until `jd_notes_url` has run |
 | `_JD_NEW_TASKS_URL` | the task app's link. Empty until `jd_tasks_create` has run |
 | `_JD_NEW_JDEX` | the JDex folder |
-| `_JD_NEW_TASKS_TPL` | the template file, from the config, as a full path |
+| `_JD_NEW_TASKS_TPL` | the template file, `W0003/Work package template.<adapter>.json`, as a full path. Empty if there is no `W0003` folder |
 | `_JD_NEW_TASKS_SOURCE` | the template project's ID in the app, from the config |
 | `_JD_NEW_NOTES_VAULT` | the vault name, from the config |
 
@@ -72,17 +77,19 @@ These helpers are there too.
 | `_jd_new_fill` | Put the values into a template. `$1` the text, `$2` `json` to escape them for a JSON file |
 | `_jd_new_uri` | URL-encode `$1` |
 | `_jd_new_jstr` | Escape `$1` for the inside of a JSON string |
+| `_jd_new_say` | Print a line about what was made, on stderr |
+| `_jd_new_warn` | Add a warning code to `--json`'s `warnings`. `$1` the code |
 | `_jd_nav_err` | Print `jd: ...` on stderr and return 1 |
 
 ## Order
 
-`jd new` runs the steps in this order, and the order matters. The task
+`jd new wp` runs the steps in this order, and the order matters. The task
 app is the only step that talks to another program, so it goes first.
 Nothing is written to disk until it has worked.
 
 1. `jd_notes_check`, `jd_tasks_check`.
 2. `jd_notes_url`. `{{NOTES_URL}}` is now known.
-3. `jd_tasks_create`. `{{TASKS_URL}}` is now known.
+3. `jd_tasks_prepare`, then `jd_tasks_create`. `{{TASKS_URL}}` is now known.
 4. The JDex note is written, with both links in it.
 5. The folder is made.
 6. `jd_tasks_link` writes both links into the task app.

@@ -8,19 +8,24 @@
 #
 # So this adapter does not copy. It keeps the template project as a
 # file, in the JSON that the Things URL scheme reads, and builds a new
-# project from that file. The file is written by 'jd new --refresh',
-# which reads the template project out of the Things database, read
-# only. Edit the template in Things, then run --refresh again.
+# project from that file. The file is written from the template project
+# in the Things database, read only. You edit the template in Things.
+#
+# The file is refreshed before each new work package, so an edit in
+# Things is never missed. It is rewritten only when the project has
+# changed. 'jd new wp --refresh' refreshes it on its own.
 #
 # The URL scheme has no way to hand an ID back to a shell, so the new
 # project is found by its name, which holds its W number and is unique.
 #
+# The template file is 'Work package template.things.json', in W0003.
+# new.sh sets its path in $_JD_NEW_TASKS_TPL.
+#
 # Config:
-#   workPackages.tasks.template   the template file. A path under the
-#                                 work package folder area, or absolute.
 #   workPackages.tasks.source     the ID of the template project in
-#                                 Things. Only --refresh reads it.
-#                                 Copy it from 'Share > Copy Link'.
+#                                 Things. Copy it from 'Share > Copy
+#                                 Link'. With no source, the file is
+#                                 used as it is, and never refreshed.
 #
 # The template file holds the placeholders that new.sh fills:
 # {{NAME}} for the project title, {{NOTES_URL}} and {{TASKS_URL}} in the
@@ -78,20 +83,36 @@ jd_tasks_check() {
     _jd_nav_err "Things 3 is not installed"
     return 1
   }
+  [ -n "$_JD_NEW_TASKS_TPL" ] || {
+    _jd_nav_err "the things adapter needs a W0003 folder in the work package area, to hold its template"
+    return 1
+  }
+  return 0
+}
+
+# Refresh the template file from Things, then check that it exists.
+#
+# A refresh that fails is not an error while an older file exists: jd
+# warns, and uses that file. With no file at all, it stops.
+jd_tasks_prepare() {
+  if [ -n "$_JD_NEW_TASKS_SOURCE" ]; then
+    if _jd_things_sync; then
+      [ "$_JD_THINGS_CHANGED" = 1 ] && _jd_new_say "tasks   template refreshed from Things"
+    elif [ -f "$_JD_NEW_TASKS_TPL" ]; then
+      _jd_nav_err "could not refresh the template from Things, so jd uses the file as it is: $_JD_NEW_TASKS_TPL"
+      _jd_new_warn tasks_refresh_failed
+    fi
+  fi
+  [ -f "$_JD_NEW_TASKS_TPL" ] || {
+    _jd_nav_err "no template project at $_JD_NEW_TASKS_TPL - set workPackages.tasks.source in the config, then run 'jd new wp --refresh'"
+    return 1
+  }
   return 0
 }
 
 # Make the project. $1 its name. Prints its URL.
 jd_tasks_create() {
   local data id n
-  [ -n "$_JD_NEW_TASKS_TPL" ] || {
-    _jd_nav_err "the things adapter needs workPackages.tasks.template in the config"
-    return 1
-  }
-  [ -f "$_JD_NEW_TASKS_TPL" ] || {
-    _jd_nav_err "no template project at $_JD_NEW_TASKS_TPL - make it with 'jd new --refresh'"
-    return 1
-  }
   data=$(_jd_things_payload) || return 1
   data=$(printf '%s' "$data" | jq -sRr @uri)
 
@@ -133,7 +154,9 @@ EOF
   return 0
 }
 
-# Read the template project out of Things and write the template file.
+# Read the template project out of Things. Write the template file if
+# it is different, or does not exist. Sets $_JD_THINGS_CHANGED to 1 if
+# it wrote the file, and 0 if it did not.
 #
 # It reads the database, not the app, because AppleScript cannot see
 # headings. The file is opened read only and never written to. A
@@ -142,18 +165,19 @@ EOF
 #
 # Order. Things sorts headings by their own index, and the to dos under
 # a heading by theirs. A to do with no heading sits above every heading.
-jd_tasks_refresh() {
-  local db rows head items out
+_jd_things_sync() {
+  local db rows head items out old
+  _JD_THINGS_CHANGED=0
   [ -n "$_JD_NEW_TASKS_SOURCE" ] || {
-    _jd_nav_err "--refresh needs workPackages.tasks.source in the config: the ID of the template project in Things"
+    _jd_nav_err "a refresh needs workPackages.tasks.source in the config: the ID of the template project in Things"
     return 1
   }
   [ -n "$_JD_NEW_TASKS_TPL" ] || {
-    _jd_nav_err "--refresh needs workPackages.tasks.template in the config: where to write the template"
+    _jd_nav_err "--refresh needs a W0003 folder in the work package area, to hold the template"
     return 1
   }
   command -v sqlite3 >/dev/null 2>&1 || {
-    _jd_nav_err "--refresh needs sqlite3"
+    _jd_nav_err "a refresh needs sqlite3"
     return 1
   }
   db=$(_jd_things_db) || {
@@ -224,14 +248,30 @@ jd_tasks_refresh() {
                 end ] }
         ) } ]') || return 1
 
+  # '$(cat)' drops the last newline, and so does '$(jq)', so the two
+  # compare equal when the file holds what would be written.
+  old=$(cat "$_JD_NEW_TASKS_TPL" 2>/dev/null)
+  [ -f "$_JD_NEW_TASKS_TPL" ] && [ "$out" = "$old" ] && return 0
   printf '%s\n' "$out" >"$_JD_NEW_TASKS_TPL" || {
     _jd_nav_err "could not write $_JD_NEW_TASKS_TPL"
     return 1
   }
-  printf 'jd: wrote %s\n' "$_JD_NEW_TASKS_TPL" >&2
+  _JD_THINGS_CHANGED=1
   case $out in
     *'{{NOTES_URL}}'*) ;;
     *) printf 'jd: the template project has no {{NOTES_URL}} in its notes\n' >&2 ;;
   esac
+  return 0
+}
+
+# 'jd new wp --refresh': refresh the template file, and say what
+# happened.
+jd_tasks_refresh() {
+  _jd_things_sync || return 1
+  if [ "$_JD_THINGS_CHANGED" = 1 ]; then
+    printf 'jd: wrote %s\n' "$_JD_NEW_TASKS_TPL" >&2
+  else
+    printf 'jd: no change, %s already matches Things\n' "$_JD_NEW_TASKS_TPL" >&2
+  fi
   return 0
 }

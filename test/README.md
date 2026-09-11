@@ -57,6 +57,8 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
 | `cases/nav-make-id.sh` | Making an ID folder from its JDex entry. |
+| `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun, help, beta. |
+| `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
 | `cases/prompt.sh` | `_jd_pwd`, the zsh prompt path. |
 | `cases/tree.sh` | The match list, when a search finds more than one thing. |
 | `cases/theme.sh` | The whole-prompt theme, `lib/theme.zsh`. |

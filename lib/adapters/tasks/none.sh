@@ -5,6 +5,7 @@
 # {{TASKS_URL}} is empty.
 
 jd_tasks_check() { return 0; }
+jd_tasks_prepare() { return 0; }
 jd_tasks_create() { printf ''; }
 jd_tasks_link() { return 0; }
 jd_tasks_refresh() {

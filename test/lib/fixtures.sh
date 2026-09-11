@@ -95,20 +95,25 @@ _jd_fx_build_root2() {
 
 _jd_fx_note() { printf 'fixture note\n' >"$1"; }
 
-# The templates 'jd new' copies. Not part of _jd_fx_build, because the
+# The templates 'jd new' uses. Not part of _jd_fx_build, because the
 # filesystem work package area is empty on purpose: other cases look in
 # it to see what jd put there. A case that tests 'jd new' calls this.
 #
-#   $JD_FX_JDEX/W0000-9999 .../W0003 Template.md   the template note
-#   $JD_FX_ROOT/W0000-9999 .../W0003 Templates/Copy me   the folders
+# Templates live in the filesystem, in the templates ID at each level.
+#   W0003 Templates/Work package template.md   the work package note
+#   W0003 Templates/Work package template/     the work package folders
+#   21.03 .../ID template.md   category 21's own ID template
+#   20.03 .../ID template.md   area 20-29's ID template. Category 22 uses it
+#   00.03 .../ID template.md   the system's ID template. Area 10-19 uses it
 _jd_fx_build_templates() {
-  local tpl
-  tpl="$JD_FX_ROOT/W0000-9999 Work packages/W0003 Templates/Copy me"
+  local w3 tpl
+  w3="$JD_FX_ROOT/W0000-9999 Work packages/W0003 Templates"
+  tpl="$w3/Work package template"
   mkdir -p "$tpl/05 Planning" "$tpl/20 Words"
   printf 'fixture\n' >"$tpl/05 Planning/a file.txt"
   # A .DS_Store in a template must not reach the new work package.
   printf 'junk\n' >"$tpl/.DS_Store"
-  cat >"$JD_FX_JDEX/W0000-9999 Work packages/W0003 Template.md" <<'EOT'
+  cat >"$w3/Work package template.md" <<'EOT'
 - Permalink:
 	- ^{{w}}
 - Related:
@@ -119,14 +124,34 @@ _jd_fx_build_templates() {
 
 ## Scope for {{NAME}}
 EOT
+  _jd_fx_build_id_templates
 }
 
-# A template note that holds '{{?TOKEN}}' tokens, for the toFill tests.
-# Separate from _jd_fx_build_templates, so a case that does not need it
-# does not get it.
-#   $JD_FX_JDEX/W0000-9999 .../W0004 Template with tokens.md
+# The three ID templates, one per level. Each says which level it is, so
+# a test can tell which one jd used.
+_jd_fx_build_id_templates() {
+  local sys area cat
+  sys="$JD_FX_ROOT/00-09 System area/00 System category/00.03 Templates for the system"
+  area="$JD_FX_ROOT/20-29 Area two/20 Management of area 20-29/20.03 Templates for area 20-29"
+  cat="$JD_FX_ROOT/20-29 Area two/21 Category twentyone/21.03 Templates for category 21"
+  mkdir -p "$sys" "$area" "$cat"
+  # {{FOO}} is not a placeholder jd knows. It is left out of the note.
+  printf 'System template for {{NAME}}{{FOO}}\n' >"$sys/ID template.md"
+  printf 'Area template for {{ID}}, {{TITLE}}\n' >"$area/ID template.md"
+  cat >"$cat/ID template.md" <<'EOT'
+Category template for {{NAME}}
+
+{{?PURPOSE Why this ID exists}}
+EOT
+}
+
+# A work package template note that holds '{{?TOKEN}}' tokens, for the
+# toFill tests. It takes the place of the one _jd_fx_build_templates
+# writes, so call it after that, or on its own.
+#   $JD_FX_ROOT/W0000-9999 .../W0003 Templates/Work package template.md
 _jd_fx_build_templates_tokens() {
-  cat >"$JD_FX_JDEX/W0000-9999 Work packages/W0004 Template with tokens.md" <<'EOT'
+  mkdir -p "$JD_FX_ROOT/W0000-9999 Work packages/W0003 Templates"
+  cat >"$JD_FX_ROOT/W0000-9999 Work packages/W0003 Templates/Work package template.md" <<'EOT'
 - Permalink:
 	- ^{{w}}
 
@@ -259,8 +284,6 @@ _jd_fx_config_new() {
       "jdex": "$JD_FX_JDEX",
       "default": true,
       "workPackages": {
-        "noteTemplate": "W0003 Template.md",
-        "folderTemplate": "W0003 Templates/Copy me",
         "notes": { "adapter": "obsidian", "vault": "D25 JDex" }
       }
     },
@@ -274,9 +297,9 @@ _jd_fx_config_new() {
 EOF
 }
 
-# The same as _jd_fx_config_new, but the note template is the one with
-# '{{?TOKEN}}' tokens in it, and there is no folder template.
-_jd_fx_config_new_tokens() {
+# The same, but it still holds the template paths that 2.5 read. jd no
+# longer reads them, and says so.
+_jd_fx_config_new_oldkeys() {
   cat >"$1" <<EOF
 {
   "version": 1,
@@ -288,8 +311,10 @@ _jd_fx_config_new_tokens() {
       "jdex": "$JD_FX_JDEX",
       "default": true,
       "workPackages": {
-        "noteTemplate": "W0004 Template with tokens.md",
-        "notes": { "adapter": "obsidian", "vault": "D25 JDex" }
+        "noteTemplate": "W0003 Template.md",
+        "folderTemplate": "W0003 Templates/Copy me",
+        "notes": { "adapter": "obsidian", "vault": "D25 JDex" },
+        "tasks": { "template": "W0003 Templates/Template project.json" }
       }
     }
   ]
