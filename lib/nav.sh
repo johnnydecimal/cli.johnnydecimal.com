@@ -26,6 +26,7 @@ _jd_nav_is_version() {
 }
 
 _jd_nav_usage() {
+  printf 'jd %s\n\n' "$_JD_CLI_VERSION"
   cat <<'EOF'
 usage: <system> [jdex] [target]
        jdex [target]

@@ -53,6 +53,8 @@ _jd_t_eq 'version: the changelog names the current version first' \
 
 _jd_t_run jd help
 _jd_t_status 'help: exit status' 0
+_jd_t_eq 'help: the first line is the version' \
+  "jd $_jd_t_version" "$(printf '%s\n' "$JD_T_OUT" | head -1)"
 _jd_t_contains 'help: prints the usage line' \
   'usage: <system> [jdex] [target]' "$JD_T_OUT"
 _jd_t_contains 'help: lists the jdex target' \
