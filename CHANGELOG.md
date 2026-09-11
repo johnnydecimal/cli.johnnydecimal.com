@@ -7,6 +7,50 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 2.6.0 – 2026-09-11
+
+> AI generated. Reviewed by Johnny.
+
+### Added
+
+- `jd new id` makes an ID: the JDex note and the folder. It is a beta
+  feature.
+  - `jd new id 21 A title` makes the next free ID in category 21.
+  - `jd new id 21.34 A title` makes ID 21.34.
+  - The next free ID is one more than the highest ID in the JDex. It
+    counts the entries in the category and in its archive, the .09 ID.
+    It is never lower than .11.
+- A template token gets its value from a flag after the title, for
+  example `--scope "What we do"`. A token with no value becomes its
+  brief.
+- `jd help` prints the version at the top.
+
+### Changed
+
+- `jd new` needs a noun. `jd new wp 21.41 A title` makes a work
+  package. `jd new 21.41 A title` is refused.
+- Templates are in the filesystem, and jd finds them by number.
+  - `ID template.md` is in the category's .03, the area's .03, or 00.03.
+    jd uses the first one it finds.
+  - `Work package template.md`, `Work package template/` and
+    `Work package template.things.json` are in W0003.
+  - jd no longer reads `noteTemplate`, `folderTemplate` or
+    `tasks.template` in the config. If the config holds one, jd warns.
+- With no template, the note is blank, and jd says so.
+- The next W number counts only the JDex: the entries in the work
+  package area and in its archive, W0009.
+- If the filesystem already has a folder with the new number, jd stops.
+- The note never holds `{{`. jd leaves out a placeholder it does not
+  know, and warns.
+- `jd new wp` refreshes the Things template from Things before it makes
+  each work package.
+- The title ends at the first word that starts with `--`.
+
+### Removed
+
+- `jd new --peek`. Use `--dry-run --json`.
+- `-n` and `-h` in `jd new`. Use `--dry-run` and `--help`.
+
 ## 2.5.1 – 2026-09-10
 
 > AI generated. Reviewed by Johnny.
