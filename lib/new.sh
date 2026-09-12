@@ -563,7 +563,7 @@ _jd_new_inner() {
 
   command -v jq >/dev/null 2>&1 || { _jd_new_fail no_jq '' "jq is not installed"; return 1; }
   [ -f "$_JD_NEW_CFG" ] || {
-    _jd_new_fail no_config "$_JD_NEW_CFG" "no config at $_JD_NEW_CFG - see $_JD_CLI_HELP_URL"
+    _jd_new_fail no_config "$_JD_NEW_CFG" "$(_jd_nav_no_config_msg "$_JD_NEW_CFG")"
     return 1
   }
 

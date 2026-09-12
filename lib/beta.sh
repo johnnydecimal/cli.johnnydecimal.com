@@ -115,7 +115,7 @@ _jd_beta() {
   fi
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   cfg=$(_jd_nav_config)
-  [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
+  [ -f "$cfg" ] || { _jd_nav_err "$(_jd_nav_no_config_msg "$cfg")"; return 1; }
   if ! jq -e 'type == "object"' "$cfg" >/dev/null 2>&1; then
     _jd_nav_err "the config is not a JSON object, so beta cannot be read or written: $cfg"
     return 1

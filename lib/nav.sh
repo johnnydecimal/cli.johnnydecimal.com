@@ -22,6 +22,12 @@ _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
 
 _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 
+# The one 'no config' message, so that every command that needs the
+# config says the same thing, and names the way out. $1 the config path.
+_jd_nav_no_config_msg() {
+  printf "no config at %s - run 'jd setup' for help, or see %s" "$1" "$_JD_CLI_HELP_URL"
+}
+
 # Arrive at a folder. $1 the absolute path. This is the one place a move
 # ends, and the only thing that writes a path to stdout.
 #
@@ -84,6 +90,8 @@ usage: <system> [jdex] [target]
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
+  <system> setup        print a prompt for your agent, which writes the
+                        config file for you. 'jd setup --help' says more
   <system> new id 21 A title
                         make the next free ID in category 21 (beta).
                         'jd new id --help' says more
@@ -287,6 +295,17 @@ _jd_nav() {
   case ${1-} in
     -h|--help|help) _jd_nav_usage; return 0 ;;
   esac
+  # 'setup' reads no config either. It is how you get one, so it must
+  # work for the person who has none.
+  if [ "${1-}" = setup ]; then
+    shift
+    if command -v _jd_setup >/dev/null 2>&1; then
+      _jd_setup "$@"
+      return
+    fi
+    _jd_nav_err "lib/setup.sh is not loaded - run bin/jd, not lib/nav.sh"
+    return 1
+  fi
   # 'beta' reads and writes one flag in the config, and no system, so it
   # is taken before the system is looked up. A root folder that is not
   # mounted does not stop 'jd beta off'.
@@ -301,7 +320,7 @@ _jd_nav() {
   fi
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
-  [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
+  [ -f "$cfg" ] || { _jd_nav_err "$(_jd_nav_no_config_msg "$cfg")"; return 1; }
   # No system named means the default one. It is worked out here, at call
   # time, so a $JD_CONFIG or a config that changed since the shell
   # started is the one that answers.

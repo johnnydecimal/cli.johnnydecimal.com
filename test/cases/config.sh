@@ -47,6 +47,8 @@ _jd_t_contains 'no config: names the file it looked for' \
   "no config at $JD_T_TMP/nothing-here.json" "$JD_T_ERR"
 _jd_t_contains 'no config: points at the help page' \
   'https://jdcm.al/jdhq/jd-cli' "$JD_T_ERR"
+_jd_t_contains 'no config: names jd setup as the way out' \
+  "run 'jd setup'" "$JD_T_ERR"
 
 _jd_t_run jd version
 _jd_t_status 'no config: jd version still works' 0

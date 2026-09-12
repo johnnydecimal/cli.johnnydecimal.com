@@ -42,6 +42,7 @@ done
 _JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
 
 . "$_JD_CLI_DIR/lib/nav.sh"
+. "$_JD_CLI_DIR/lib/setup.sh"
 . "$_JD_CLI_DIR/lib/beta.sh"
 . "$_JD_CLI_DIR/lib/new.sh"
 

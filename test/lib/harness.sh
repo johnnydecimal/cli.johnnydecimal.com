@@ -186,6 +186,7 @@ _jd_t_libs() {
   _JD_CLI_VERSION=$(_jd_t_version)
   _JD_CLI_HELP_URL=$(sed -n 's/^_JD_CLI_HELP_URL="\([^"]*\)".*/\1/p' "$JD_T_BIN")
   . "$JD_T_REPO/lib/nav.sh"
+  . "$JD_T_REPO/lib/setup.sh"
   . "$JD_T_REPO/lib/beta.sh"
   . "$JD_T_REPO/lib/new.sh"
 }
