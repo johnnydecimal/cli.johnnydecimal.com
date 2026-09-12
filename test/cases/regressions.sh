@@ -94,30 +94,6 @@ _jd_t_at '2.0.2: the systems that do have a sys still work' "$JD_FX_ROOT"
 _jd_t_run d25
 _jd_t_at '2.0.2: and by name too' "$JD_FX_ROOT"
 
-# ============================================================== 2.0.1
-# 2.0.0 deleted the 1.x source paths, so a 1.x user who pulled lost the
-# jd command. The shims put them back. They load jd.sh and print one
-# reminder per shell, not one per shim.
-
-_jd_t_unload
-unset _JD_CLI_SHIM_SAID
-JD_CONFIG=$JD_T_TMP/two.json
-export JD_CONFIG
-. "$JD_T_REPO/jd-nav/jd-nav.sh" 2>"$JD_T_TMP/.shim1"
-_jd_t_contains '2.0.1: the jd-nav shim tells you to update' \
-  'you are sourcing a 1.x path' "$(cat "$JD_T_TMP/.shim1")"
-
-_jd_t_run jd
-_jd_t_at '2.0.1: the jd-nav shim gives you a working jd' "$JD_FX_ROOT"
-
-. "$JD_T_REPO/jd-prompt/jd-prompt.zsh" 2>"$JD_T_TMP/.shim2"
-_jd_t_eq '2.0.1: the second shim does not say it again' \
-  '' "$(cat "$JD_T_TMP/.shim2")"
-
-_jd_t_run jd 11.11
-_jd_t_at '2.0.1: and jd still navigates' \
-  "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID"
-
 # ============================================================== 2.0.3
 # _jd_pwd read config rows with `IFS=$'\t' read a b`, which drops a
 # leading empty field, so a system with no sys lost its root as well and

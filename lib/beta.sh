@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # beta.sh - the beta flag, and 'jd beta', which turns it on and off
-# Part of the Johnny.Decimal command line. Loaded by jd.sh, before the
+# Part of the Johnny.Decimal command line. Sourced by bin/jd, before the
 # files that hold beta features.
 #
 # Beta is one flag for every beta feature: "beta": true at the top level

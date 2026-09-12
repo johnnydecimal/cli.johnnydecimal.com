@@ -121,7 +121,7 @@ fi
 
 # ------------------------------------------------------ a system not there
 
-_jd_t_run _jd_nav X99
+_jd_t_run "$JD_T_BIN" --system X99
 _jd_t_status 'unknown system: an error' 1
 _jd_t_contains 'unknown system: says which one and where it looked' \
   "system 'X99' is not in $JD_T_TMP/two.json" "$JD_T_ERR"
@@ -161,13 +161,15 @@ fi
 
 # ------------------------------------------------- no leaks into the shell
 
-# _jd_nav_setup used to assign idx without declaring it local, so idx was
-# left behind in the user's shell. It only happened on the path a single
-# system with no sys takes, which is the common one-system config.
-# Fixed in 2.0.5.
+# The setup code used to assign idx without declaring it local, so idx
+# was left behind in the user's shell. It only happened on the path a
+# single system with no sys takes, which is the common one-system
+# config. Fixed in 2.0.5. That code is now _jd_nav_default_sys, in the
+# program, where nothing it does can reach the shell at all - so this
+# also checks that sourcing jd.sh leaves no variable of its own behind.
 
 unset idx
 _jd_t_load "$JD_T_TMP/single-nosys.json"
-_jd_t_eq 'nav.sh does not leave $idx in the shell' 'unset' "${idx-unset}"
+_jd_t_eq 'jd.sh does not leave $idx in the shell' 'unset' "${idx-unset}"
 
 _jd_t_summary

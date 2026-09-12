@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MIT
 # version-usage.sh - jd version, and jd help
 #
-# The version is not written out here. It is read from jd.sh, so a
-# release does not need the tests edited. What is tested is that the
-# three spellings agree, that the version reaches the user, and that the
-# changelog was updated with it.
+# The version is not written out here. It is read from bin/jd, which is
+# the one place it lives, so a release does not need the tests edited.
+# What is tested is that the three spellings agree, that the version
+# reaches the user, and that the changelog was updated with it.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -18,16 +18,21 @@ _jd_fx_build
 _jd_fx_config_two "$JD_T_TMP/two.json"
 _jd_t_load "$JD_T_TMP/two.json"
 
-_jd_t_version=$(sed -n 's/^_JD_CLI_VERSION="\([^"]*\)".*/\1/p' "$JD_T_REPO/jd.sh")
+_jd_t_version=$(_jd_t_version)
 
 if [ -n "$_jd_t_version" ]; then
-  _jd_t_ok 'version: jd.sh sets _JD_CLI_VERSION'
+  _jd_t_ok 'version: bin/jd sets _JD_CLI_VERSION'
 else
-  _jd_t_bad 'version: jd.sh sets _JD_CLI_VERSION' 'a version' 'nothing'
+  _jd_t_bad 'version: bin/jd sets _JD_CLI_VERSION' 'a version' 'nothing'
 fi
 
-_jd_t_eq 'version: sourcing jd.sh exports it to the shell' \
-  "$_jd_t_version" "$_JD_CLI_VERSION"
+# The hook loads no lib, so it has no version of its own to get wrong,
+# and it leaves nothing in the shell for someone to read as one.
+_jd_t_eq 'version: sourcing jd.sh does not put a version in the shell' \
+  'unset' "${_JD_CLI_VERSION-unset}"
+
+_jd_t_lacks 'version: jd.sh names no version' '_JD_CLI_VERSION' \
+  "$(cat "$JD_T_REPO/jd.sh")"
 
 _jd_t_run jd version
 _jd_t_status 'version: exit status' 0

@@ -1,12 +1,17 @@
 # SPDX-License-Identifier: MIT
-# nav.sh - Johnny.Decimal shell navigation
-# Part of the Johnny.Decimal command line. Loaded by jd.sh, which sets
-# $_JD_CLI_VERSION and $_JD_CLI_HELP_URL.
+# nav.sh - Johnny.Decimal navigation
+# Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
+# $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR.
 #
-# It reads ~/.jd/config.json (override with $JD_CONFIG) and defines:
-#   - one function per system, named by its lowercase sys id: d25, p76
-#   - jd, which acts on the default system (or the only system)
-#   - jdex, which is jd in the JDex of that same system
+# It defines _jd_nav, which bin/jd calls with the system to act on and
+# the words the user typed. It reads ~/.jd/config.json (override with
+# $JD_CONFIG) to learn that system's root folder and JDex.
+#
+# An empty system means the default one: the entry marked default: true,
+# else the first entry.
+#
+# Nothing here cd's. A move ends at _jd_nav_arrive, which prints the
+# folder. The comment at the top of bin/jd says why.
 #
 # 'jd new' is a word this file does not act on. It hands the rest of the
 # line to _jd_new, in lib/new.sh.
@@ -16,6 +21,44 @@
 _jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
 
 _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
+
+# Arrive at a folder. $1 the absolute path. This is the one place a move
+# ends, and the only thing that writes a path to stdout.
+#
+# On its own the program cannot move the shell that called it, so it
+# says where to go and stops: the path, one line, status 0. That is the
+# answer to 'where is 11.11', and it is what a script or an agent reads.
+#
+# jd.sh sets JD_HOOK, because it can move the shell. It gets the same
+# path and status 3, which no other thing here returns. The hook does
+# the cd.
+_jd_nav_arrive() {
+  printf '%s\n' "$1"
+  [ -n "${JD_HOOK-}" ] && return 3
+  return 0
+}
+
+# Print the sys id of the default system: the entry marked default:
+# true, else the first entry. An entry with no sys is named by its place
+# in the array, '#0', which _jd_nav reads as well as a sys id.
+#
+# Returns 1 if the config holds no system to name, which is also what a
+# config jq cannot read looks like from here.
+_jd_nav_default_sys() {
+  local cfg sys idx
+  cfg=$(_jd_nav_config)
+  sys=$(jq -r '(.systems | (map(select(.default == true))[0] // .[0])).sys // empty' \
+    "$cfg" 2>/dev/null)
+  if [ -z "$sys" ]; then
+    idx=$(jq -r '(.systems | to_entries | (map(select(.value.default == true))[0] // .[0])).key' \
+      "$cfg" 2>/dev/null)
+    case $idx in
+      '' | null | *[!0-9]*) return 1 ;;
+    esac
+    sys="#$idx"
+  fi
+  printf '%s' "$sys"
+}
 
 # Print the version if $1 asks for it. Returns 0 if it did.
 _jd_nav_is_version() {
@@ -55,6 +98,16 @@ jd is the default system, or the only one. jdex is its JDex, so 'jdex
 
 Two or more matches are listed, not entered. Word search ignores case.
 An ID or work package in the JDex with no folder gets its folder made.
+
+From a script or an agent, run the program, ~/.jd/cli/bin/jd. Nothing
+has to be sourced first.
+
+  ~/.jd/cli/bin/jd 11.11             print the folder for 11.11
+  ~/.jd/cli/bin/jd --system P76 22   act on another system. --system
+                                     is only read as the first word
+
+A move prints the folder on stdout and exits 0. Set JD_HOOK and it
+prints the same folder and exits 3, which is how the shell knows to cd.
 EOF
 }
 
@@ -131,7 +184,7 @@ _jd_nav_tree() {
   '
 }
 
-# Act on a match list: cd if one, report if several, error if none.
+# Act on a match list: arrive if one, report if several, error if none.
 # $1 tree, $2 mode fs|jdex, $3 label for messages, $4 matches
 _jd_nav_go() {
   local tree=$1 mode=$2 label=$3 m=$4 n p
@@ -143,7 +196,7 @@ _jd_nav_go() {
     if [ "$mode" = jdex ] && [ ! -d "$m" ]; then
       m=$(dirname "$m")
     fi
-    cd -- "$m" && pwd
+    _jd_nav_arrive "$m"
   else
     {
       printf 'jd: %s matches for %s:\n' "$n" "$label"
@@ -229,6 +282,11 @@ _jd_nav() {
     shift
   fi
   _jd_nav_is_version "${1-}" && return 0
+  # Help needs no config and no system. Someone with neither is exactly
+  # the person reading it.
+  case ${1-} in
+    -h|--help|help) _jd_nav_usage; return 0 ;;
+  esac
   # 'beta' reads and writes one flag in the config, and no system, so it
   # is taken before the system is looked up. A root folder that is not
   # mounted does not stop 'jd beta off'.
@@ -238,12 +296,18 @@ _jd_nav() {
       _jd_beta "$@"
       return
     fi
-    _jd_nav_err "lib/beta.sh is not loaded - source jd.sh, not lib/nav.sh"
+    _jd_nav_err "lib/beta.sh is not loaded - run bin/jd, not lib/nav.sh"
     return 1
   fi
   cfg=$(_jd_nav_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "no config at $cfg - see $_JD_CLI_HELP_URL"; return 1; }
+  # No system named means the default one. It is worked out here, at call
+  # time, so a $JD_CONFIG or a config that changed since the shell
+  # started is the one that answers.
+  if [ -z "$sys" ]; then
+    sys=$(_jd_nav_default_sys) || { _jd_nav_err "no systems in $cfg"; return 1; }
+  fi
   case $sys in
     '#'*)
       row=$(jq -r --argjson i "${sys#'#'}" \
@@ -267,18 +331,17 @@ _jd_nav() {
   [ -d "$tree" ] || { _jd_nav_err "folder does not exist: $tree"; return 1; }
 
   if [ $# -eq 0 ]; then
-    cd -- "$tree" && pwd
+    _jd_nav_arrive "$tree"
     return
   fi
   case $1 in
-    -h|--help|help) _jd_nav_usage; return 0 ;;
     new)
       shift
       if command -v _jd_new >/dev/null 2>&1; then
         _jd_new "$sys" "$@"
         return
       fi
-      _jd_nav_err "lib/new.sh is not loaded - source jd.sh, not lib/nav.sh"
+      _jd_nav_err "lib/new.sh is not loaded - run bin/jd, not lib/nav.sh"
       return 1
       ;;
   esac
@@ -353,78 +416,3 @@ $wm"
       ;;
   esac
 }
-
-# The tool cannot start. jd and jdex both say why, and both still print
-# the version, because someone with a broken config still needs to be
-# able to tell which version they have. The reason is read at call time,
-# so a $JD_CONFIG that changes after the shell started names the file the
-# user is looking at now.
-# $1 reason: config, jq or systems. $2+ the user's words.
-_jd_nav_stub_run() {
-  local why=$1
-  shift
-  _jd_nav_is_version "${1-}" && return 0
-  case $why in
-    jq) _jd_nav_err "jq is not installed" ;;
-    systems) _jd_nav_err "no systems in $(_jd_nav_config)" ;;
-    *) _jd_nav_err "no config at $(_jd_nav_config) - see $_JD_CLI_HELP_URL" ;;
-  esac
-}
-
-_jd_nav_stub() {
-  eval "jd() { _jd_nav_stub_run $1 \"\$@\"; }"
-  eval "jdex() { _jd_nav_stub_run $1 \"\$@\"; }"
-}
-
-_jd_nav_setup() {
-  local cfg n sys fn idx
-  cfg=$(_jd_nav_config)
-  if [ ! -f "$cfg" ]; then
-    _jd_nav_stub config
-    return 0
-  fi
-  if ! command -v jq >/dev/null 2>&1; then
-    _jd_nav_stub jq
-    return 0
-  fi
-  n=$(jq -r '.systems | length' "$cfg" 2>/dev/null)
-  if [ -z "$n" ] || [ "$n" = 0 ] || [ "$n" = null ]; then
-    _jd_nav_stub systems
-    return 0
-  fi
-
-  # One function per system, named by its lowercase sys id. More than one
-  # system means every entry needs a sys, so a missing one is an error,
-  # not a skip.
-  if [ "$n" -gt 1 ]; then
-    while IFS= read -r sys; do
-      if [ -z "$sys" ] || [ "$sys" = null ]; then
-        _jd_nav_err "a system in $cfg has no 'sys' - every entry needs one when there is more than one system"
-        continue
-      fi
-      fn=$(printf '%s' "$sys" | tr 'A-Z' 'a-z')
-      case $fn in
-        *[!a-z0-9_]*|[0-9]*) _jd_nav_err "cannot make a function for sys id '$sys'"; continue ;;
-      esac
-      eval "$fn() { _jd_nav '$sys' \"\$@\"; }"
-    done <<EOF
-$(jq -r '.systems[].sys' "$cfg")
-EOF
-  fi
-
-  # jd acts on the default system, or the only one. jdex is the same
-  # system, in its JDex. Fall back to the array index when the system has
-  # no sys - a single system does not need one.
-  #
-  # Both are defined after the loop above, so a system whose sys id is
-  # 'jd' or 'jdex' does not take the name from the root command.
-  sys=$(jq -r '(.systems | (map(select(.default == true))[0] // .[0])).sys // empty' "$cfg")
-  if [ -z "$sys" ]; then
-    idx=$(jq -r '(.systems | to_entries | (map(select(.value.default == true))[0] // .[0])).key' "$cfg")
-    sys="#$idx"
-  fi
-  eval "jd() { _jd_nav '$sys' \"\$@\"; }"
-  eval "jdex() { _jd_nav '$sys' jdex \"\$@\"; }"
-}
-
-_jd_nav_setup

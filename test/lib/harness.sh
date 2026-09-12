@@ -9,6 +9,9 @@
 #     left us, then puts us back
 #   - _jd_t_load, which points $JD_CONFIG at a fixture config and sources
 #     jd.sh again
+#   - _jd_t_bin, the path of the program, and _jd_t_libs, which sources
+#     lib into this shell for the few tests that drive a lib function
+#     directly
 #
 # Why a harness of our own: the tools must work in bash 3.2 and zsh with
 # jq as the only dependency, so the tests must too. Nothing here needs a
@@ -23,6 +26,9 @@
 # jd cd's. So does every per-system function. _jd_t_run therefore records
 # $PWD after the command as $JD_T_PWD, then returns to where it started.
 # A case file never has to think about it.
+#
+# The program, bin/jd, does not cd: it prints the folder and stops. A
+# case that runs $JD_T_BIN reads $JD_T_OUT, not $JD_T_PWD.
 
 if [ -z "${JD_T_TMP-}" ] || [ -z "${JD_T_REPO-}" ]; then
   printf 'test: no $JD_T_TMP or $JD_T_REPO - run the suite with test/run.sh\n' >&2
@@ -160,6 +166,30 @@ _jd_t_run() {
 
 # ------------------------------------------------------- loading the CLI
 
+# The program. A case runs it with _jd_t_run to see the contract an
+# agent, a script or cron gets: no cd, the folder on stdout.
+JD_T_BIN=$JD_T_REPO/bin/jd
+
+# The version, which lives in bin/jd and nowhere else.
+_jd_t_version() {
+  sed -n 's/^_JD_CLI_VERSION="\([^"]*\)".*/\1/p' "$JD_T_BIN"
+}
+
+# Source lib into this shell, for the few tests that drive a lib
+# function directly rather than through a command. bin/jd sets the same
+# three variables before it sources the same three files.
+#
+# It defines no command: jd and the rest still come from _jd_t_load, and
+# still run the program.
+_jd_t_libs() {
+  _JD_CLI_DIR=$JD_T_REPO
+  _JD_CLI_VERSION=$(_jd_t_version)
+  _JD_CLI_HELP_URL=$(sed -n 's/^_JD_CLI_HELP_URL="\([^"]*\)".*/\1/p' "$JD_T_BIN")
+  . "$JD_T_REPO/lib/nav.sh"
+  . "$JD_T_REPO/lib/beta.sh"
+  . "$JD_T_REPO/lib/new.sh"
+}
+
 # Forget the commands a previous _jd_t_load defined. jd.sh redefines jd
 # every time, but a per-system function from an old config would survive
 # into a config that no longer has that system.
@@ -170,10 +200,10 @@ _jd_t_unload() {
   done
 }
 
-# Point $JD_CONFIG at a fixture config and source jd.sh again.
-# $1 path to the config. It need not exist; that is a test too.
-# Sets $JD_T_LOADERR, the stderr jd.sh wrote while it loaded.
-_jd_t_load() {
+# Point $JD_CONFIG at a fixture config, and load nothing. This is what a
+# case that only runs the program needs. $1 path to the config. It need
+# not exist; that is a test too.
+_jd_t_config() {
   JD_CONFIG=$1
   export JD_CONFIG
   # Never let a test read the real config, or the real system.
@@ -184,6 +214,12 @@ _jd_t_load() {
       exit 2
       ;;
   esac
+}
+
+# The same, and source jd.sh again, so this shell has jd and the rest.
+# Sets $JD_T_LOADERR, the stderr jd.sh wrote while it loaded.
+_jd_t_load() {
+  _jd_t_config "$1"
   _jd_t_unload
   . "$JD_T_REPO/jd.sh" 2>"$JD_T_TMP/.loaderr"
   JD_T_LOADERR=$(cat "$JD_T_TMP/.loaderr")

@@ -436,15 +436,20 @@ fi
 # the next free number, as 'twice' above shows. The only way in is a
 # race between the scan and the write, which this forces by fixing the
 # number that _jd_new_next_number returns.
+#
+# A fixed function reaches _jd_new only in the shell it is defined in,
+# and the program is another process. So this one test sources lib and
+# calls _jd_nav here, the way bin/jd does.
 
 _jd_fx_reset
 _jd_fx_config_new "$JD_T_TMP/exists.json"
 _jd_t_load "$JD_T_TMP/exists.json"
+_jd_t_libs
 
 printf 'note\n' >"$_jd_t_jw/W0301~21.35 Already there.md"
 _jd_new_next_number() { printf 'W0301'; }
 
-_jd_t_run jd new wp --json 21.35 Already there
+_jd_t_run _jd_nav D25 new wp --json 21.35 Already there
 _jd_t_status 'exists: exit status' 1
 _jd_t_eq 'exists: the code is exists' 'exists' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"

@@ -171,11 +171,14 @@ EOT
 # tested. Some machines carry jq in /usr/bin, so hiding it by trimming
 # $PATH is not reliable. Build a bin folder instead and link in only the
 # commands the tools and the harness use. Prints the folder.
+#
+# bash is in the list because bin/jd starts '#!/usr/bin/env bash', and
+# env looks the shell up on $PATH like anything else.
 _jd_fx_nojq_bin() {
   local dir cmd src
   dir="$JD_T_TMP/nojq-bin"
   mkdir -p "$dir"
-  for cmd in cat find sort grep sed awk basename dirname mkdir rm tr env; do
+  for cmd in cat find sort grep sed awk basename dirname mkdir rm tr env bash; do
     src=$(command -v "$cmd" 2>/dev/null) || continue
     [ -n "$src" ] && ln -sf "$src" "$dir/$cmd"
   done

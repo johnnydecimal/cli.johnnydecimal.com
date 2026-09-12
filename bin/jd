@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# jd - the Johnny.Decimal command line
+#
+# A program. Anything can run it: your shell, a script, cron, an agent.
+# Nothing has to be sourced first.
+#
+#   jd 11.11              print the folder for ID 11.11
+#   jd --system P76 22    act on a system other than the default
+#   jd version            print the version
+#   jd --help             the rest of it
+#
+# A move prints one absolute path on stdout and nothing else, and exits
+# 0. Match lists, reports and errors go to stderr. That is so the answer
+# can be read by a program:
+#
+#   cd "$(jd 11.11)"
+#
+# The shell hook, jd.sh, sets JD_HOOK. A move then prints the same path
+# and exits 3, which tells the hook to cd there itself. No other exit
+# status means that.
+#
+# Needs jq. Works in bash 3.2+ and zsh.
+
+# The version of this repo, shared by every tool in it. Semver. It lives
+# here, and nowhere else.
+_JD_CLI_VERSION="2.6.0"
+_JD_CLI_HELP_URL="https://jdcm.al/jdhq/jd-cli"
+
+# The repo this file is in, through however many symlinks $0 is, so that
+# a link to bin/jd from somewhere on $PATH still finds lib.
+_jd_self=$0
+while [ -L "$_jd_self" ]; do
+  _jd_link=$(readlink "$_jd_self") || break
+  case $_jd_link in
+    /*) _jd_self=$_jd_link ;;
+    *) _jd_self=$(dirname -- "$_jd_self")/$_jd_link ;;
+  esac
+done
+
+# The tools read this at call time, to find the adapters in lib.
+_JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
+
+. "$_JD_CLI_DIR/lib/nav.sh"
+. "$_JD_CLI_DIR/lib/beta.sh"
+. "$_JD_CLI_DIR/lib/new.sh"
+
+# --system SYS, first and nowhere else, so that it can never be read as
+# a title or as a flag of 'jd new'. Without it the program acts on the
+# default system, which _jd_nav works out from the config at call time.
+_jd_sys=''
+if [ "${1-}" = --system ]; then
+  shift
+  _jd_sys=${1-}
+  if [ -z "$_jd_sys" ]; then
+    printf 'jd: --system needs a system id\n' >&2
+    exit 1
+  fi
+  shift
+fi
+
+_jd_nav "$_jd_sys" "$@"
+exit $?

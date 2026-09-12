@@ -7,8 +7,8 @@
 # is in.
 #
 # _jd_nav_tree reads paths on stdin, relative to the system root, so
-# most of this drives it directly. The tests through jd prove the two
-# are wired together.
+# most of this drives it directly, with lib sourced into this shell.
+# The tests through jd prove the two are wired together.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -21,6 +21,7 @@
 _jd_fx_build
 _jd_fx_config_two "$JD_T_TMP/two.json"
 _jd_t_load "$JD_T_TMP/two.json"
+_jd_t_libs
 
 # ------------------------------------------------------------- through jd
 

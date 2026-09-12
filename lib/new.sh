@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # new.sh - make a new ID or work package
-# Part of the Johnny.Decimal command line. Loaded by jd.sh, which sets
+# Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
 # $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR.
 #
 # It defines _jd_new, which nav.sh calls for 'jd new'. The word after
@@ -739,12 +739,14 @@ _jd_new_id() {
   mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not make $dir"; return 1; }
   _jd_new_say "folder  $dir"
 
-  cd -- "$dir" || return 1
+  # --json is the machine interface, and the object is the whole answer,
+  # so it never moves. Without it, the new folder is where you want to
+  # be, so it arrives there like any other move.
   if [ "$_JD_NEW_JSON" -eq 1 ]; then
     _jd_new_emit_ok false "$note_path" "$dir"
-  else
-    pwd
+    return 0
   fi
+  _jd_nav_arrive "$dir"
 }
 
 # -------------------------------------------------------------------- wp
@@ -947,10 +949,11 @@ _jd_new_wp() {
     }
   fi
 
-  cd -- "$dir" || return 1
+  # As for an ID: --json answers with the object and stays put, and
+  # anything else arrives in the new folder.
   if [ "$_JD_NEW_JSON" -eq 1 ]; then
     _jd_new_emit_ok false "$note_path" "$dir"
-  else
-    pwd
+    return 0
   fi
+  _jd_nav_arrive "$dir"
 }
