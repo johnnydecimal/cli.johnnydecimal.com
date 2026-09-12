@@ -25,7 +25,8 @@ _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 # The one 'no config' message, so that every command that needs the
 # config says the same thing, and names the way out. $1 the config path.
 _jd_nav_no_config_msg() {
-  printf "no config at %s - run 'jd setup' for help, or see %s" "$1" "$_JD_CLI_HELP_URL"
+  printf "no config at %s\n    Humans: see %s\n    To generate a prompt so your agent can do this for you: jd agent-setup" \
+    "$1" "$_JD_CLI_HELP_URL"
 }
 
 # Arrive at a folder. $1 the absolute path. This is the one place a move
@@ -90,8 +91,8 @@ usage: <system> [jdex] [target]
   <system> 20-29 word   search inside area 20-29
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
-  <system> setup        print a prompt for your agent, which writes the
-                        config file for you. 'jd setup --help' says more
+  <system> agent-setup  print a prompt for your agent, which writes the
+                        config file for you. 'jd agent-setup --help' says more
   <system> new id 21 A title
                         make the next free ID in category 21 (beta).
                         'jd new id --help' says more
@@ -295,9 +296,9 @@ _jd_nav() {
   case ${1-} in
     -h|--help|help) _jd_nav_usage; return 0 ;;
   esac
-  # 'setup' reads no config either. It is how you get one, so it must
-  # work for the person who has none.
-  if [ "${1-}" = setup ]; then
+  # 'agent-setup' reads no config either. It is how you get one, so it
+  # must work for the person who has none.
+  if [ "${1-}" = agent-setup ]; then
     shift
     if command -v _jd_setup >/dev/null 2>&1; then
       _jd_setup "$@"

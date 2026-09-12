@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: MIT
-# setup.sh - 'jd setup', a prompt for your agent
+# setup.sh - 'jd agent-setup', a prompt for your agent
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
 # $_JD_CLI_DIR, and after lib/nav.sh, whose helpers it uses.
 #
 # The tools need ~/.jd/config.json, and writing it by hand is a chore.
-# 'jd setup' prints a prompt on stdout. Paste it into whatever agent you
+# 'jd agent-setup' prints a prompt on stdout. Paste it into whatever agent you
 # use, and the agent finds your systems and writes the config for you.
 # It reads no config, so it is the one command that works before the
 # rest do, and the 'no config' error names it.
 #
 # Only the prompt goes to stdout. The one thing said to the person, that
-# a config exists already, goes to stderr, so that 'jd setup | pbcopy'
+# a config exists already, goes to stderr, so that 'jd agent-setup | pbcopy'
 # puts the prompt, and nothing else, on the clipboard. Nothing is said
 # after the prompt: the shell hook captures stdout and prints it last,
 # so a trailer would come out before the prompt it describes.
@@ -19,11 +19,11 @@
 
 _jd_setup_usage() {
   cat <<'EOF'
-usage: <system> setup
+usage: <system> agent-setup
 
-  jd setup            print a prompt for your agent. The agent finds
-                      your systems and writes the config file for you
-  jd setup | pbcopy   the same, onto the macOS clipboard
+  jd agent-setup            print a prompt for your agent. The agent finds
+                            your systems and writes the config file for you
+  jd agent-setup | pbcopy   the same, onto the macOS clipboard
 
 The prompt is all that goes to stdout, so it can be piped. It names
 this copy of the program and the config file it will read, so run it
@@ -37,7 +37,7 @@ _jd_setup() {
     -h|--help|help) _jd_setup_usage; return 0 ;;
   esac
   [ $# -eq 0 ] || {
-    _jd_nav_err "'jd setup' takes nothing after it - see 'jd setup --help'"
+    _jd_nav_err "'jd agent-setup' takes nothing after it - see 'jd agent-setup --help'"
     return 1
   }
   cfg=$(_jd_nav_config)

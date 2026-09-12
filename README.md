@@ -26,10 +26,10 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems and writes the file:
 
    ```sh
-   ~/.jd/cli/bin/jd setup
+   ~/.jd/cli/bin/jd agent-setup
    ```
 
-   On macOS, `~/.jd/cli/bin/jd setup | pbcopy` puts the prompt on the clipboard.
+   On macOS, `~/.jd/cli/bin/jd agent-setup | pbcopy` puts the prompt on the clipboard.
 
    Or copy the template and edit it for your systems:
 

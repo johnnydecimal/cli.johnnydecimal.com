@@ -65,7 +65,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun, help, beta. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
 | `cases/prompt.sh` | `_jd_pwd`, the zsh prompt path. |
-| `cases/setup.sh` | `jd setup`, the prompt for your agent, and the `no config` error that names it. |
+| `cases/setup.sh` | `jd agent-setup`, the prompt for your agent, and the `no config` error that names it. |
 | `cases/tree.sh` | The match list, when a search finds more than one thing. |
 | `cases/theme.sh` | The whole-prompt theme, `lib/theme.zsh`. |
 | `cases/regressions.sh` | One test for every bug in the changelog. |
