@@ -7,6 +7,29 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.1.0 – 2026-09-12
+
+> AI generated. Reviewed by Johnny.
+
+This release adds `jd agent-setup`, which has your agent write the config
+for you.
+
+### Features
+
+- `jd agent-setup` prints a prompt for your agent. Paste it in, and the
+  agent finds your systems on disk, confirms each root with you, and
+  writes `~/.jd/config.json` and the `source` line in your shell config.
+  It works before any config exists. Only the prompt goes to stdout, so
+  `jd agent-setup | pbcopy` puts it on the clipboard.
+
+### Changes
+
+- The "no config" error is now three lines: the file it looked for, the
+  help page for a person to read, and `jd agent-setup` for an agent.
+  Every command that needs the config says the same thing.
+
+Closes #7.
+
 ## 3.0.0 – 2026-09-12
 
 > AI generated. Reviewed by Johnny.
