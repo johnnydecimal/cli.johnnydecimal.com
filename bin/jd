@@ -24,7 +24,7 @@
 
 # The version of this repo, shared by every tool in it. Semver. It lives
 # here, and nowhere else.
-_JD_CLI_VERSION="3.1.0"
+_JD_CLI_VERSION="3.2.0"
 _JD_CLI_HELP_URL="https://jdcm.al/jdhq/jd-cli"
 
 # The repo this file is in, through however many symlinks $0 is, so that

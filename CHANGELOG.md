@@ -7,6 +7,38 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.2.0 – 2026-09-12
+
+> AI generated. Reviewed by Johnny.
+
+This release adds `jd move`, which moves a file or a folder into an ID
+and journals it, and `jd undo move`, which moves it back. Both are beta.
+
+### Features
+
+- `jd move <path> <id>` moves the file or folder at `<path>` into the
+  folder for an ID or a W number, and prints the new path. An ID that
+  is in the JDex but has no folder gets its folder made first. It
+  refuses a name the target already holds, an iCloud stub that is not
+  downloaded, and a target inside the thing you are moving. It never
+  renames.
+- Every move is one line in `~/.jd/journal.jsonl`: when, which system,
+  the ID, from, to, and whether a person or a program asked. The file
+  is append only. The journal has to be writable before anything
+  moves. jd writes nothing into the JDex.
+- `jd undo move` moves the newest move in the system back, or, with a
+  path, the move that put that path where it is. It refuses if the
+  moved thing is no longer where jd put it, or if something else is
+  now where it came from. An undo is one more journal line.
+- Both take `--dry-run` and `--json`, in the shape `jd new` uses.
+
+### Changes
+
+- The README opens with an attribution line that points at the AI
+  attribution section.
+
+Closes #8.
+
 ## 3.1.0 – 2026-09-12
 
 > AI generated. Reviewed by Johnny.
