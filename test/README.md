@@ -24,6 +24,10 @@ The word is matched against the case filenames.
   every case file runs once per shell.
 - `test/run.sh` is POSIX sh. Everything under `test/lib` and
   `test/cases` runs under bash or zsh, because it sources `jd.sh`.
+- Most cases go through the shell hook, which is what a person types.
+  `cases/bin.sh` runs `$JD_T_BIN`, the program, which is what a script,
+  cron or an agent gets. The program does not cd, so that file reads
+  `$JD_T_OUT` and never `$JD_T_PWD`.
 - Nothing needs installing. `jq` is the only dependency, the same as the
   tools.
 - Environment:
@@ -48,9 +52,10 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | Path | What it is |
 | --- | --- |
 | `run.sh` | The entry point. Finds the shells, makes a temp folder per case, totals the results. |
-| `lib/harness.sh` | Counters, assertions, and the two helpers that run `jd` and load a config. |
+| `lib/harness.sh` | Counters, assertions, and the helpers that run `jd` and load a config. |
 | `lib/fixtures.sh` | The fake systems, and every config shape the tests need. |
 | `lib/corpus.sh` | Reads a conformance corpus. See [Conformance corpora](#conformance-corpora). |
+| `cases/bin.sh` | `bin/jd`, the program, and the shape of the functions `jd.sh` makes. |
 | `cases/config.sh` | Reading the config, and every way it can be wrong. |
 | `cases/corpus.sh` | Runs each corpus in `test/corpus`. |
 | `cases/known-bugs.sh` | Bugs the tests found, which nothing has fixed yet. |
@@ -119,7 +124,10 @@ Nothing here reads `~/.jd/config.json` or goes near a real system.
 
 | Call | What it does |
 | --- | --- |
-| `_jd_t_load <config>` | Points `$JD_CONFIG` at a config and sources `jd.sh` again. Sets `$JD_T_LOADERR`. |
+| `_jd_t_config <config>` | Points `$JD_CONFIG` at a config, and loads nothing. For a case that only runs the program. |
+| `_jd_t_load <config>` | The same, and sources `jd.sh` again, so this shell has `jd`. Sets `$JD_T_LOADERR`. |
+| `_jd_t_libs` | Sources `lib` into this shell, for a test that drives a lib function directly. |
+| `_jd_t_version` | The version, read from `bin/jd`, which is the one place it lives. |
 | `_jd_t_run <cmd> [words]` | Runs the command from `$JD_T_TMP`, then returns there. |
 | `_jd_t_run_from <dir> <cmd> [words]` | The same, from a directory you name. |
 | `_jd_t_eq <name> <expected> <actual>` | They must be the same string. |

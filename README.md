@@ -33,7 +33,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    source ~/.jd/cli/jd.sh
    ```
 
-   It loads the navigation in all shells. It loads the prompt in zsh only.
+   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and moves your shell to where the program says. In zsh it also loads the prompt.
 
 5. For the zsh prompt, add one of these two to `.zshrc`, after the `source` line.
 
@@ -53,6 +53,27 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 6. Start a new shell.
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
+
+## Running jd from a script or an agent
+
+The tool is a program, `~/.jd/cli/bin/jd`. Nothing has to be sourced to run it, so a script, cron, or an agent's shell can use it.
+
+```sh
+~/.jd/cli/bin/jd 11.11             # the folder for ID 11.11
+~/.jd/cli/bin/jd --system P76 22   # a system other than the default
+~/.jd/cli/bin/jd version
+```
+
+- A move prints one absolute path on stdout and exits 0, so it reads as an answer: `cd "$(~/.jd/cli/bin/jd 11.11)"`.
+- Match lists, reports, and errors go to stderr.
+- `--system` is read as the first word and nowhere else, so it never collides with a title or with a flag of `jd new`.
+- `jd new` takes `--json`, which prints one JSON object on stdout. Refer to [For agents](#for-agents).
+
+  ```sh
+  JD_BETA=1 ~/.jd/cli/bin/jd new id 21 A title --json
+  ```
+
+- `source ~/.jd/cli/jd.sh` also puts `~/.jd/cli/bin` on `$PATH`, so a program started from your shell can run `jd` by name.
 
 ## The prompt theme
 
@@ -85,7 +106,9 @@ All the tools read the configuration file at `~/.jd/config.json`.
 
 `$JD_CONFIG` overrides its location.
 
-The tools read the configuration once, at shell start. A new system, or a system that has moved, needs a new shell.
+The program reads the configuration each time it runs, so a system that has moved takes effect at once.
+
+Two things are read at shell start, and need a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the zsh prompt.
 
 Refer to [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for the fields.
 
@@ -173,12 +196,9 @@ The flag is `"beta": true` at the top level of `~/.jd/config.json`. `JD_BETA=1` 
 git -C ~/.jd/cli pull
 ```
 
-### Migration from 1.x
+The v1.x `jd-nav` and `jd-prompt` paths are deleted at 3.0.0. A `.zshrc` that still sources one fails at shell start with "no such file".
 
-Replace the two `source` lines with the single line in
-[Installation](#installation). v1.x `jd-nav` and `jd-prompt` paths still
-operate. They print a reminder at each shell start. They'll be deleted in
-a future version.
+Replace both lines with the single line in [Installation](#installation), which has been the documented line since 2.0.0.
 
 ## Tests
 
