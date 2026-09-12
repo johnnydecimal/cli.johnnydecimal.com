@@ -44,8 +44,8 @@ _jd_t_contains 'no config: the prompt says what to do with no system' \
   'If you find no system, stop.' "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt is not an error' 'no config' "$JD_T_ERR"
 _jd_t_lacks 'no config: nothing for the person is on stdout' 'jd:' "$JD_T_OUT"
-_jd_t_contains 'no config: the person is told where the prompt goes' \
-  'paste it into your agent' "$JD_T_ERR"
+_jd_t_eq 'no config: nothing on stderr - the prompt speaks for itself' \
+  '' "$JD_T_ERR"
 _jd_t_at 'no config: does not move us' "$JD_T_TMP"
 
 # The unquoted heredoc means a backtick or a dollar in the prompt would

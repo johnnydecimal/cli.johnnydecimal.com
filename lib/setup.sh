@@ -9,9 +9,11 @@
 # It reads no config, so it is the one command that works before the
 # rest do, and the 'no config' error names it.
 #
-# Only the prompt goes to stdout. Everything said to the person goes to
-# stderr, so that 'jd setup | pbcopy' puts the prompt, and nothing else,
-# on the clipboard.
+# Only the prompt goes to stdout. The one thing said to the person, that
+# a config exists already, goes to stderr, so that 'jd setup | pbcopy'
+# puts the prompt, and nothing else, on the clipboard. Nothing is said
+# after the prompt: the shell hook captures stdout and prints it last,
+# so a trailer would come out before the prompt it describes.
 #
 # Works in bash 3.2+ and zsh.
 
@@ -80,10 +82,4 @@ If you have the Johnny.Decimal MCP server, call its install_cli tool. It walks y
 
 8. Ask me whether I want the Johnny.Decimal zsh prompt. Step 5 of the README says how. Do not add it unless I say yes.
 EOF
-
-  if [ -t 1 ]; then
-    printf '\njd: copy the text above and paste it into your agent. On macOS, jd setup | pbcopy puts it on the clipboard\n' >&2
-  else
-    printf 'jd: the prompt was written - paste it into your agent\n' >&2
-  fi
 }
