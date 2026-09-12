@@ -7,6 +7,44 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.0.0 – 2026-09-12
+
+> AI generated. Reviewed by Johnny.
+
+This release makes `jd` a standalone program, and removes the 1.x shims.
+
+### Breaking changes
+
+- The `jd-nav/` and `jd-prompt/` directories are gone. A `.zshrc` that
+  sources either one now fails at shell start with "no such file".
+  Replace that line with `source ~/.jd/cli/jd.sh`.
+- `jd new --json` no longer changes directory. It prints the object and
+  exits. Without `--json`, `jd new` moves into the new folder as before.
+
+### Features
+
+- `bin/jd` is the program. It can be run without sourcing anything,
+  from a script, cron, an agent, or another program.
+- A move run from the program prints the folder on stdout and exits 0,
+  so `cd "$(~/.jd/cli/bin/jd 11.11)"` works.
+- The shell hook sets `JD_HOOK` when it runs the program. A move then
+  exits 3 instead of 0, and the hook does the `cd`.
+- `--system` is now read only as the first word, so it cannot be taken
+  for a title or for a flag of `jd new`.
+- `jd help` now works without a config.
+- `source ~/.jd/cli/jd.sh` now adds `~/.jd/cli/bin` to `$PATH`.
+
+### Changes
+
+- `jd.sh` is now a hook. It defines `jd`, `jdex` and one command per
+  system, adds `bin` to `$PATH`, and loads nothing from `lib` but the
+  zsh prompt. Each function it defines is self-contained, so a shell
+  that copies `jd` without its helpers still gets a working command.
+- The version number now lives only in `bin/jd`. `jd version` reads it
+  from there.
+- `jd` and `jdex` no longer hard-code a system. The program resolves
+  the default on every run, so a config edit takes effect immediately.
+
 ## 2.6.0 – 2026-09-11
 
 > AI generated. Reviewed by Johnny.
