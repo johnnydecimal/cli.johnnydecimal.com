@@ -13,8 +13,9 @@
 # Nothing here cd's. A move ends at _jd_nav_arrive, which prints the
 # folder. The comment at the top of bin/jd says why.
 #
-# 'jd new' is a word this file does not act on. It hands the rest of the
-# line to _jd_new, in lib/new.sh.
+# 'jd new', 'jd move' and 'jd undo' are words this file does not act on.
+# It hands the rest of the line to _jd_new, in lib/new.sh, or to
+# _jd_move and _jd_undo, in lib/move.sh.
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
@@ -99,6 +100,12 @@ usage: <system> [jdex] [target]
   <system> new wp 21.41 A title
                         make a new work package (beta). 'jd new wp
                         --help' says more
+  <system> move <path> 21.34
+                        move a file or folder into the folder for
+                        21.34, and journal it (beta). 'jd move --help'
+                        says more
+  <system> undo move    move it back (beta). 'jd undo move --help'
+                        says more
   <system> beta on|off  turn beta features on or off. 'jd beta' says
                         which
 
@@ -363,6 +370,22 @@ _jd_nav() {
       fi
       _jd_nav_err "lib/new.sh is not loaded - run bin/jd, not lib/nav.sh"
       return 1
+      ;;
+    move | undo)
+      # Both act on the filesystem. The JDex is an index, and a note is
+      # not moved by this.
+      if [ "$mode" = jdex ]; then
+        _jd_nav_err "'jd $1' works in the filesystem, not the JDex"
+        return 1
+      fi
+      if ! command -v "_jd_$1" >/dev/null 2>&1; then
+        _jd_nav_err "lib/move.sh is not loaded - run bin/jd, not lib/nav.sh"
+        return 1
+      fi
+      t=$1
+      shift
+      "_jd_$t" "$sys" "$root" "$jdex" "$@"
+      return
       ;;
   esac
 

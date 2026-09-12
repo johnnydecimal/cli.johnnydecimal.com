@@ -45,6 +45,7 @@ _JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
 . "$_JD_CLI_DIR/lib/setup.sh"
 . "$_JD_CLI_DIR/lib/beta.sh"
 . "$_JD_CLI_DIR/lib/new.sh"
+. "$_JD_CLI_DIR/lib/move.sh"
 
 # --system SYS, first and nowhere else, so that it can never be read as
 # a title or as a flag of 'jd new'. Without it the program acts on the

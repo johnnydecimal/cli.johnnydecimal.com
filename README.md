@@ -83,6 +83,7 @@ The tool is a program, `~/.jd/cli/bin/jd`. Nothing has to be sourced to run it, 
   JD_BETA=1 ~/.jd/cli/bin/jd new id 21 A title --json
   ```
 
+- `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
 - `source ~/.jd/cli/jd.sh` also puts `~/.jd/cli/bin` on `$PATH`, so a program started from your shell can run `jd` by name.
 
 ## The prompt theme
@@ -187,6 +188,46 @@ Templates are in the filesystem. jd finds them by number, so the config does not
   - `warnings` lists the codes for problems that did not stop the command, for example `no_template`.
 - To fill in the tokens, first run a dry run with `--json`. `toFill` lists each token with its `brief` and its `flag`. Then run the command again with a value for each flag.
 - `--dry-run` says what jd would make, and which templates it would use.
+
+## `jd move`
+
+`jd move` moves a file or a folder into the folder for an ID, and writes one line to a journal. `jd undo move` reads the journal and moves it back.
+
+```sh
+jd move ~/Downloads/invoice.pdf 21.34    # into the folder for 21.34
+jd move ~/Desktop/Photos W0189           # a folder moves whole
+jd undo move                             # move the last thing back
+jd undo move ~/D25/.../invoice.pdf       # move that thing back
+```
+
+- `jd move` is a beta feature. Turn beta on first. See [Beta](#beta).
+- The target is an ID or a W number. It is found the same way `jd 21.34` finds it. An ID that is in the JDex but has no folder gets its folder made.
+- It prints the new path on stdout and exits 0. It does not cd.
+- It refuses, and moves nothing, when the target folder already holds something with that name. It never renames.
+- It refuses an iCloud stub, a `.name.icloud` file that is not downloaded. A Dropbox online-only file is not detected.
+- It refuses when the target folder is inside the thing you are moving.
+- `--dry-run` says what it would do, and moves nothing.
+- Run `jd move --help` or `jd undo move --help` for the full text.
+
+### The journal
+
+Every move is one line in `~/.jd/journal.jsonl`. So is every undo. The file is append only, and jd never edits it.
+
+```json
+{"at":"2026-09-12T07:09:53Z","sys":"D25","id":"21.34","kind":"file","from":"/Users/you/Downloads/invoice.pdf","to":"/Users/you/Documents/D25/20-29 Finance/21 Accounts/21.34 Invoices/invoice.pdf","by":"person","host":"mymac.local"}
+```
+
+- `by` is `person` when the shell ran it, and `program` when a script or an agent ran the program.
+- An undo line has `undoes`, the `at` of the move it undid, and `from` and `to` the other way round.
+- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync.
+- jd writes nothing into the JDex. An agent that files a mess reads the JSON result and writes the note itself.
+
+### `jd undo move`
+
+- With no path, it undoes the newest move in the system that is not yet undone. `--system` picks the system.
+- With a path, it undoes the move that put that path where it is, in whichever system.
+- It refuses if the moved thing is no longer where jd put it, code `moved_since`, or if something else is now where it came from, code `source_exists`.
+- An undo is never a candidate for undo.
 
 ## Beta
 

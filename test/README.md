@@ -62,6 +62,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
 | `cases/nav-make-id.sh` | Making an ID folder from its JDex entry. |
+| `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |
 | `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun, help, beta. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
 | `cases/prompt.sh` | `_jd_pwd`, the zsh prompt path. |
@@ -87,7 +88,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 - Configs are written by `_jd_fx_config_*`, one function per shape. Each
   takes the path to write.
 - A case file that changes the tree calls `_jd_fx_reset` when it is done.
-  `cases/nav-make-id.sh` is the only one that does.
+  `cases/nav-make-id.sh` and `cases/move.sh` do.
 
 Nothing here reads `~/.jd/config.json` or goes near a real system.
 `_jd_t_load` refuses a `$JD_CONFIG` that is not under `$JD_T_TMP`.
