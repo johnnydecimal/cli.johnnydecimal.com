@@ -1,5 +1,7 @@
 # The JD CLI utilities
 
+> Written by Claude. See [AI attribution](#ai-attribution).
+
 Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, and in zsh. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
 
 [^pr]: PRs welcome if you do.
