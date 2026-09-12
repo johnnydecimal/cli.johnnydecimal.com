@@ -25,7 +25,7 @@ _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 # The one 'no config' message, so that every command that needs the
 # config says the same thing, and names the way out. $1 the config path.
 _jd_nav_no_config_msg() {
-  printf "no config at %s\n    Humans: see %s\n    To generate a prompt so your agent can do this for you: jd agent-setup" \
+  printf "no config at %s\n    See %s for instructions.\n    To generate a prompt so your agent can do this for you: jd agent-setup" \
     "$1" "$_JD_CLI_HELP_URL"
 }
 
