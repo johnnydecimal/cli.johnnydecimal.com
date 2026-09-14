@@ -273,6 +273,10 @@ The suite runs in bash and in zsh. It exits non-zero if a test fails. It
 needs `jq`, and nothing else. It runs against fixture systems in a temporary
 folder, not against your system.
 
+`jd.fish` has its own coverage in `test/cases/fish.sh`, which runs fish
+as a subprocess. It needs `fish` too, and skips itself, with one line
+saying so, when there is none on the machine.
+
 Refer to [test/README.md](test/README.md) to add a test.
 
 ## Versions

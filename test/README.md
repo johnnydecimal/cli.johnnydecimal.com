@@ -28,6 +28,13 @@ The word is matched against the case filenames.
   `cases/bin.sh` runs `$JD_T_BIN`, the program, which is what a script,
   cron or an agent gets. The program does not cd, so that file reads
   `$JD_T_OUT` and never `$JD_T_PWD`.
+- `cases/fish.sh` is the exception to "once per shell": jd.fish is
+  neither bash nor zsh, so nothing sources it into the case file's own
+  shell. It runs `fish -c ...` as a subprocess instead, through
+  `_jd_t_run`, the same way `cases/bin.sh` runs `$JD_T_BIN`. Since fish
+  is a subprocess dependency here, not a driver, the file runs once,
+  under bash, and skips under zsh - and skips outright, with one line
+  saying so, on a machine that has no fish.
 - Nothing needs installing. `jq` is the only dependency, the same as the
   tools.
 - Environment:
@@ -58,6 +65,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/bin.sh` | `bin/jd`, the program, and the shape of the functions `jd.sh` makes. |
 | `cases/config.sh` | Reading the config, and every way it can be wrong. |
 | `cases/corpus.sh` | Runs each corpus in `test/corpus`. |
+| `cases/fish.sh` | `jd.fish`, the fish hook, run as a subprocess. Needs fish. |
 | `cases/known-bugs.sh` | Bugs the tests found, which nothing has fixed yet. |
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
