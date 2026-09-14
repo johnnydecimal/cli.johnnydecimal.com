@@ -7,6 +7,26 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.3.0 – 2026-09-14
+
+> AI generated.
+
+This release adds a rename and a subfolder target to `jd move`.
+
+### Features
+
+- `jd move <path> <id> --as <name>` moves and renames in one step.
+  `--as=<name>` works too. The journal keeps the old name in `from` and
+  the new name in `to`, so `jd undo move` gives the old name back. The
+  clash check is on the new name.
+- `jd move <path> <id>/<subfolder>` puts the file or folder in a
+  subfolder of the ID's folder, one level down. jd makes the subfolder
+  when it does not exist. An undo leaves the subfolder in place. A
+  second `/` is refused.
+- The `--json` result has two more fields: `name`, the name at `to`,
+  and `folder`, the folder at `to`.
+
+
 ## 3.2.0 – 2026-09-12
 
 > AI generated. Reviewed by Johnny.
