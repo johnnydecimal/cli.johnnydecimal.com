@@ -2,7 +2,7 @@
 
 > Written by Claude. See [AI attribution](#ai-attribution).
 
-Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, and in zsh. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
+Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, in zsh, and in fish. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
 
 [^pr]: PRs welcome if you do.
 
@@ -43,6 +43,12 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 
    ```sh
    source ~/.jd/cli/jd.sh
+   ```
+
+   In fish, add this line to `config.fish` instead:
+
+   ```fish
+   source ~/.jd/cli/jd.fish
    ```
 
    It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and moves your shell to where the program says. In zsh it also loads the prompt.
