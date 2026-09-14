@@ -198,14 +198,18 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 ```sh
 jd move ~/Downloads/invoice.pdf 21.34    # into the folder for 21.34
 jd move ~/Desktop/Photos W0189           # a folder moves whole
+jd move ~/Downloads/x.pdf "21.34/Bank statements"        # into a subfolder
+jd move ~/Downloads/x.pdf 21.34 --as "2024-03-14 x.pdf"  # with a new name
 jd undo move                             # move the last thing back
 jd undo move ~/D25/.../invoice.pdf       # move that thing back
 ```
 
 - `jd move` is a beta feature. Turn beta on first. See [Beta](#beta).
 - The target is an ID or a W number. It is found the same way `jd 21.34` finds it. An ID that is in the JDex but has no folder gets its folder made.
+- `<id>/<subfolder>` puts it in a subfolder of the ID's folder, one level down. jd makes the subfolder when it does not exist. An undo leaves the subfolder in place.
+- `--as <name>` gives it a new name as it moves. The journal keeps the old name in `from` and the new name in `to`. An undo gives the old name back.
 - It prints the new path on stdout and exits 0. It does not cd.
-- It refuses, and moves nothing, when the target folder already holds something with that name. It never renames.
+- It refuses, and moves nothing, when the target folder already holds something with that name. With `--as`, the check is on the new name.
 - It refuses an iCloud stub, a `.name.icloud` file that is not downloaded. A Dropbox online-only file is not detected.
 - It refuses when the target folder is inside the thing you are moving.
 - `--dry-run` says what it would do, and moves nothing.

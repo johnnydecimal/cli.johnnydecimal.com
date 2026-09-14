@@ -8,6 +8,8 @@
 #
 #   jd move <path> <id>        move the file or folder at <path> into
 #                              the folder for <id>, an ID or a W number
+#   jd move <path> <id>/<sub>  into a subfolder of it, made if need be
+#   jd move ... --as <name>    and give it a new name
 #   jd undo move               undo the newest move not yet undone
 #   jd undo move <path>        undo the move that put <path> where it is
 #
@@ -24,19 +26,30 @@
 
 _jd_move_usage() {
   cat <<'EOF'
-usage: <system> move <path> <id>
+usage: <system> move <path> <id>[/<subfolder>] [--as <name>]
 
   jd move ~/Downloads/invoice.pdf 21.34     into the folder for 21.34
   jd move ~/Desktop/Photos W0189            a folder moves whole
+  jd move ~/Downloads/x.pdf "21.34/Bank statements"
+                                            into a subfolder of 21.34
+  jd move ~/Downloads/x.pdf 21.34 --as "2024-03-14 Statement.pdf"
+                                            with a new name
 
 It moves the file or folder at <path> into the folder for <id>, and
 prints the new path. <id> is an ID, like 21.34, or a W number, like
 W0189. An ID that is in the JDex but has no folder gets its folder made.
 
+<id>/<subfolder> puts it in a subfolder of the ID's folder, one level
+down. jd makes the subfolder when it does not exist. An undo leaves the
+subfolder in place.
+
+--as <name> gives it a new name as it moves. The journal keeps both
+names, in 'from' and 'to', and 'jd undo move' gives the old name back.
+
 It refuses, and moves nothing, when:
 
-  - the target folder already holds something with that name. It never
-    renames. Rename the file and try again
+  - the target folder already holds something with that name. With
+    --as, the check is on the new name. Pick another name and try again
   - the file is an iCloud stub, a '.name.icloud' file that is not
     downloaded. Download it first. A Dropbox file that is online-only
     is not detected: jd moves the placeholder
@@ -46,6 +59,7 @@ Every move is one line in ~/.jd/journal.jsonl: when, which system, the
 ID, from, to, and whether a person or a program asked. 'jd undo move'
 reads it. Nothing is written into the JDex.
 
+      --as <name>     the new name. --as=<name> works too
       --dry-run       say what it would do, and move nothing
       --json          print one JSON object on stdout instead of the
                        usual lines. { "ok": true, ... } or, on error,
@@ -208,6 +222,9 @@ _jd_move_folder() {
 # $_JD_MOVE_*, set by the caller.
 #
 #   kind      "file" or "folder"
+#   name      the name it has at 'to'. With --as, the new name
+#   folder    the folder it is in at 'to': the ID's folder, or the
+#             subfolder
 #   by        "person" from the shell, "program" from anything else
 #   at        when the journal line was written. Empty in a dry run
 #   journal   the journal file
@@ -219,12 +236,15 @@ _jd_move_emit_ok() {
     --arg kind "$_JD_MOVE_KIND" \
     --arg from "$_JD_MOVE_FROM" \
     --arg to "$_JD_MOVE_TO" \
+    --arg name "$(basename -- "$_JD_MOVE_TO")" \
+    --arg folder "$(dirname -- "$_JD_MOVE_TO")" \
     --arg by "$_JD_MOVE_BY" \
     --arg at "$_JD_MOVE_AT" \
     --arg journal "$_JD_MOVE_JOURNAL" \
     --arg undoes "$_JD_MOVE_UNDOES" \
     --argjson dryRun "$1" \
     '{ok: true, sys: $sys, id: $id, kind: $kind, from: $from, to: $to,
+      name: $name, folder: $folder,
       by: $by, at: $at, dryRun: $dryRun, journal: $journal}
      + (if $undoes == "" then {} else {undoes: $undoes} end)'
 }
@@ -267,11 +287,15 @@ _jd_move_reset() {
   _JD_MOVE_W1=''
   _JD_MOVE_W2=''
   _JD_MOVE_NWORDS=0
+  _JD_MOVE_AS=''
+  _JD_MOVE_AS_SET=0
+  _JD_MOVE_MKDIR=''
 }
 
 # Read the flags, and up to two words, into $_JD_MOVE_W1 and
 # $_JD_MOVE_W2. A flag can go anywhere. '--' ends the flags, so a path
-# that starts with '-' can follow it. $@ the words.
+# that starts with '-' can follow it. '--as <name>' and '--as=<name>'
+# set $_JD_MOVE_AS. $@ the words.
 _jd_move_words() {
   local end=0 w
   # --json first, so that a bad word still gets the JSON error it asked
@@ -289,6 +313,14 @@ _jd_move_words() {
         help | --help) _JD_MOVE_HELP=1; shift; continue ;;
         --dry-run) _JD_MOVE_DRY=1; shift; continue ;;
         --json) _JD_MOVE_JSON=1; shift; continue ;;
+        --as=*) _JD_MOVE_AS=${1#--as=}; _JD_MOVE_AS_SET=1; shift; continue ;;
+        --as)
+          [ $# -gt 1 ] || { _jd_move_fail no_value '' "'--as' needs a name: --as \"...\""; return 1; }
+          _JD_MOVE_AS=$2
+          _JD_MOVE_AS_SET=1
+          shift 2
+          continue
+          ;;
         -*) _jd_move_fail unknown_option '' "unknown option '$1'"; return 1 ;;
       esac
     fi
@@ -353,8 +385,19 @@ _jd_move() {
   return "$_JD_MOVE_STATUS"
 }
 
+# Check a name that will be part of a path: a subfolder, or the name
+# from --as. $1 what it is, for the message, $2 the name. Returns 1 and
+# records the error when it cannot be a name.
+_jd_move_check_name() {
+  case $2 in
+    '') _jd_move_fail bad_name '' "the $1 is empty"; return 1 ;;
+    . | ..) _jd_move_fail bad_name '' "'$2' cannot be a $1"; return 1 ;;
+    */*) _jd_move_fail bad_name '' "a $1 cannot hold '/': '$2'"; return 1 ;;
+  esac
+}
+
 _jd_move_inner() {
-  local src id folder name
+  local src id sub folder name
 
   _jd_move_words "$@" || return 1
   if [ "$_JD_MOVE_HELP" -eq 1 ]; then
@@ -367,6 +410,21 @@ _jd_move_inner() {
   id=$_JD_MOVE_W2
   [ -n "$src" ] || { _jd_move_usage >&2; _jd_move_fail no_path '' "say what to move, and where: jd move <path> <id>"; return 1; }
   [ -n "$id" ] || { _jd_move_fail no_id '' "say where to move it: jd move <path> <id>"; return 1; }
+
+  # '21.34/Bank statements' is the ID, then one subfolder. One level is
+  # all there is for now, so a second '/' is refused, not made.
+  sub=''
+  case $id in
+    */*)
+      sub=${id#*/}
+      id=${id%%/*}
+      sub=${sub%/}
+      _jd_move_check_name subfolder "$sub" || return 1
+      ;;
+  esac
+  if [ "$_JD_MOVE_AS_SET" -eq 1 ]; then
+    _jd_move_check_name 'new name' "$_JD_MOVE_AS" || return 1
+  fi
 
   # The source. A stub is refused before anything is looked up.
   name=$(basename -- "${src%/}")
@@ -398,16 +456,35 @@ _jd_move_inner() {
   case $_JD_MOVE_ID in
     *~*) _JD_MOVE_ID=${_JD_MOVE_ID%%~*} ;;
   esac
-  _JD_MOVE_TO="$folder/$name"
 
-  # A folder cannot go inside itself, and a thing that is already there
-  # has nowhere to go.
+  # A folder cannot go inside itself. The check is on the ID's folder,
+  # so it covers a subfolder too.
   case "$folder/" in
     "$_JD_MOVE_FROM"/*)
       _jd_move_fail nested "$folder" "the folder for $id is inside $_JD_MOVE_FROM, so it cannot move there"
       return 1
       ;;
   esac
+
+  # The subfolder. One that exists must be a folder. One that does not
+  # is made, after the checks and before the move.
+  _JD_MOVE_MKDIR=''
+  if [ -n "$sub" ]; then
+    folder="$folder/$sub"
+    if [ -e "$folder" ] || [ -L "$folder" ]; then
+      if [ ! -d "$folder" ] || [ -L "$folder" ]; then
+        _jd_move_fail not_a_folder "$folder" "$sub is not a folder: $folder"
+        return 1
+      fi
+    else
+      _JD_MOVE_MKDIR=$folder
+    fi
+  fi
+
+  [ "$_JD_MOVE_AS_SET" -eq 1 ] && name=$_JD_MOVE_AS
+  _JD_MOVE_TO="$folder/$name"
+
+  # A thing that is already there has nowhere to go.
   if [ "$_JD_MOVE_FROM" = "$_JD_MOVE_TO" ]; then
     _jd_move_fail exists "$_JD_MOVE_TO" "$name is already in $folder"
     return 1
@@ -418,9 +495,11 @@ _jd_move_inner() {
   fi
 
   _JD_MOVE_BY=$(_jd_move_by)
-  printf 'jd: move %s\n' "$name" >&2
+  printf 'jd: move %s\n' "$(basename -- "$_JD_MOVE_FROM")" >&2
   _jd_move_say "from    $_JD_MOVE_FROM"
+  [ -n "$_JD_MOVE_MKDIR" ] && _jd_move_say "makes   $_JD_MOVE_MKDIR"
   _jd_move_say "to      $_JD_MOVE_TO"
+  [ "$_JD_MOVE_AS_SET" -eq 1 ] && _jd_move_say "as      $_JD_MOVE_AS"
 
   if [ "$_JD_MOVE_DRY" -eq 1 ]; then
     _jd_move_say 'nothing was moved'
@@ -428,6 +507,12 @@ _jd_move_inner() {
     return 0
   fi
 
+  if [ -n "$_JD_MOVE_MKDIR" ]; then
+    mkdir -- "$_JD_MOVE_MKDIR" || {
+      _jd_move_fail mkdir_failed "$_JD_MOVE_MKDIR" "could not make $_JD_MOVE_MKDIR"
+      return 1
+    }
+  fi
   _jd_move_do || return 1
 
   if [ "$_JD_MOVE_JSON" -eq 1 ]; then
@@ -481,6 +566,10 @@ _jd_undo_inner() {
   if [ "$_JD_MOVE_HELP" -eq 1 ]; then
     _jd_undo_usage
     return 0
+  fi
+  if [ "$_JD_MOVE_AS_SET" -eq 1 ]; then
+    _jd_move_fail unknown_option '' "'--as' is for 'jd move' only - an undo gives the old name back"
+    return 1
   fi
   case $noun in
     move) ;;

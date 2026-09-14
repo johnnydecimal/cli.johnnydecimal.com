@@ -222,16 +222,134 @@ mkdir "$_jd_t_mess/-flag"
 _jd_t_run_from "$_jd_t_mess" jd move --json -- -flag 11.11
 _jd_t_eq 'after --: a path that starts with a dash is a path' "$_jd_t_f11/-flag" "$(_jd_t_json .to)"
 
+# ------------------------------------------------------------- --as
+
+# The name it arrives with. The journal keeps the old name in 'from' and
+# the new one in 'to', so an undo gives the old name back.
+printf 'st\n' >"$_jd_t_mess/statement.pdf"
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as '2024-03-14 Statement.pdf' --dry-run --json
+_jd_t_status 'as dry run: exit status' 0
+_jd_t_eq 'as dry run: to has the new name' "$_jd_t_f11/2024-03-14 Statement.pdf" "$(_jd_t_json .to)"
+_jd_t_eq 'as dry run: name is the new name' '2024-03-14 Statement.pdf' "$(_jd_t_json .name)"
+_jd_t_contains 'as dry run: says the new name' 'as      2024-03-14 Statement.pdf' "$JD_T_ERR"
+_jd_t_exists 'as dry run: moves nothing' "$_jd_t_mess/statement.pdf"
+
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as '2024-03-14 Statement.pdf'
+_jd_t_status 'as: exit status' 0
+_jd_t_eq 'as: prints the new path' "$_jd_t_f11/2024-03-14 Statement.pdf" "$JD_T_OUT"
+_jd_t_exists 'as: it arrives under the new name' "$_jd_t_f11/2024-03-14 Statement.pdf"
+_jd_t_gone 'as: it has left the mess' "$_jd_t_mess/statement.pdf"
+_jd_t_eq 'as journal: from has the old name' "$_jd_t_mess/statement.pdf" "$(_jd_t_jline 7 .from)"
+_jd_t_eq 'as journal: to has the new name' "$_jd_t_f11/2024-03-14 Statement.pdf" "$(_jd_t_jline 7 .to)"
+
+printf 'st2\n' >"$_jd_t_mess/statement.pdf"
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 '--as=Invoice & co, 2026.pdf' --json
+_jd_t_status 'as: the old name is free but the new one is taken' 1
+_jd_t_eq 'as clash on the new name: code' exists "$(_jd_t_json .code)"
+_jd_t_eq 'as clash on the new name: path is the taken target' "$_jd_t_f11/Invoice & co, 2026.pdf" "$(_jd_t_json .path)"
+_jd_t_exists 'as clash on the new name: the source stays' "$_jd_t_mess/statement.pdf"
+
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as 'a/b' --json
+_jd_t_eq 'as with a slash: code' bad_name "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as '' --json
+_jd_t_eq 'as with nothing: code' bad_name "$(_jd_t_json .code)"
+_jd_t_run jd move --json "$_jd_t_mess/statement.pdf" 11.11 --as
+_jd_t_eq 'as with no value: code' no_value "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as .. --json
+_jd_t_eq 'as with dot dot: code' bad_name "$(_jd_t_json .code)"
+_jd_t_exists 'as refusals: the source stays' "$_jd_t_mess/statement.pdf"
+_jd_t_eq 'as refusals: no journal lines' 7 "$(_jd_t_lines)"
+
+_jd_t_run jd undo move --json
+_jd_t_status 'undo of a rename: the old name is taken in the mess, so it refuses' 1
+_jd_t_eq 'undo of a rename: code' source_exists "$(_jd_t_json .code)"
+_jd_t_eq 'undo of a rename: path is the old name' "$_jd_t_mess/statement.pdf" "$(_jd_t_json .path)"
+rm "$_jd_t_mess/statement.pdf"
+_jd_t_run jd undo move --json
+_jd_t_status 'undo of a rename, way clear: exit status' 0
+_jd_t_eq 'undo of a rename: to is the old path' "$_jd_t_mess/statement.pdf" "$(_jd_t_json .to)"
+_jd_t_exists 'undo of a rename: it is back under the old name' "$_jd_t_mess/statement.pdf"
+_jd_t_gone 'undo of a rename: the new name is gone' "$_jd_t_f11/2024-03-14 Statement.pdf"
+rm "$_jd_t_mess/statement.pdf"
+
+_jd_t_run jd undo move --as x --json
+_jd_t_eq 'undo takes no --as: code' unknown_option "$(_jd_t_json .code)"
+
+# ------------------------------------------------------------- subfolder
+
+# '<id>/<subfolder>' is a subfolder of the ID's folder. It is made when
+# it does not exist, and an undo leaves it in place.
+printf 'b1\n' >"$_jd_t_mess/b1.pdf"
+printf 'b2\n' >"$_jd_t_mess/b2.pdf"
+_jd_t_run jd move "$_jd_t_mess/b1.pdf" '11.11/Bank statements' --dry-run --json
+_jd_t_status 'subfolder dry run: exit status' 0
+_jd_t_eq 'subfolder dry run: to' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_json .to)"
+_jd_t_eq 'subfolder dry run: folder' "$_jd_t_f11/Bank statements" "$(_jd_t_json .folder)"
+_jd_t_contains 'subfolder dry run: says it would make the subfolder' "makes   $_jd_t_f11/Bank statements" "$JD_T_ERR"
+_jd_t_gone 'subfolder dry run: makes nothing' "$_jd_t_f11/Bank statements"
+
+_jd_t_run jd move "$_jd_t_mess/b1.pdf" '11.11/Bank statements' --json
+_jd_t_status 'subfolder: exit status' 0
+_jd_t_eq 'subfolder: id is the ID, not the subfolder' 11.11 "$(_jd_t_json .id)"
+_jd_t_eq 'subfolder: to' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_json .to)"
+_jd_t_exists 'subfolder: the subfolder is made' "$_jd_t_f11/Bank statements"
+_jd_t_exists 'subfolder: the file is in it' "$_jd_t_f11/Bank statements/b1.pdf"
+_jd_t_eq 'subfolder journal: to is the full path' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_jline 9 .to)"
+_jd_t_eq 'subfolder journal: id' 11.11 "$(_jd_t_jline 9 .id)"
+
+_jd_t_run jd move "$_jd_t_mess/b2.pdf" '11.11/Bank statements/' --as '2024-04-14 Statement.pdf' --json
+_jd_t_status 'subfolder that exists, with --as: exit status' 0
+_jd_t_eq 'subfolder that exists, with --as: to' "$_jd_t_f11/Bank statements/2024-04-14 Statement.pdf" "$(_jd_t_json .to)"
+_jd_t_run jd move "$_jd_t_mess/b2.pdf" '11.11/Bank statements' --json
+_jd_t_eq 'subfolder that exists: no second folder made' "$(_jd_t_json .code)" no_source
+
+printf 'w\n' >"$_jd_t_mess/w.txt"
+_jd_t_run jd move "$_jd_t_mess/w.txt" 'W0189/Sub' --json
+_jd_t_status 'subfolder of a work package: exit status' 0
+_jd_t_eq 'subfolder of a work package: to' "$_jd_t_w189/Sub/w.txt" "$(_jd_t_json .to)"
+_jd_t_run jd undo move --json
+_jd_t_status 'undo out of a work package subfolder: exit status' 0
+_jd_t_exists 'undo out of a work package subfolder: it is back' "$_jd_t_mess/w.txt"
+rm "$_jd_t_mess/w.txt"
+rmdir "$_jd_t_w189/Sub"
+
+printf 'b3\n' >"$_jd_t_mess/b3.pdf"
+_jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.11/' --json
+_jd_t_eq 'subfolder with nothing after the slash: code' bad_name "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.11/a/b' --json
+_jd_t_eq 'subfolder two deep: code' bad_name "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.11/..' --json
+_jd_t_eq 'subfolder dot dot: code' bad_name "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.11/Invoice & co, 2026.pdf' --json
+_jd_t_eq 'subfolder that is a file: code' not_a_folder "$(_jd_t_json .code)"
+_jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.99/Sub' --json
+_jd_t_eq 'subfolder of an ID that does not exist: code' no_match "$(_jd_t_json .code)"
+_jd_t_gone 'subfolder refusals: no subfolder made' "$_jd_t_f11/a"
+_jd_t_exists 'subfolder refusals: the source stays' "$_jd_t_mess/b3.pdf"
+rm "$_jd_t_mess/b3.pdf"
+
+_jd_t_run jd undo move "$_jd_t_f11/Bank statements/2024-04-14 Statement.pdf" --json
+_jd_t_status 'undo out of a subfolder: exit status' 0
+_jd_t_eq 'undo out of a subfolder: back under the old name' "$_jd_t_mess/b2.pdf" "$(_jd_t_json .to)"
+_jd_t_run jd undo move "$_jd_t_f11/Bank statements/b1.pdf" --json
+_jd_t_status 'undo out of a subfolder, the last file: exit status' 0
+_jd_t_exists 'undo leaves the empty subfolder in place' "$_jd_t_f11/Bank statements"
+rm "$_jd_t_mess/b1.pdf" "$_jd_t_mess/b2.pdf"
+rmdir "$_jd_t_f11/Bank statements"
+
 # ------------------------------------------------------------------ undo
 
 # The journal so far, oldest first: the invoice, Photos, agent.txt to
-# W0189, plain.txt to 12.99, -dashed to P76, -flag. The newest move not
-# yet undone in D25 is -flag: the P76 move is in another system.
+# W0189, plain.txt to 12.99, -dashed to P76, -flag, then the --as and
+# subfolder moves, every one of them undone. The newest move not yet
+# undone in D25 is -flag: the P76 move is in another system.
 _jd_t_run jd undo move --dry-run
 _jd_t_status 'undo dry run: exit status' 0
 _jd_t_contains 'undo dry run: names the newest move in this system' "from    $_jd_t_f11/-flag" "$JD_T_ERR"
 _jd_t_exists 'undo dry run: moves nothing' "$_jd_t_f11/-flag"
-_jd_t_eq 'undo dry run: no journal line' 6 "$(_jd_t_lines)"
+_jd_t_ln=$(_jd_t_lines)
+_jd_t_run jd undo move --dry-run
+_jd_t_eq 'undo dry run: no journal line' "$_jd_t_ln" "$(_jd_t_lines)"
 
 _jd_t_run_from "$_jd_t_mess" jd undo move
 _jd_t_status 'undo: exit status' 0
@@ -239,12 +357,13 @@ _jd_t_eq 'undo: prints where it went back to' "$_jd_t_mess/-flag" "$JD_T_OUT"
 _jd_t_at 'undo: the shell does not cd' "$_jd_t_mess"
 _jd_t_exists 'undo: it is back' "$_jd_t_mess/-flag"
 _jd_t_gone 'undo: it has left the ID' "$_jd_t_f11/-flag"
-_jd_t_eq 'undo: one more journal line' 7 "$(_jd_t_lines)"
-_jd_t_eq 'undo journal: from is where it was' "$_jd_t_f11/-flag" "$(_jd_t_jline 7 .from)"
-_jd_t_eq 'undo journal: to is where it came from' "$_jd_t_mess/-flag" "$(_jd_t_jline 7 .to)"
-_jd_t_eq 'undo journal: undoes names the original' "$(_jd_t_jline 6 .at)" "$(_jd_t_jline 7 .undoes)"
-_jd_t_eq 'undo journal: id' 11.11 "$(_jd_t_jline 7 .id)"
-_jd_t_eq 'undo journal: kind' folder "$(_jd_t_jline 7 .kind)"
+_jd_t_eq 'undo: one more journal line' "$((_jd_t_ln + 1))" "$(_jd_t_lines)"
+_jd_t_last=$(_jd_t_lines)
+_jd_t_eq 'undo journal: from is where it was' "$_jd_t_f11/-flag" "$(_jd_t_jline "$_jd_t_last" .from)"
+_jd_t_eq 'undo journal: to is where it came from' "$_jd_t_mess/-flag" "$(_jd_t_jline "$_jd_t_last" .to)"
+_jd_t_eq 'undo journal: undoes names the original' "$(_jd_t_jline 6 .at)" "$(_jd_t_jline "$_jd_t_last" .undoes)"
+_jd_t_eq 'undo journal: id' 11.11 "$(_jd_t_jline "$_jd_t_last" .id)"
+_jd_t_eq 'undo journal: kind' folder "$(_jd_t_jline "$_jd_t_last" .kind)"
 
 # Undo again: the newest not-undone move in D25 is now plain.txt to 12.99.
 _jd_t_run jd undo move --json
