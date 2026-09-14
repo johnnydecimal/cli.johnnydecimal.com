@@ -7,9 +7,33 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.4.0 – 2026-09-15
+
+> AI generated. Reviewed by Johnny.
+
+This release adds a shell hook for fish. Sean Lunsford contributed it
+in #12.
+
+### Features
+
+- `jd.fish` is the shell hook for fish. Source it from `config.fish`.
+  It defines `jd`, `jdex`, and one command per system, the same as
+  `jd.sh` does. Each one runs `bin/jd` and moves your shell to the
+  folder the program prints. It also puts `bin` on `$PATH`. There is
+  no fish port of the zsh prompt.
+
+### Changes
+
+- `test/cases/fish.sh` covers the fish hook. It runs fish as a
+  subprocess, and skips with one line when fish is not installed. CI
+  installs fish, so the tests run there.
+- The README lists fish next to bash and zsh, with its own install
+  step.
+
+
 ## 3.3.0 – 2026-09-14
 
-> AI generated.
+> AI generated. Reviewed by Johnny.
 
 This release adds a rename and a subfolder target to `jd move`.
 
