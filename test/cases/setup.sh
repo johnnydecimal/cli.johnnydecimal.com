@@ -38,8 +38,20 @@ _jd_t_contains 'no config: the prompt names the template' \
   "$JD_T_REPO/config.example.json" "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names the configuration page' \
   'https://johnnydecimal.com/jdhq/configuration' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt names the MCP install tool' \
+_jd_t_lacks 'no config: the prompt is the one home, it does not defer to install_cli' \
   'install_cli' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt sends a bought system to install_system' \
+  'install_system' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt says never to add the source line twice' \
+  'Never add the line twice' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt resolves a symlinked rc file' \
+  'symlink' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt warns that the theme takes PROMPT' \
+  'whatever PROMPT' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names config.fish for fish' \
+  'config.fish' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt says never to overwrite a file' \
+  'Never overwrite' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt says what to do with no system' \
   'If you find no system, stop.' "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt is not an error' 'no config' "$JD_T_ERR"

@@ -7,6 +7,35 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 3.5.0 – 2026-09-15
+
+> AI generated. Reviewed by Johnny.
+
+This release makes `jd agent-setup` the one home for setup. The
+johnnydecimal.com MCP server's `install_cli` tool clones this repo and
+then sends the agent to this prompt. The prompt no longer sends the
+agent back to the server.
+
+### Changes
+
+- The prompt carries the safety rules that lived in the server's text
+  before: name the package manager before jq is installed, add to an
+  existing config and never overwrite it, `JD_CONFIG` overrides the
+  file's location, the rc file for each shell with `config.fish` for
+  fish, show the line and the file before writing, never add the source
+  line twice, append and never reorder, resolve a symlinked rc file
+  and say where the real file lives, and touch no other file.
+- Step 3 sends a bought system that is not on disk to the server's
+  `install_system` tool, which builds it and writes the config.
+- Step 8 offers the zsh prompt both ways, `_jd_pwd` in the user's own
+  prompt or Johnny's theme, and warns that the theme sets `PROMPT`
+  whatever was there. Nothing is added without a yes.
+- The line "If you have the Johnny.Decimal MCP server, call its
+  install_cli tool" is gone.
+- `test/cases/setup.sh` checks the new lines and that `install_cli` is
+  no longer named.
+
+
 ## 3.4.0 – 2026-09-15
 
 > AI generated. Reviewed by Johnny.

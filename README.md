@@ -25,7 +25,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 
 3. If `~/.jd/config.json` does not exist, make it. Either way works.
 
-   Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems and writes the file:
+   Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems, writes the file, adds the source line, and offers the prompt. It is the one prompt for setup. The johnnydecimal.com MCP server's `install_cli` tool clones this repository and then sends an agent to it:
 
    ```sh
    ~/.jd/cli/bin/jd agent-setup
