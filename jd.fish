@@ -21,7 +21,7 @@
 # Needs jq.
 
 set -l _jd_hook_self (status filename)
-set -g _jd_hook_dir (cd -- (dirname -- $_jd_hook_self) && pwd)
+set -g _jd_hook_dir (path resolve (path dirname -- $_jd_hook_self))
 set -g _jd_hook_bin $_jd_hook_dir/bin/jd
 
 # bin on $PATH, so that a subprocess of this shell can run jd by name.
