@@ -92,6 +92,29 @@ _jd_t_contains 'many matches: the list is on stderr' \
 _jd_t_fish 'echo $PATH'
 _jd_t_contains 'jd.fish puts bin on $PATH' "$JD_T_REPO/bin" "$JD_T_OUT"
 
+# ------------------------------------------------ sourcing moves no shell
+#
+# The hook's one licence is to cd when you call a command. Sourcing it
+# must not: jd.sh finds its own directory with $(cd -- ... && pwd), a
+# subshell whose cd dies with it, and the first fish port copied that
+# line as written. Fish runs a command substitution in the calling
+# shell, not a subshell, so that cd was real and every new shell
+# started in the repo. Compare pwd across the source in one fish, so
+# that a symlinked $JD_T_TMP cannot pass or fail this on its own.
+
+_jd_t_run fish -c "cd '$JD_T_TMP'
+  set -l before (pwd)
+  source '$JD_T_REPO/jd.fish'
+  test (pwd) = \$before; and echo unchanged; or echo (pwd)"
+_jd_t_eq 'sourcing jd.fish leaves the directory alone' 'unchanged' "$JD_T_OUT"
+
+# Sourced by a relative path, the hook must still resolve its own
+# directory to an absolute one: what cd && pwd was there for.
+
+_jd_t_run fish -c "cd '$JD_T_REPO'; source ./jd.fish; echo \$PATH"
+_jd_t_contains 'sourced by a relative path, bin goes on $PATH absolute' \
+  "$JD_T_REPO/bin" "$JD_T_OUT"
+
 # ----------------------------------------------------- what jd.fish makes
 #
 # The same shape cases/bin.sh checks for jd.sh: each function must name
