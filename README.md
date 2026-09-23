@@ -2,7 +2,7 @@
 
 > Written by Claude. See [AI attribution](#ai-attribution).
 
-Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, in zsh, and in fish. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
+Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and later, in zsh, and in fish 3.5 and later. The code is MIT licensed. Adapt it for other shells as necessary.[^pr]
 
 [^pr]: PRs welcome if you do.
 
