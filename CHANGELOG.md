@@ -7,6 +7,57 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.0.0 – 2026-10-06
+
+> AI generated. Reviewed by Johnny.
+
+jd no longer keeps its files in `~/.jd`. After you update, jd
+continues to operate, and you do not have to do anything immediately.
+A later version of jd will not read `~/.jd`, so move your files soon.
+Run `jd agent-setup` and give the prompt to your agent, or run
+`jd paths` and use the commands that it prints. If you use the
+Johnny.Decimal agent skills, update the skills first. The README has
+all the steps, in "Move from `~/.jd`".
+
+### Features
+
+- `jd paths` prints the paths that jd uses on your machine: the
+  configuration file, the journal, and the folder that contains jd.
+  `jd paths config` prints only one path. `jd paths --json` prints a
+  JSON object.
+- The prompt from `jd agent-setup` now tells your agent to move your
+  files out of `~/.jd`. Your agent asks you before each move.
+
+### Changes
+
+- The configuration file is now
+  `~/.config/johnnydecimal/config.json`.
+- The journal of `jd move` is now
+  `~/.local/state/johnnydecimal/journal.jsonl`.
+- The README now tells you to clone jd to
+  `~/.local/share/johnnydecimal/cli`. jd operates from any folder, so
+  you can also keep your clone in `~/.jd/cli`.
+- jd follows the XDG Base Directory Specification. If you set
+  `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` or `$XDG_DATA_HOME`, jd uses
+  that directory. If you set `$JD_CONFIG`, jd continues to read only
+  that file.
+- If your configuration file or your journal is still in `~/.jd`, jd
+  continues to use it. Each command prints one line to tell you.
+- If you have a configuration file in `~/.jd` and also in
+  `~/.config/johnnydecimal`, jd reads the file in
+  `~/.config/johnnydecimal` and prints a warning.
+- `jd paths` no longer searches for a folder with "paths" in its
+  name, because `paths` is now a command. A search in one category,
+  such as `jd 21 paths`, continues to operate.
+- A new shell takes approximately 15 ms longer to start.
+
+### Fixes
+
+- When a fish shell starts, `jd.fish` no longer moves the shell to
+  the jd folder. `jd.fish` now needs fish 3.5 or later. Sean Lunsford
+  contributed the fix in #14.
+
+
 ## 3.5.0 – 2026-09-15
 
 > AI generated. Reviewed by Johnny.
