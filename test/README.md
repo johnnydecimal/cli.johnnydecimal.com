@@ -70,6 +70,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
 | `cases/nav-make-id.sh` | Making an ID folder from its JDex entry. |
+| `cases/paths.sh` | Where jd keeps its files: the XDG paths, `~/.jd`, the old place, and `jd paths`. |
 | `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |
 | `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun, help, beta. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
@@ -83,7 +84,9 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 ## How the fixtures work
 
 - `test/run.sh` makes a temp folder for each case file, in each shell.
-  It sets `$JD_T_TMP` to it, and `$HOME` to `$JD_T_TMP/home`.
+  It sets `$JD_T_TMP` to it, and `$HOME` to `$JD_T_TMP/home`. It unsets
+  `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` and `$XDG_DATA_HOME`, so that
+  yours do not reach a test.
 - A case file calls `_jd_fx_build`. That makes three trees under
   `$JD_T_TMP/fixtures`:
   - `$JD_FX_ROOT` – the D25 test system.
@@ -98,8 +101,13 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 - A case file that changes the tree calls `_jd_fx_reset` when it is done.
   `cases/nav-make-id.sh` and `cases/move.sh` do.
 
-Nothing here reads `~/.jd/config.json` or goes near a real system.
-`_jd_t_load` refuses a `$JD_CONFIG` that is not under `$JD_T_TMP`.
+Nothing here reads the real config or the real journal, or goes near a
+real system. `_jd_t_load` refuses a `$JD_CONFIG` that is not under
+`$JD_T_TMP`. The journal is under `$HOME`, which is under `$JD_T_TMP`.
+
+`cases/paths.sh` is the one file that takes `$JD_CONFIG` away, to test
+how jd finds the config without it. It calls `_jd_t_no_config_var`,
+which stops the file if `$HOME` is not under `$JD_T_TMP`.
 
 ## Add a test
 
@@ -136,6 +144,7 @@ Nothing here reads `~/.jd/config.json` or goes near a real system.
 | --- | --- |
 | `_jd_t_config <config>` | Points `$JD_CONFIG` at a config, and loads nothing. For a case that only runs the program. |
 | `_jd_t_load <config>` | The same, and sources `jd.sh` again, so this shell has `jd`. Sets `$JD_T_LOADERR`. |
+| `_jd_t_no_config_var` | Unsets `$JD_CONFIG`, so that jd finds the config by the XDG paths. Stops if `$HOME` is not under `$JD_T_TMP`. |
 | `_jd_t_libs` | Sources `lib` into this shell, for a test that drives a lib function directly. |
 | `_jd_t_version` | The version, read from `bin/jd`, which is the one place it lives. |
 | `_jd_t_run <cmd> [words]` | Runs the command from `$JD_T_TMP`, then returns there. |

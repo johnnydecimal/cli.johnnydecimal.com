@@ -18,7 +18,7 @@ Each kind has a `none.sh`, which does nothing and is the default.
 
 ## Choosing one
 
-The system's entry in `~/.jd/config.json` names the adapter, and holds
+The system's entry in the config file names the adapter, and holds
 whatever that adapter needs:
 
 ```json

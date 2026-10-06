@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # move.sh - move a file or a folder into an ID, and undo a move
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
-# $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR.
+# $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR, and after
+# lib/paths.sh, which says where the journal is.
 #
 # It defines _jd_move and _jd_undo, which nav.sh calls for 'jd move' and
 # 'jd undo':
@@ -13,10 +14,13 @@
 #   jd undo move               undo the newest move not yet undone
 #   jd undo move <path>        undo the move that put <path> where it is
 #
-# Every move is one line in the journal, ~/.jd/journal.jsonl, and so is
-# every undo. The journal is append only. It is what answers 'where did
-# that file go', and it is what makes undo possible. A move that cannot
-# be journaled is not made.
+# Every move is one line in the journal, journal.jsonl, and so is every
+# undo. The journal is append only. It is what answers 'where did that
+# file go', and it is what makes undo possible. A move that cannot be
+# journaled is not made.
+#
+# The journal is state, in the XDG sense: it is what this machine did.
+# So it is in $XDG_STATE_HOME/johnnydecimal, and it does not sync.
 #
 # The CLI moves and journals. It decides nothing about where a file
 # belongs, and it writes nothing into the JDex. An agent that files a
@@ -55,9 +59,10 @@ It refuses, and moves nothing, when:
     is not detected: jd moves the placeholder
   - the target folder is inside the thing you are moving
 
-Every move is one line in ~/.jd/journal.jsonl: when, which system, the
-ID, from, to, and whether a person or a program asked. 'jd undo move'
-reads it. Nothing is written into the JDex.
+Every move is one line in the journal: when, which system, the ID,
+from, to, and whether a person or a program asked. 'jd undo move' reads
+it. 'jd paths journal' prints where the journal is. Nothing is written
+into the JDex.
 
       --as <name>     the new name. --as=<name> works too
       --dry-run       say what it would do, and move nothing
@@ -80,9 +85,10 @@ usage: <system> undo move [<path>]
                                undo the move that put that path where
                                it is, whichever system it is in
 
-It reads ~/.jd/journal.jsonl, moves the file or folder back to where it
-came from, and prints that path. The undo is one more line in the
-journal. The journal is never edited.
+It reads the journal, moves the file or folder back to where it came
+from, and prints that path. The undo is one more line in the journal.
+The journal is never edited. 'jd paths journal' prints where the
+journal is.
 
 It refuses, and moves nothing, when:
 
@@ -98,8 +104,6 @@ EOF
 }
 
 # ------------------------------------------------------------ small parts
-
-_jd_move_journal() { printf '%s' "$HOME/.jd/journal.jsonl"; }
 
 # Say what happened, on stderr, so that stdout stays the new path.
 _jd_move_say() { printf '     %s\n' "$*" >&2; }
@@ -144,10 +148,14 @@ _jd_move_host() { uname -n 2>/dev/null; }
 
 # The journal has to take a line before anything moves. Make its folder,
 # then check the write. $1 the journal path.
+#
+# The folder is made with mode 700, and so is every folder above it that
+# is missing. The XDG spec asks that of a program that makes one. The
+# umask is in a subshell, so it is gone when the folder is made.
 _jd_move_journal_ready() {
   local j=$1 d
   d=$(dirname -- "$j")
-  [ -d "$d" ] || mkdir -p -- "$d" 2>/dev/null
+  [ -d "$d" ] || (umask 077 && mkdir -p -- "$d") 2>/dev/null
   if [ -e "$j" ]; then
     [ -f "$j" ] && [ -w "$j" ]
   else
@@ -282,7 +290,7 @@ _jd_move_reset() {
   _JD_MOVE_BY=''
   _JD_MOVE_AT=''
   _JD_MOVE_UNDOES=''
-  _JD_MOVE_JOURNAL=$(_jd_move_journal)
+  _JD_MOVE_JOURNAL=$(_jd_paths_journal)
   _JD_MOVE_FOLDER=''
   _JD_MOVE_W1=''
   _JD_MOVE_W2=''
@@ -336,6 +344,10 @@ _jd_move_words() {
 
 # The checks both commands make before anything else: jq, beta, the
 # journal. $1 the name of the command, for the message.
+#
+# This is also where a journal that is still in ~/.jd, the old place,
+# gets its one line. It is said here, after beta, so that it comes once
+# for a command that will use the journal, and never with the help.
 _jd_move_gate() {
   command -v jq >/dev/null 2>&1 || { _jd_move_fail no_jq '' "jq is not installed"; return 1; }
   _jd_beta_on || {
@@ -343,6 +355,7 @@ _jd_move_gate() {
     _jd_beta_warn
     return 1
   }
+  _jd_paths_note journal
   _jd_move_journal_ready "$_JD_MOVE_JOURNAL" || {
     _jd_move_fail journal_not_writable "$_JD_MOVE_JOURNAL" "cannot write the journal, so nothing moves: $_JD_MOVE_JOURNAL"
     return 1

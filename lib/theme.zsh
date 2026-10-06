@@ -3,8 +3,8 @@
 # Part of the Johnny.Decimal command line. jd.sh does NOT load this file.
 # You source it yourself, after jd.sh:
 #
-#   source ~/.jd/cli/jd.sh
-#   source ~/.jd/cli/lib/theme.zsh
+#   source ~/.local/share/johnnydecimal/cli/jd.sh
+#   source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
 #
 # You get the prompt Johnny uses. Two lines:
 #

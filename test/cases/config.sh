@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: MIT
-# config.sh - reading ~/.jd/config.json, and what happens when it is wrong
+# config.sh - reading the config file, and what happens when it is wrong
 #
 # Everything reads one config file. $JD_CONFIG moves it, which is how the
 # whole suite keeps away from the real one. These tests cover the shapes
 # a config can take, good and bad, and check the message each bad shape
-# gives, because a silent failure is the bug 2.0.2 was about.
+# gives, because a silent failure is the bug 2.0.2 was about. Where jd
+# looks for the file when $JD_CONFIG is not set is in cases/paths.sh.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2

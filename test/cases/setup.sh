@@ -67,7 +67,7 @@ _jd_t_lacks 'the prompt text has no backtick' '`' \
 _jd_t_lacks 'the prompt text has no dollar but its own variables' \
   '$' \
   "$(sed -n '/<<EOF$/,/^EOF$/p' "$JD_T_REPO/lib/setup.sh" |
-    sed 's/\$_JD_CLI_DIR//g; s/\$cfg//g; s/\$state//g')"
+    sed 's/\$_JD_CLI_DIR//g; s/\$_JD_SETUP_MOVE//g; s/\$cfg//g; s/\$state//g')"
 
 _jd_t_run jd jdex agent-setup
 _jd_t_status 'no config: jd jdex agent-setup works too' 0

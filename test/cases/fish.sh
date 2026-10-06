@@ -143,4 +143,48 @@ _jd_t_lacks 'jd: names no system, so the program picks the default' \
 _jd_t_fish 'functions -a'
 _jd_t_lacks 'sourcing cleans up its own helpers' '_jd_hook' "$JD_T_OUT"
 
+# ------------------------------------------------- where the config is
+#
+# jd.fish asks the program where the config is, as jd.sh does, so it
+# holds no copy of that rule. With no $JD_CONFIG, the per-system
+# commands come from the config in each place the program looks. The
+# rule itself is tested in cases/paths.sh.
+
+_jd_t_no_config_var
+
+# Say whether jd.fish made the per-system command p76.
+_jd_t_fish_p76() {
+  _jd_t_fish 'functions -q p76; and echo yes; or echo no'
+}
+
+_jd_t_fish_p76
+_jd_t_eq 'no config in any place: no per-system command' 'no' "$JD_T_OUT"
+
+mkdir -p "$HOME/.config/johnnydecimal"
+_jd_fx_config_two "$HOME/.config/johnnydecimal/config.json"
+_jd_t_fish_p76
+_jd_t_eq 'a config in ~/.config gives one command per system' 'yes' "$JD_T_OUT"
+rm -rf "$HOME/.config"
+
+mkdir -p "$JD_T_TMP/xdg/johnnydecimal"
+_jd_fx_config_two "$JD_T_TMP/xdg/johnnydecimal/config.json"
+XDG_CONFIG_HOME="$JD_T_TMP/xdg"
+export XDG_CONFIG_HOME
+_jd_t_fish_p76
+_jd_t_eq 'a config in $XDG_CONFIG_HOME gives one command per system' 'yes' "$JD_T_OUT"
+unset XDG_CONFIG_HOME
+
+# ~/.jd, the old place, which the program still reads for now. A new
+# shell says nothing about it: the line comes with the command.
+mkdir -p "$HOME/.jd"
+_jd_fx_config_two "$HOME/.jd/config.json"
+_jd_t_fish_p76
+_jd_t_eq 'a config in ~/.jd still gives one command per system' 'yes' "$JD_T_OUT"
+_jd_t_lacks 'a config in ~/.jd: sourcing says nothing about it' 'old place' "$JD_T_ERR"
+_jd_t_fish 'jd 11.11'
+_jd_t_eq 'a config in ~/.jd: jd still moves the shell' "$_jd_t_id" "$JD_T_OUT"
+_jd_t_contains 'a config in ~/.jd: the command says it is in the old place' \
+  'the config is in ~/.jd, the old place' "$JD_T_ERR"
+rm -rf "$HOME/.jd"
+
 _jd_t_summary

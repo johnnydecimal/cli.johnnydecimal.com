@@ -3,8 +3,9 @@
 # it, and jd undo move, which moves it back
 #
 # The mess is a folder outside every fixture system, under $JD_T_TMP.
-# The journal is ~/.jd/journal.jsonl, and $HOME is under $JD_T_TMP too,
-# so nothing here touches a real journal.
+# The journal is ~/.local/state/johnnydecimal/journal.jsonl, and $HOME is
+# under $JD_T_TMP too, so nothing here touches a real journal. Where the
+# journal is, and what happens to one in ~/.jd, is in cases/paths.sh.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -26,7 +27,7 @@ _jd_t_f11="$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID"
 _jd_t_f12="$JD_FX_ROOT/10-19 Area one/12 Category twelve"
 _jd_t_w189="$JD_FX_ROOT/10-19 Area one/W0189 Work package one"
 _jd_t_p31="$JD_FX_ROOT2/30-39 Area three/31 Category thirtyone/31.11 Pear"
-_jd_t_journal="$HOME/.jd/journal.jsonl"
+_jd_t_journal="$HOME/.local/state/johnnydecimal/journal.jsonl"
 
 # A fresh mess. Called before each group, so a group starts from the
 # same files whatever the one before it did.

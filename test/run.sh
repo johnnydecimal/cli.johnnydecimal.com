@@ -14,8 +14,8 @@
 #   JD_TEST_KEEP     set to 1 to keep the temp directory for a look
 #
 # Each case file gets its own temp directory, its own $HOME, and its own
-# fixture systems. Nothing here reads the real ~/.jd/config.json or goes
-# near a real Johnny.Decimal system.
+# fixture systems. Nothing here reads the real config or the real
+# journal, or goes near a real Johnny.Decimal system.
 #
 # This file is POSIX sh. The harness and the case files are not, because
 # they source jd.sh and so must run under bash or zsh.
@@ -27,6 +27,12 @@ JD_T_REPO=$(cd -- "$_jd_r_here/.." && pwd -P)
 export JD_T_REPO
 
 _jd_r_match=${1-}
+
+# jd finds its config and its journal through these, and they come in
+# from the shell that started the suite. Left set, a test would write
+# its journal into the real $XDG_STATE_HOME. A case that tests one sets
+# it again, to a folder under its own temp directory.
+unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME
 
 # ------------------------------------------------------------ the shells
 

@@ -17,38 +17,41 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 ## Installation
 
 1. Install `jq` if it is not installed. On macOS: `brew install jq`.[^homebrew]
-2. Clone this repository to `~/.jd/cli`:
+2. Clone this repository to `~/.local/share/johnnydecimal/cli`:
 
    ```sh
-   git clone https://github.com/johnnydecimal/cli.johnnydecimal.com ~/.jd/cli
+   git clone https://github.com/johnnydecimal/cli.johnnydecimal.com \
+     ~/.local/share/johnnydecimal/cli
    ```
 
-3. If `~/.jd/config.json` does not exist, make it. Either way works.
+3. If `~/.config/johnnydecimal/config.json` does not exist, make it. Either way works.
 
    Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems, writes the file, adds the source line, and offers the prompt. It is the one prompt for setup. The johnnydecimal.com MCP server's `install_cli` tool clones this repository and then sends an agent to it:
 
    ```sh
-   ~/.jd/cli/bin/jd agent-setup
+   ~/.local/share/johnnydecimal/cli/bin/jd agent-setup
    ```
 
-   On macOS, `~/.jd/cli/bin/jd agent-setup | pbcopy` puts the prompt on the clipboard.
+   On macOS, add `| pbcopy` to that line to put the prompt on the clipboard.
 
    Or copy the template and edit it for your systems:
 
    ```sh
-   cp ~/.jd/cli/config.example.json ~/.jd/config.json
+   mkdir -p -m 700 ~/.config/johnnydecimal
+   cp ~/.local/share/johnnydecimal/cli/config.example.json \
+     ~/.config/johnnydecimal/config.json
    ```
 
 4. Add this line to `.zshrc`, or to `.bashrc`:
 
    ```sh
-   source ~/.jd/cli/jd.sh
+   source ~/.local/share/johnnydecimal/cli/jd.sh
    ```
 
    In fish, add this line to `config.fish` instead:
 
    ```fish
-   source ~/.jd/cli/jd.fish
+   source ~/.local/share/johnnydecimal/cli/jd.fish
    ```
 
    It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and moves your shell to where the program says. In zsh it also loads the prompt.
@@ -65,34 +68,44 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    Or Johnny's prompt. It sets `PROMPT`, so put the line after all other lines that set `PROMPT`. Refer to [The prompt theme](#the-prompt-theme):
 
    ```zsh
-   source ~/.jd/cli/lib/theme.zsh
+   source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
    ```
 
 6. Start a new shell.
+
+- These are the default paths. If you set `$XDG_DATA_HOME` or `$XDG_CONFIG_HOME`, refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- If you have jd from before 4.0.0, it is in `~/.jd`. Refer to [Move from `~/.jd`](#move-from-jd).
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
 
 ## Running jd from a script or an agent
 
-The tool is a program, `~/.jd/cli/bin/jd`. Nothing has to be sourced to run it, so a script, cron, or an agent's shell can use it.
+The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to be sourced to run it, so a script, cron, or an agent's shell can use it.
 
 ```sh
-~/.jd/cli/bin/jd 11.11             # the folder for ID 11.11
-~/.jd/cli/bin/jd --system P76 22   # a system other than the default
-~/.jd/cli/bin/jd version
+~/.local/share/johnnydecimal/cli/bin/jd 11.11             # the folder for ID 11.11
+~/.local/share/johnnydecimal/cli/bin/jd --system P76 22   # a system other than the default
+~/.local/share/johnnydecimal/cli/bin/jd version
+~/.local/share/johnnydecimal/cli/bin/jd paths             # where jd keeps its files
 ```
 
-- A move prints one absolute path on stdout and exits 0, so it reads as an answer: `cd "$(~/.jd/cli/bin/jd 11.11)"`.
+- A move prints one absolute path on stdout and exits 0, so it reads as an answer: `cd "$(~/.local/share/johnnydecimal/cli/bin/jd 11.11)"`.
 - Match lists, reports, and errors go to stderr.
 - `--system` is read as the first word and nowhere else, so it never collides with a title or with a flag of `jd new`.
 - `jd new` takes `--json`, which prints one JSON object on stdout. Refer to [For agents](#for-agents).
 
   ```sh
-  JD_BETA=1 ~/.jd/cli/bin/jd new id 21 A title --json
+  JD_BETA=1 ~/.local/share/johnnydecimal/cli/bin/jd new id 21 A title --json
   ```
 
 - `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
-- `source ~/.jd/cli/jd.sh` also puts `~/.jd/cli/bin` on `$PATH`, so a program started from your shell can run `jd` by name.
+- `jd paths` prints the configuration file, the journal, and the folder the program is in. It takes `--json` too. A script or an agent that needs one of these paths asks `jd paths`, and does not work the path out again. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- The `source` line in [Installation](#installation) also puts `bin` on `$PATH`, so a program started from your shell can run `jd` by name.
+- If `~/.local/bin` is on your `$PATH`, a link to the program there operates too. The program follows the link to find its files:
+
+  ```sh
+  ln -s ~/.local/share/johnnydecimal/cli/bin/jd ~/.local/bin/jd
+  ```
 
 ## The prompt theme
 
@@ -106,7 +119,7 @@ The tool is a program, `~/.jd/cli/bin/jd`. Nothing has to be sourced to run it, 
 Add this line to `.zshrc`, after all other lines that set `PROMPT`:
 
 ```zsh
-source ~/.jd/cli/lib/theme.zsh
+source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
 ```
 
 - Chevron colours. The prompt reads these variables at each prompt, so put them before or after the source line:
@@ -119,11 +132,44 @@ source ~/.jd/cli/lib/theme.zsh
 - For git status, load [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme. If it is not loaded, the theme's own `gitprompt` function operates and prints nothing.
 - The symbols need a font that contains box-drawing characters.
 
+## Where jd keeps its files
+
+jd follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/). Its folder in each base directory is `johnnydecimal`.
+
+| What | Default path | With the variable set |
+| --- | --- | --- |
+| The configuration file | `~/.config/johnnydecimal/config.json` | `$XDG_CONFIG_HOME/johnnydecimal/config.json` |
+| [The journal](#the-journal) | `~/.local/state/johnnydecimal/journal.jsonl` | `$XDG_STATE_HOME/johnnydecimal/journal.jsonl` |
+| This repository | `~/.local/share/johnnydecimal/cli` | `$XDG_DATA_HOME/johnnydecimal/cli` |
+
+- `$JD_CONFIG` names the configuration file itself. If it is set, jd reads that file and no other.
+- A path in an XDG variable must start with `/`. jd ignores a path that does not, and uses the default.
+- An XDG variable names the base directory. It is not a second place to look. With `$XDG_CONFIG_HOME` set, jd does not read `~/.config`.
+- jd makes the folder for the journal if it is missing, with mode 700.
+- This repository operates from any folder, because the program finds its own files. So the third row is where these instructions clone it, and jd reads nothing from there. If you clone it to a different folder, use that folder in the `source` line.
+- The paths are the same on macOS. jd is a command-line tool, so it does not use `~/Library`.
+
+`jd paths` prints the paths that jd uses on this machine. It needs no configuration file and no `jq`.
+
+```sh
+jd paths            # all three
+jd paths config     # one path and nothing else, for a script
+jd paths --json     # one JSON object
+```
+
+```
+config   /Users/you/.config/johnnydecimal/config.json
+journal  /Users/you/.local/state/johnnydecimal/journal.jsonl
+install  /Users/you/.local/share/johnnydecimal/cli
+```
+
+- `install` is the folder this copy of jd is in.
+- If a file is still in `~/.jd`, `jd paths` prints that path, because that is the file jd reads. It also prints, on stderr, the commands that move the file. Refer to [Move from `~/.jd`](#move-from-jd).
+- `jd paths --json` has a `warnings` list. `old_config`, `old_journal` and `old_install` each name a thing that jd uses in `~/.jd`. `old_config_ignored` and `old_journal_ignored` each name a file in `~/.jd` that jd does not read, because the new place has one.
+
 ## Configuration
 
-All the tools read the configuration file at `~/.jd/config.json`.
-
-`$JD_CONFIG` overrides its location.
+All the tools read one configuration file. Refer to [Where jd keeps its files](#where-jd-keeps-its-files) for its path.
 
 The program reads the configuration each time it runs, so a system that has moved takes effect at once.
 
@@ -223,7 +269,7 @@ jd undo move ~/D25/.../invoice.pdf       # move that thing back
 
 ### The journal
 
-Every move is one line in `~/.jd/journal.jsonl`. So is every undo. The file is append only, and jd never edits it.
+Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jsonl`. So is every undo. The file is append only, and jd never edits it. `jd paths journal` prints its path on this machine.
 
 ```json
 {"at":"2026-09-12T07:09:53Z","sys":"D25","id":"21.34","kind":"file","from":"/Users/you/Downloads/invoice.pdf","to":"/Users/you/Documents/D25/20-29 Finance/21 Accounts/21.34 Invoices/invoice.pdf","by":"person","host":"mymac.local"}
@@ -231,7 +277,7 @@ Every move is one line in `~/.jd/journal.jsonl`. So is every undo. The file is a
 
 - `by` is `person` when the shell ran it, and `program` when a script or an agent ran the program.
 - An undo line has `undoes`, the `at` of the move it undid, and `from` and `to` the other way round.
-- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync.
+- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync. That is why it is in the state folder. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
 - jd writes nothing into the JDex. An agent that files a mess reads the JSON result and writes the note itself.
 
 ### `jd undo move`
@@ -251,13 +297,56 @@ jd beta on       # turn it on
 jd beta off      # turn it off
 ```
 
-The flag is `"beta": true` at the top level of `~/.jd/config.json`. `JD_BETA=1` turns beta on for one shell, and writes nothing.
+The flag is `"beta": true` at the top level of the configuration file. `JD_BETA=1` turns beta on for one shell, and writes nothing.
 
 ## Update
 
 ```sh
-git -C ~/.jd/cli pull
+git -C ~/.local/share/johnnydecimal/cli pull
 ```
+
+### Move from `~/.jd`
+
+Up to 3.x, jd kept everything in `~/.jd`: the configuration file, the journal, and this repository in `~/.jd/cli`. From 4.0.0 it uses the paths in [Where jd keeps its files](#where-jd-keeps-its-files).
+
+An install in `~/.jd` still operates after you update it. jd reads the configuration file and the journal in `~/.jd` if the new place has none. Each time it does, it prints one line to say so. A later release will not read `~/.jd`.
+
+1. Update the copy you have:
+
+   ```sh
+   git -C ~/.jd/cli pull
+   ```
+
+2. Move the files. Either way works.
+
+   Let your agent do it. This prints a prompt, and the first step in it is the move:
+
+   ```sh
+   ~/.jd/cli/bin/jd agent-setup
+   ```
+
+   Or run `~/.jd/cli/bin/jd paths`. It prints the commands for this machine, and only for the things that are still in `~/.jd`. With no XDG variable set, the commands are:
+
+   ```sh
+   mkdir -p -m 700 ~/.config/johnnydecimal
+   mv ~/.jd/config.json ~/.config/johnnydecimal/
+
+   mkdir -p -m 700 ~/.local/state/johnnydecimal
+   mv ~/.jd/journal.jsonl ~/.local/state/johnnydecimal/
+
+   mkdir -p -m 700 ~/.local/share/johnnydecimal
+   mv ~/.jd/cli ~/.local/share/johnnydecimal/
+   ```
+
+3. In your shell config, change `~/.jd/cli` to `~/.local/share/johnnydecimal/cli` in each `source` line. Then start a new shell.
+4. When `~/.jd` is empty, remove it: `rmdir ~/.jd`.
+
+- If you set `$JD_CONFIG`, jd reads that file as before, and the configuration file does not move.
+- If a configuration file is in `~/.jd` and in the new place, jd reads the new one and prints a warning. Delete the one in `~/.jd`.
+- If you use the [Johnny.Decimal agent skills](https://github.com/johnnydecimal/skills), update them before you move the configuration file. An older skill looks for it in `~/.jd`.
+- You can leave this repository in `~/.jd/cli`. It operates from any folder. But then `~/.jd` stays.
+
+### From 1.x
 
 The v1.x `jd-nav` and `jd-prompt` paths are deleted at 3.0.0. A `.zshrc` that still sources one fails at shell start with "no such file".
 

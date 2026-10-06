@@ -2,7 +2,7 @@
 # jd.sh - the shell hook for the Johnny.Decimal command line
 #
 # Source this file from .zshrc or .bashrc:
-#   source ~/.jd/cli/jd.sh
+#   source ~/.local/share/johnnydecimal/cli/jd.sh
 #
 # The tool itself is bin/jd, a program. Anything can run it: a script,
 # cron, an agent, another program. This file does only the two things a
@@ -14,7 +14,8 @@
 # the program says. It also puts bin on $PATH, so that a script started
 # from this shell finds jd too.
 #
-# It loads nothing else from lib, except lib/prompt.zsh under zsh.
+# It loads nothing else from lib, except lib/prompt.zsh under zsh. It
+# does not work out where the config is: it asks the program.
 #
 # Needs jq. Works in bash 3.2+ and zsh.
 
@@ -72,7 +73,12 @@ _jd_hook_def() {
 # With no config, no jq, or no systems there is nothing to name, and
 # nothing is said: jd and jdex are still defined, and the program says
 # what is wrong when you call one.
-_jd_hook_cfg=${JD_CONFIG:-$HOME/.jd/config.json}
+#
+# Where the config is, is for the program to say: $JD_CONFIG, then the
+# XDG place, then ~/.jd for now. 'jd paths config' prints the one it
+# reads and nothing else, so this file holds no copy of that rule. It
+# costs one more process at shell start.
+_jd_hook_cfg=$("$_jd_hook_bin" paths config 2>/dev/null)
 _jd_hook_n=0
 if [ -f "$_jd_hook_cfg" ] && command -v jq >/dev/null 2>&1; then
   _jd_hook_n=$(jq -r '.systems | length' "$_jd_hook_cfg" 2>/dev/null)
@@ -110,7 +116,8 @@ fi
 _jd_hook_def jd ''
 _jd_hook_def jdex jdex
 
-# The prompt redraws on every command, so it stays a shell function.
+# The prompt redraws on every command, so it stays a shell function. It
+# reads $_jd_hook_cfg as it loads, which is why the unset comes after.
 if [ -n "${ZSH_VERSION-}" ]; then
   . "$_jd_hook_dir/lib/prompt.zsh"
 fi

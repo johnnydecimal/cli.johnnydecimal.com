@@ -177,7 +177,7 @@ _jd_t_version() {
 
 # Source lib into this shell, for the few tests that drive a lib
 # function directly rather than through a command. bin/jd sets the same
-# three variables before it sources the same three files.
+# three variables before it sources the same files.
 #
 # It defines no command: jd and the rest still come from _jd_t_load, and
 # still run the program.
@@ -185,6 +185,7 @@ _jd_t_libs() {
   _JD_CLI_DIR=$JD_T_REPO
   _JD_CLI_VERSION=$(_jd_t_version)
   _JD_CLI_HELP_URL=$(sed -n 's/^_JD_CLI_HELP_URL="\([^"]*\)".*/\1/p' "$JD_T_BIN")
+  . "$JD_T_REPO/lib/paths.sh"
   . "$JD_T_REPO/lib/nav.sh"
   . "$JD_T_REPO/lib/setup.sh"
   . "$JD_T_REPO/lib/beta.sh"
@@ -200,6 +201,25 @@ _jd_t_unload() {
   for _jd_t_f in jd d25 p76 x99; do
     unset -f "$_jd_t_f" 2>/dev/null || true
   done
+}
+
+# Take $JD_CONFIG away, so that jd finds the config the way it does for
+# a person who has set nothing: $XDG_CONFIG_HOME, then ~/.config, then
+# ~/.jd. Only cases/paths.sh and the few tests like it need this. Every
+# other case names its config with _jd_t_config or _jd_t_load.
+#
+# It is safe only because $HOME is a folder under $JD_T_TMP, which
+# test/run.sh sees to. If it is not, stop: the next jd would read the
+# real config, and the real journal.
+_jd_t_no_config_var() {
+  case ${HOME-} in
+    "$JD_T_TMP"/*) ;;
+    *)
+      printf 'test: refusing to run - $HOME is outside $JD_T_TMP\n' >&2
+      exit 2
+      ;;
+  esac
+  unset JD_CONFIG
 }
 
 # Point $JD_CONFIG at a fixture config, and load nothing. This is what a

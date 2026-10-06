@@ -8,6 +8,7 @@
 #   jd 11.11              print the folder for ID 11.11
 #   jd --system P76 22    act on a system other than the default
 #   jd version            print the version
+#   jd paths              print where jd keeps its files
 #   jd --help             the rest of it
 #
 # A move prints one absolute path on stdout and nothing else, and exits
@@ -41,6 +42,7 @@ done
 # The tools read this at call time, to find the adapters in lib.
 _JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
 
+. "$_JD_CLI_DIR/lib/paths.sh"
 . "$_JD_CLI_DIR/lib/nav.sh"
 . "$_JD_CLI_DIR/lib/setup.sh"
 . "$_JD_CLI_DIR/lib/beta.sh"

@@ -532,7 +532,7 @@ _jd_new_inner() {
     '#'*) _JD_NEW_SEL=".systems[${_JD_NEW_SYS#'#'}]" ;;
     *) _JD_NEW_SEL='.systems[] | select(.sys == $s)' ;;
   esac
-  _JD_NEW_CFG=$(_jd_nav_config)
+  _JD_NEW_CFG=$(_jd_paths_config)
 
   # Flags can come before the noun, after it, or after the title. The
   # first word that is not a flag is the noun. The next one is the ID.

@@ -2,7 +2,7 @@
 # jd.fish - the shell hook for the Johnny.Decimal command line, in fish
 #
 # Source this file from config.fish:
-#   source ~/.jd/cli/jd.fish
+#   source ~/.local/share/johnnydecimal/cli/jd.fish
 #
 # The tool itself is bin/jd, a program. Anything can run it: a script,
 # cron, an agent, another program. This file does only what a separate
@@ -71,8 +71,11 @@ end
 # With no config, no jq, or no systems there is nothing to name, and
 # nothing is said: jd and jdex are still defined, and the program says
 # what is wrong when you call one.
-set -l _jd_hook_cfg $JD_CONFIG
-test -z "$_jd_hook_cfg"; and set _jd_hook_cfg $HOME/.jd/config.json
+#
+# Where the config is, is for the program to say: $JD_CONFIG, then the
+# XDG place, then ~/.jd for now. 'jd paths config' prints the one it
+# reads and nothing else, so this file holds no copy of that rule.
+set -l _jd_hook_cfg ($_jd_hook_bin paths config 2>/dev/null)
 set -l _jd_hook_n 0
 if test -f "$_jd_hook_cfg"; and command -q jq
     set _jd_hook_n (jq -r '.systems | length' "$_jd_hook_cfg" 2>/dev/null)

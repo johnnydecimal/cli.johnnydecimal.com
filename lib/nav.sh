@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: MIT
 # nav.sh - Johnny.Decimal navigation
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
-# $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR.
+# $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR, and after
+# lib/paths.sh, which says where the config is.
 #
 # It defines _jd_nav, which bin/jd calls with the system to act on and
-# the words the user typed. It reads ~/.jd/config.json (override with
-# $JD_CONFIG) to learn that system's root folder and JDex.
+# the words the user typed. It reads the config to learn that system's
+# root folder and JDex.
 #
 # An empty system means the default one: the entry marked default: true,
 # else the first entry.
@@ -13,13 +14,12 @@
 # Nothing here cd's. A move ends at _jd_nav_arrive, which prints the
 # folder. The comment at the top of bin/jd says why.
 #
-# 'jd new', 'jd move' and 'jd undo' are words this file does not act on.
-# It hands the rest of the line to _jd_new, in lib/new.sh, or to
-# _jd_move and _jd_undo, in lib/move.sh.
+# 'jd new', 'jd move', 'jd undo' and 'jd paths' are words this file does
+# not act on. It hands the rest of the line to _jd_new, in lib/new.sh,
+# to _jd_move and _jd_undo, in lib/move.sh, or to _jd_paths, in
+# lib/paths.sh.
 #
 # Needs jq. Works in bash 3.2+ and zsh.
-
-_jd_nav_config() { printf '%s' "${JD_CONFIG:-$HOME/.jd/config.json}"; }
 
 _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 
@@ -54,7 +54,7 @@ _jd_nav_arrive() {
 # config jq cannot read looks like from here.
 _jd_nav_default_sys() {
   local cfg sys idx
-  cfg=$(_jd_nav_config)
+  cfg=$(_jd_paths_config)
   sys=$(jq -r '(.systems | (map(select(.default == true))[0] // .[0])).sys // empty' \
     "$cfg" 2>/dev/null)
   if [ -z "$sys" ]; then
@@ -108,6 +108,9 @@ usage: <system> [jdex] [target]
                         says more
   <system> beta on|off  turn beta features on or off. 'jd beta' says
                         which
+  <system> paths        print where jd keeps its config and its journal,
+                        and where jd itself is. 'jd paths --help' says
+                        more
 
 jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
@@ -115,12 +118,19 @@ jd is the default system, or the only one. jdex is its JDex, so 'jdex
 Two or more matches are listed, not entered. Word search ignores case.
 An ID or work package in the JDex with no folder gets its folder made.
 
-From a script or an agent, run the program, ~/.jd/cli/bin/jd. Nothing
-has to be sourced first.
+From a script or an agent, run the program. Nothing has to be sourced
+first. This copy of the program is:
 
-  ~/.jd/cli/bin/jd 11.11             print the folder for 11.11
-  ~/.jd/cli/bin/jd --system P76 22   act on another system. --system
-                                     is only read as the first word
+EOF
+  # The path of this copy, not the one the README names, so that the
+  # line is true wherever the repo was cloned.
+  printf '  %s/bin/jd\n' "$_JD_CLI_DIR"
+  cat <<'EOF'
+
+  <program> 11.11             print the folder for 11.11
+  <program> --system P76 22   act on another system. --system is
+                              only read as the first word
+  <program> paths             print where jd keeps its files
 
 A move prints the folder on stdout and exits 0. Set JD_HOOK and it
 prints the same folder and exits 3, which is how the shell knows to cd.
@@ -314,6 +324,16 @@ _jd_nav() {
     _jd_nav_err "lib/setup.sh is not loaded - run bin/jd, not lib/nav.sh"
     return 1
   fi
+  # 'paths' reads no config either. It says where the config is, so it
+  # must answer for the person who has none.
+  if [ "${1-}" = paths ]; then
+    shift
+    _jd_paths "$@"
+    return
+  fi
+  # Everything from here reads the config. If it is still in ~/.jd, the
+  # old place, this says so, once, in one line.
+  _jd_paths_note config
   # 'beta' reads and writes one flag in the config, and no system, so it
   # is taken before the system is looked up. A root folder that is not
   # mounted does not stop 'jd beta off'.
@@ -326,7 +346,7 @@ _jd_nav() {
     _jd_nav_err "lib/beta.sh is not loaded - run bin/jd, not lib/nav.sh"
     return 1
   fi
-  cfg=$(_jd_nav_config)
+  cfg=$(_jd_paths_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "$(_jd_nav_no_config_msg "$cfg")"; return 1; }
   # No system named means the default one. It is worked out here, at call

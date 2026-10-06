@@ -37,7 +37,7 @@ _jd_beta_on() {
 # Return 0 if the config holds "beta": true. JD_BETA plays no part.
 _jd_beta_in_config() {
   local cfg
-  cfg=$(_jd_nav_config)
+  cfg=$(_jd_paths_config)
   [ -f "$cfg" ] || return 1
   command -v jq >/dev/null 2>&1 || return 1
   [ "$(jq -r '.beta // false' "$cfg" 2>/dev/null)" = true ]
@@ -51,7 +51,7 @@ _jd_beta_in_config() {
 # repo would be replaced by a private-mode regular file.
 _jd_beta_write() {
   local value=$1 cfg dir tmp link mode
-  cfg=$(_jd_nav_config)
+  cfg=$(_jd_paths_config)
   while [ -L "$cfg" ]; do
     link=$(readlink "$cfg") || return 1
     case $link in
@@ -114,7 +114,7 @@ _jd_beta() {
     return 1
   fi
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
-  cfg=$(_jd_nav_config)
+  cfg=$(_jd_paths_config)
   [ -f "$cfg" ] || { _jd_nav_err "$(_jd_nav_no_config_msg "$cfg")"; return 1; }
   if ! jq -e 'type == "object"' "$cfg" >/dev/null 2>&1; then
     _jd_nav_err "the config is not a JSON object, so beta cannot be read or written: $cfg"
