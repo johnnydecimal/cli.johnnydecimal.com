@@ -39,34 +39,37 @@ _jd_paths_usage() {
   cat <<'EOF'
 usage: <system> paths [config|journal|install] [--json]
 
-  jd paths            print where jd keeps its files, one to a line:
-                      the config, the journal, and jd itself
-  jd paths config     print the path of the config, and nothing else
-  jd paths journal    the same, for the journal
-  jd paths install    the same, for the folder this copy of jd is in
-  jd paths --json     print all three as one JSON object on stdout
+  jd paths            print the paths that jd uses, one on each line:
+                      the config, the journal, and the folder that
+                      contains jd
+  jd paths config     print only the path of the config
+  jd paths journal    print only the path of the journal
+  jd paths install    print only the folder that contains jd
+  jd paths --json     print the three paths as one JSON object
 
-jd follows the XDG Base Directory Specification. Its folder in each
-base directory is 'johnnydecimal'.
+jd follows the XDG Base Directory Specification. In each base
+directory, jd uses a folder with the name 'johnnydecimal'.
 
   config    $XDG_CONFIG_HOME/johnnydecimal/config.json
             The default is ~/.config/johnnydecimal/config.json.
-            $JD_CONFIG names the file itself, and wins
+            If you set $JD_CONFIG, jd reads only that file
   journal   $XDG_STATE_HOME/johnnydecimal/journal.jsonl
             The default is ~/.local/state/johnnydecimal/journal.jsonl
-  install   The folder this copy of jd is in, wherever that is. The
-            README says to clone it to $XDG_DATA_HOME/johnnydecimal/cli.
+  install   The folder that contains this copy of jd. The README
+            tells you to clone jd to $XDG_DATA_HOME/johnnydecimal/cli.
             The default is ~/.local/share/johnnydecimal/cli
 
-A path in an XDG variable that does not start with '/' is ignored, and
-the default is used.
+A path in an XDG variable must start with '/'. If the path does not
+start with '/', jd uses the default.
 
-Up to 3.x all of these were in ~/.jd. For now jd still reads a config
-or a journal there when the new place has none. A later release will
-not. 'jd paths' prints the commands that move what is still there.
+Before 4.0.0, jd kept all these files in ~/.jd. If the config or the
+journal is still in ~/.jd, jd uses the file there, and 'jd paths'
+prints the commands that move the file. A later version of jd will
+not read ~/.jd.
 
-It reads no config, so it works before you have one. The path it
-prints for a file that does not exist yet is where jd looks for it.
+'jd paths' does not need a config or jq. Only 'jd paths --json' needs
+jq. If a file does not exist, 'jd paths' prints the path where jd
+looks for the file.
 EOF
 }
 
@@ -250,7 +253,7 @@ _jd_paths_report() {
       both)
         printf 'jd: there is a config in ~/.jd, the old place, that jd does not read.\n'
         printf '    jd reads %s\n' "$_JD_PATHS_CONFIG_NEW"
-        printf '    If you do not need the old one, delete it: rm %s\n' \
+        printf '    If you do not need the old file, delete it: rm %s\n' \
           "$(_jd_paths_sh "$_JD_PATHS_CONFIG_OLD")"
         said=1
         ;;
@@ -264,8 +267,8 @@ _jd_paths_report() {
       both)
         printf 'jd: there is a journal in ~/.jd, the old place, that jd does not read.\n'
         printf '    jd reads %s\n' "$_JD_PATHS_JOURNAL_NEW"
-        printf "    'jd undo move' cannot undo a move that is only in the old one.\n"
-        printf '    If you do not need the old one, delete it: rm %s\n' \
+        printf "    'jd undo move' cannot undo a move that is only in the old journal.\n"
+        printf '    If you do not need the old journal, delete it: rm %s\n' \
           "$(_jd_paths_sh "$_JD_PATHS_JOURNAL_OLD")"
         said=1
         ;;
@@ -280,10 +283,10 @@ _jd_paths_report() {
       said=1
     fi
     if [ "$said" -eq 1 ]; then
-      printf 'jd: ~/.jd works for now. A later release does not read it.\n'
+      printf 'jd: this is temporary. A later version of jd will not read ~/.jd.\n'
       printf '    When ~/.jd is empty, delete it: rmdir %s\n' \
         "$(_jd_paths_sh "${HOME-}/.jd")"
-      printf "    Your agent can do all of this: 'jd agent-setup' prints the prompt for it.\n"
+      printf "    Your agent can move these for you: 'jd agent-setup' prints a prompt for your agent.\n"
     fi
   } >&2
 }

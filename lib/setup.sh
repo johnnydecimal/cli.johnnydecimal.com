@@ -42,8 +42,8 @@ this copy of the program and the config file it will read, so run it
 from the install you mean to use.
 
 If your config, your journal or this copy of jd is still in ~/.jd, the
-old place, the prompt starts with a step that moves it. 'jd paths' says
-what is where.
+prompt starts with a step that tells the agent to move them. 'jd paths'
+prints where each one is.
 EOF
 }
 
@@ -65,23 +65,23 @@ _jd_setup_move() {
       list="$list   - The configuration file: move $_JD_PATHS_CONFIG_OLD to $_JD_PATHS_CONFIG_NEW$nl"
       ;;
     both)
-      list="$list   - An old configuration file that jd does not read: $_JD_PATHS_CONFIG_OLD. jd reads $_JD_PATHS_CONFIG_NEW. Show me how the two differ, and delete the old one only when I say yes.$nl"
+      list="$list   - An old configuration file that jd does not read: $_JD_PATHS_CONFIG_OLD. jd reads $_JD_PATHS_CONFIG_NEW. Show me the differences between the two files. Delete the old file only when I say yes.$nl"
       ;;
   esac
   case $_JD_PATHS_JOURNAL_WAS in
     old)
-      list="$list   - The journal, which is the record of every jd move: move $_JD_PATHS_JOURNAL_OLD to $_JD_PATHS_JOURNAL_NEW$nl"
+      list="$list   - The journal, which records each jd move: move $_JD_PATHS_JOURNAL_OLD to $_JD_PATHS_JOURNAL_NEW$nl"
       ;;
     both)
-      list="$list   - An old journal that jd does not read: $_JD_PATHS_JOURNAL_OLD. jd reads $_JD_PATHS_JOURNAL_NEW. With the old one gone, jd undo move cannot undo a move that is only in it. Delete it only when I say yes.$nl"
+      list="$list   - An old journal that jd does not read: $_JD_PATHS_JOURNAL_OLD. jd reads $_JD_PATHS_JOURNAL_NEW. If you delete the old journal, jd undo move cannot undo the moves that are only in the old journal. Delete the old journal only when I say yes.$nl"
       ;;
   esac
   if [ "$_JD_PATHS_INSTALL_WAS" = old ]; then
     list="$list   - The program: move the folder $_JD_PATHS_INSTALL_OLD to $_JD_PATHS_INSTALL_NEW$nl"
-    program="$nl   If you moved the program, change $_JD_PATHS_INSTALL_OLD to $_JD_PATHS_INSTALL_NEW in every source line in my rc file. Step 6 says which file that is. Show me each line before you change it, and change only the path. Then stop following this prompt. Run $_JD_PATHS_INSTALL_NEW/bin/jd agent-setup and follow the prompt it prints. It is this prompt, with the new paths.$nl"
+    program="$nl   If you moved the program, change $_JD_PATHS_INSTALL_OLD to $_JD_PATHS_INSTALL_NEW in every source line in my rc file. Step 6 tells you which file is my rc file. Show me each line before you change the line. Change only the path. Then stop, and do not continue with this prompt. Run $_JD_PATHS_INSTALL_NEW/bin/jd agent-setup and follow the new prompt, which has the new paths.$nl"
   fi
   [ -n "$list" ] || return 0
-  _JD_SETUP_MOVE="${nl}0. Move jd out of ~/.jd first. That folder is the old place. jd now keeps its files where the XDG Base Directory Specification says. It still reads the old place for now, and a later release will not. Show me this list, and wait for my yes to each line:$nl$nl$list$nl   Use mv, and do not copy: there must be one of each. Make a folder that is missing with mode 700. If a thing is a symlink, tell me where it points before you move it. If I say no to a line, leave that thing where it is. If I use the Johnny.Decimal agent skills, update them before the configuration file moves, or tell me to: an older skill looks for that file in the old place. When ~/.jd is empty, ask me, then remove it with rmdir.$nl$program"
+  _JD_SETUP_MOVE="${nl}0. First, move my jd files out of ~/.jd. Before version 4.0.0, jd kept its files in ~/.jd. jd now uses the paths in the XDG Base Directory Specification. jd still reads ~/.jd, but a later version of jd will not. Show me this list. Wait for my yes to each line before you move anything:$nl$nl$list$nl   Use mv. Do not copy, because there must be only one copy of each item. If a folder does not exist, make the folder with mode 700. If an item is a symlink, tell me the target of the symlink before you move the item. If I say no to a line, do not move that item. If I use the Johnny.Decimal agent skills, update the skills before you move the configuration file, or tell me to update them. An older skill looks for the configuration file in ~/.jd. When ~/.jd is empty, ask me. Then remove ~/.jd with rmdir.$nl$program"
 }
 
 _jd_setup() {
@@ -102,8 +102,8 @@ _jd_setup() {
     state="It exists already. Read it first, and change nothing in it without asking me."
     printf 'jd: you have a config at %s already - the prompt tells the agent to keep it\n' "$cfg" >&2
   elif [ "$_JD_PATHS_CONFIG_WAS" = old ]; then
-    state="Mine is still at $_JD_PATHS_CONFIG_OLD, the old place, and step 0 moves it. Read it first, and change nothing in it without asking me."
-    printf 'jd: you have a config in ~/.jd, the old place - the prompt tells the agent to move it, and to keep what is in it\n' >&2
+    state="My configuration file is still at $_JD_PATHS_CONFIG_OLD, the old place. Step 0 moves the file. Read the file first, and change nothing in it without asking me."
+    printf 'jd: you have a config in ~/.jd, the old place - the prompt tells the agent to move it, and not to change it\n' >&2
   else
     state="It does not exist yet."
   fi
@@ -131,7 +131,7 @@ $_JD_SETUP_MOVE
 
 4. Ask me whether my JDex, the index of my system, is a folder on disk, for example an Obsidian vault. If it is, put its path in that system's "jdex" field. If it is not, leave "jdex" out.
 
-5. Write $cfg. jd worked that path out from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. So use it as it is, and do not work it out again. Run $_JD_CLI_DIR/bin/jd paths to see it. If the folder it goes in is missing, make that folder with mode 700. Use "version": 1 and one entry in "systems" per system. Each entry needs "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry needs a "sys", and mark one "default": true. Leave out "beta" and "workPackages". If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
+5. Write $cfg. jd calculated this path from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. Use this path, and do not calculate the path yourself. To see the path again, run $_JD_CLI_DIR/bin/jd paths. If the folder for this file is missing, make the folder with mode 700. Use "version": 1 and one entry in "systems" per system. Each entry needs "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry needs a "sys", and mark one "default": true. Leave out "beta" and "workPackages". If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
 
 6. Add this line to the rc file for my shell:
 
@@ -147,7 +147,7 @@ $_JD_SETUP_MOVE
 Safety rules:
 
 - Read a file before you change it. Never overwrite one.
-- Touch only two files: the rc file in step 6 and the configuration file in step 5. If there is a step 0, what it names is allowed too.
+- Touch only two files: the rc file in step 6 and the configuration file in step 5. If there is a step 0, you can also move the items that step 0 lists.
 - If anything is already set up differently from these steps, stop and ask me. A working shell matters more than a tidy install.
 EOF
 }

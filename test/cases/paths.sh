@@ -528,7 +528,7 @@ _jd_t_run "$JD_T_BIN" agent-setup
 _jd_t_status 'agent-setup, nothing set up: exit status' 0
 _jd_t_contains 'agent-setup, nothing set up: the prompt names the new place' \
   "It needs a configuration file at $_jd_t_new. It does not exist yet." "$JD_T_OUT"
-_jd_t_lacks 'agent-setup, nothing set up: there is no step 0' '0. Move jd out' "$JD_T_OUT"
+_jd_t_lacks 'agent-setup, nothing set up: there is no step 0' '0. First, move' "$JD_T_OUT"
 _jd_t_lacks 'agent-setup, nothing set up: the old place is not named' \
   'the old place' "$JD_T_OUT"
 _jd_t_contains 'agent-setup, nothing set up: a blank line before step 1' \
@@ -548,7 +548,7 @@ ln -s "$JD_T_REPO" "$HOME/.jd/cli"
 _jd_t_run "$_jd_t_oldbin" agent-setup
 _jd_t_status 'agent-setup, old install: exit status' 0
 _jd_t_contains 'agent-setup, old install: the prompt opens with step 0' \
-  '0. Move jd out of ~/.jd first.' "$JD_T_OUT"
+  '0. First, move my jd files out of ~/.jd.' "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: step 0 moves the config' \
   "The configuration file: move $_jd_t_old to $_jd_t_new" "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: step 0 moves the journal' \
@@ -559,15 +559,15 @@ _jd_t_contains 'agent-setup, old install: step 0 moves the program' \
 _jd_t_contains 'agent-setup, old install: then it sends the agent to the new copy' \
   "Run $HOME/.local/share/johnnydecimal/cli/bin/jd agent-setup" "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: the agent waits for a yes' \
-  'wait for my yes to each line' "$JD_T_OUT"
+  'Wait for my yes to each line before you move anything' "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: the prompt says the config is in the old place' \
-  "Mine is still at $_jd_t_old, the old place" "$JD_T_OUT"
+  "My configuration file is still at $_jd_t_old, the old place" "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: the config is still to be kept as it is' \
   'change nothing in it without asking me' "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: a blank line before step 1' \
   "${_jd_t_nl}${_jd_t_nl}1. Check that jq" "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: the safety rules allow step 0' \
-  'If there is a step 0, what it names is allowed too.' "$JD_T_OUT"
+  'If there is a step 0, you can also move the items that step 0 lists.' "$JD_T_OUT"
 _jd_t_contains 'agent-setup, old install: the person is told' \
   'you have a config in ~/.jd, the old place' "$JD_T_ERR"
 _jd_t_lacks 'agent-setup, old install: only the prompt is on stdout' 'jd:' "$JD_T_OUT"
@@ -596,7 +596,7 @@ _jd_t_run "$JD_T_BIN" agent-setup
 _jd_t_contains 'agent-setup, both places: step 0 names the old config' \
   "An old configuration file that jd does not read: $_jd_t_old" "$JD_T_OUT"
 _jd_t_contains 'agent-setup, both places: nothing is deleted without a yes' \
-  'delete the old one only when I say yes' "$JD_T_OUT"
+  'Delete the old file only when I say yes' "$JD_T_OUT"
 
 # ------------------------------------------------------- the shell hook
 

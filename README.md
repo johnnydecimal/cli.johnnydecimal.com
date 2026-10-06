@@ -74,7 +74,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 6. Start a new shell.
 
 - These are the default paths. If you set `$XDG_DATA_HOME` or `$XDG_CONFIG_HOME`, refer to [Where jd keeps its files](#where-jd-keeps-its-files).
-- If you have jd from before 4.0.0, it is in `~/.jd`. Refer to [Move from `~/.jd`](#move-from-jd).
+- If you installed jd before 4.0.0, your files are in `~/.jd`. Refer to [Move from `~/.jd`](#move-from-jd).
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
 
@@ -99,9 +99,9 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
   ```
 
 - `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
-- `jd paths` prints the configuration file, the journal, and the folder the program is in. It takes `--json` too. A script or an agent that needs one of these paths asks `jd paths`, and does not work the path out again. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- `jd paths` prints the path of the configuration file, the path of the journal, and the folder that contains the program. `jd paths --json` prints one JSON object. If a script or an agent needs one of these paths, it must get the path from `jd paths`. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
 - The `source` line in [Installation](#installation) also puts `bin` on `$PATH`, so a program started from your shell can run `jd` by name.
-- If `~/.local/bin` is on your `$PATH`, a link to the program there operates too. The program follows the link to find its files:
+- If `~/.local/bin` is on your `$PATH`, you can put a link to the program there. The program follows the link to find its other files:
 
   ```sh
   ln -s ~/.local/share/johnnydecimal/cli/bin/jd ~/.local/bin/jd
@@ -134,7 +134,7 @@ source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
 
 ## Where jd keeps its files
 
-jd follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/). Its folder in each base directory is `johnnydecimal`.
+jd follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/). In each base directory, jd uses a folder with the name `johnnydecimal`.
 
 | What | Default path | With the variable set |
 | --- | --- | --- |
@@ -142,14 +142,14 @@ jd follows the [XDG Base Directory Specification](https://specifications.freedes
 | [The journal](#the-journal) | `~/.local/state/johnnydecimal/journal.jsonl` | `$XDG_STATE_HOME/johnnydecimal/journal.jsonl` |
 | This repository | `~/.local/share/johnnydecimal/cli` | `$XDG_DATA_HOME/johnnydecimal/cli` |
 
-- `$JD_CONFIG` names the configuration file itself. If it is set, jd reads that file and no other.
-- A path in an XDG variable must start with `/`. jd ignores a path that does not, and uses the default.
-- An XDG variable names the base directory. It is not a second place to look. With `$XDG_CONFIG_HOME` set, jd does not read `~/.config`.
-- jd makes the folder for the journal if it is missing, with mode 700.
-- This repository operates from any folder, because the program finds its own files. So the third row is where these instructions clone it, and jd reads nothing from there. If you clone it to a different folder, use that folder in the `source` line.
+- `$JD_CONFIG` is the path of the configuration file. If you set `$JD_CONFIG`, jd reads only that file.
+- A path in an XDG variable must start with `/`. If the path does not start with `/`, jd uses the default path.
+- If you set `$XDG_CONFIG_HOME`, jd looks only in that directory. jd does not also look in `~/.config`.
+- If the folder for the journal does not exist, jd makes the folder with mode 700.
+- You can clone this repository to any folder. The program finds its other files from its own path. The third row is only the folder that these instructions use. If you use a different folder, put that folder in the `source` line.
 - The paths are the same on macOS. jd is a command-line tool, so it does not use `~/Library`.
 
-`jd paths` prints the paths that jd uses on this machine. It needs no configuration file and no `jq`.
+`jd paths` prints the paths that jd uses on this machine. `jd paths` does not need a configuration file or `jq`. Only `jd paths --json` needs `jq`.
 
 ```sh
 jd paths            # all three
@@ -163,9 +163,14 @@ journal  /Users/you/.local/state/johnnydecimal/journal.jsonl
 install  /Users/you/.local/share/johnnydecimal/cli
 ```
 
-- `install` is the folder this copy of jd is in.
-- If a file is still in `~/.jd`, `jd paths` prints that path, because that is the file jd reads. It also prints, on stderr, the commands that move the file. Refer to [Move from `~/.jd`](#move-from-jd).
-- `jd paths --json` has a `warnings` list. `old_config`, `old_journal` and `old_install` each name a thing that jd uses in `~/.jd`. `old_config_ignored` and `old_journal_ignored` each name a file in `~/.jd` that jd does not read, because the new place has one.
+- `install` is the folder that contains this copy of jd.
+- If the configuration file or the journal is still in `~/.jd`, `jd paths` prints the path in `~/.jd`, because jd uses that file. `jd paths` also prints, on stderr, the commands that move the file. Refer to [Move from `~/.jd`](#move-from-jd).
+- The object from `jd paths --json` has a `warnings` list. Each code in the list tells you about one item in `~/.jd`:
+  - `old_config`: jd reads the configuration file in `~/.jd`.
+  - `old_journal`: jd uses the journal in `~/.jd`.
+  - `old_install`: this copy of jd is in `~/.jd/cli`.
+  - `old_config_ignored`: there is a configuration file in `~/.jd`, but jd reads the file in the new place.
+  - `old_journal_ignored`: there is a journal in `~/.jd`, but jd uses the journal in the new place.
 
 ## Configuration
 
@@ -269,7 +274,7 @@ jd undo move ~/D25/.../invoice.pdf       # move that thing back
 
 ### The journal
 
-Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jsonl`. So is every undo. The file is append only, and jd never edits it. `jd paths journal` prints its path on this machine.
+Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jsonl`. So is every undo. The file is append only, and jd never edits it. `jd paths journal` prints the path of the journal on this machine.
 
 ```json
 {"at":"2026-09-12T07:09:53Z","sys":"D25","id":"21.34","kind":"file","from":"/Users/you/Downloads/invoice.pdf","to":"/Users/you/Documents/D25/20-29 Finance/21 Accounts/21.34 Invoices/invoice.pdf","by":"person","host":"mymac.local"}
@@ -277,7 +282,7 @@ Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jso
 
 - `by` is `person` when the shell ran it, and `program` when a script or an agent ran the program.
 - An undo line has `undoes`, the `at` of the move it undid, and `from` and `to` the other way round.
-- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync. That is why it is in the state folder. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync. For this reason, jd keeps the journal in the XDG state directory. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
 - jd writes nothing into the JDex. An agent that files a mess reads the JSON result and writes the note itself.
 
 ### `jd undo move`
@@ -307,9 +312,16 @@ git -C ~/.local/share/johnnydecimal/cli pull
 
 ### Move from `~/.jd`
 
-Up to 3.x, jd kept everything in `~/.jd`: the configuration file, the journal, and this repository in `~/.jd/cli`. From 4.0.0 it uses the paths in [Where jd keeps its files](#where-jd-keeps-its-files).
+Before 4.0.0, jd kept all its files in `~/.jd`: the configuration file, the journal, and this repository, which was in `~/.jd/cli`. From 4.0.0, jd uses the paths in [Where jd keeps its files](#where-jd-keeps-its-files).
 
-An install in `~/.jd` still operates after you update it. jd reads the configuration file and the journal in `~/.jd` if the new place has none. Each time it does, it prints one line to say so. A later release will not read `~/.jd`.
+jd continues to operate from `~/.jd` after you update it, and you do not have to move the files immediately.
+
+- If the new place has no configuration file, jd reads the configuration file in `~/.jd`.
+- If the new place has no journal, jd uses the journal in `~/.jd`.
+- Each command that uses a file in `~/.jd` prints one line to tell you.
+- A later version of jd will not read `~/.jd`.
+
+To move the files:
 
 1. Update the copy you have:
 
@@ -319,13 +331,13 @@ An install in `~/.jd` still operates after you update it. jd reads the configura
 
 2. Move the files. Either way works.
 
-   Let your agent do it. This prints a prompt, and the first step in it is the move:
+   Your agent can move the files. This command prints a prompt for your agent. The first step in the prompt tells the agent to move the files:
 
    ```sh
    ~/.jd/cli/bin/jd agent-setup
    ```
 
-   Or run `~/.jd/cli/bin/jd paths`. It prints the commands for this machine, and only for the things that are still in `~/.jd`. With no XDG variable set, the commands are:
+   Or move the files yourself. Run `~/.jd/cli/bin/jd paths`. It prints the commands that move the files on this machine. It prints commands only for the items that are still in `~/.jd`. If you set no XDG variable, the commands are:
 
    ```sh
    mkdir -p -m 700 ~/.config/johnnydecimal
@@ -341,10 +353,10 @@ An install in `~/.jd` still operates after you update it. jd reads the configura
 3. In your shell config, change `~/.jd/cli` to `~/.local/share/johnnydecimal/cli` in each `source` line. Then start a new shell.
 4. When `~/.jd` is empty, remove it: `rmdir ~/.jd`.
 
-- If you set `$JD_CONFIG`, jd reads that file as before, and the configuration file does not move.
-- If a configuration file is in `~/.jd` and in the new place, jd reads the new one and prints a warning. Delete the one in `~/.jd`.
-- If you use the [Johnny.Decimal agent skills](https://github.com/johnnydecimal/skills), update them before you move the configuration file. An older skill looks for it in `~/.jd`.
-- You can leave this repository in `~/.jd/cli`. It operates from any folder. But then `~/.jd` stays.
+- If you set `$JD_CONFIG`, jd continues to read that file. Do not move the configuration file.
+- If there is a configuration file in `~/.jd` and also in the new place, jd reads the file in the new place and prints a warning. Delete the file in `~/.jd`.
+- If you use the [Johnny.Decimal agent skills](https://github.com/johnnydecimal/skills), update the skills before you move the configuration file. An older skill looks for the configuration file in `~/.jd`.
+- You can keep this repository in `~/.jd/cli`, because jd operates from any folder. But then you cannot remove `~/.jd`.
 
 ### From 1.x
 
