@@ -71,6 +71,10 @@ the JDex. It counts the entries directly in the category, and directly
 in its archive, the .09 ID. A folder with no JDex entry is not an ID, so
 it is not counted. The ID is never lower than .11. A gap is not filled.
 
+A JDex can be flat: it has no area folders, and the notes are in its
+root. Then it counts the notes in the root that start with the
+category's number, and the new note goes in the root.
+
 If the filesystem already has a folder with the new ID's number, jd
 stops, and names the folder.
 
