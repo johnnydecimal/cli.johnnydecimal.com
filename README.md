@@ -95,7 +95,7 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
 - `jd new` takes `--json`, which prints one JSON object on stdout. Refer to [For agents](#for-agents).
 
   ```sh
-  JD_BETA=1 ~/.local/share/johnnydecimal/cli/bin/jd new id 21 A title --json
+  ~/.local/share/johnnydecimal/cli/bin/jd new id 21 A title --json
   ```
 
 - `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
@@ -194,7 +194,6 @@ jd new id 21.34 A title     # exactly ID 21.34, if it is not used
 jd new wp 21.34 A title     # a work package for ID 21.34
 ```
 
-- `jd new` is a beta feature. Turn beta on first. See [Beta](#beta).
 - Run `jd new id --help` or `jd new wp --help` for the full list of flags.
 
 ### `jd new id`

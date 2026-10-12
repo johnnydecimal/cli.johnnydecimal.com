@@ -11,7 +11,8 @@
 # rest do, and the 'no config' error names it.
 #
 # The prompt is the one home for setup: the systems, the config file,
-# the source line in the rc file, and the optional zsh prompt. The
+# the source line in the rc file, the optional zsh prompt, and the
+# optional "workPackages" block that 'jd new wp' reads. The
 # johnnydecimal.com MCP server's install_cli tool clones this repo and
 # then sends the agent here. Nothing else holds these steps.
 #
@@ -131,7 +132,7 @@ $_JD_SETUP_MOVE
 
 4. Ask me whether my JDex, the index of my system, is a folder on disk, for example an Obsidian vault. If it is, put its path in that system's "jdex" field. If it is not, leave "jdex" out.
 
-5. Write $cfg. jd calculated this path from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. Use this path, and do not calculate the path yourself. To see the path again, run $_JD_CLI_DIR/bin/jd paths. If the folder for this file is missing, make the folder with mode 700. Use "version": 1 and one entry in "systems" per system. Each entry needs "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry needs a "sys", and mark one "default": true. Leave out "beta" and "workPackages". If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
+5. Write $cfg. jd calculated this path from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. Use this path, and do not calculate the path yourself. To see the path again, run $_JD_CLI_DIR/bin/jd paths. If the folder for this file is missing, make the folder with mode 700. Use "version": 1 and one entry in "systems" per system. Each entry needs "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry needs a "sys", and mark one "default": true. Leave out "beta". Leave out "workPackages" too, because step 9 adds it. If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
 
 6. Add this line to the rc file for my shell:
 
@@ -143,6 +144,15 @@ $_JD_SETUP_MOVE
 7. Check your work. Run $_JD_CLI_DIR/bin/jd with no words. It should print the root folder of my default system. Then tell me to open a new shell, and to run 'jd' there.
 
 8. Ask me whether I want the Johnny.Decimal path in my zsh prompt. There are two ways: _jd_pwd in the prompt I have, or Johnny's whole theme in place of it. The README section "The prompt theme" says how. The theme sets PROMPT, whatever PROMPT I had, with no check. So ask first, and say what it replaces: my own PROMPT, starship, powerlevel10k, or an oh-my-zsh theme. Do not add either unless I say yes. If I keep my own prompt, tell me that _jd_pwd is available and let me place it.
+
+9. Ask me whether I want jd to make work packages. A work package is one piece of work with a number, like W0001. The command 'jd new wp' makes a note for it in my JDex and a folder for it in my system. If I say no, skip this step. If I say yes, do this for each system that I name:
+
+   - The system needs a "jdex" path in its entry. If the entry has none, tell me, and skip this system.
+   - Ask me whether I use Things 3 on this Mac. If I do, the block gets "tasks": { "adapter": "things" }. jd then makes a project in Things for each work package. Tell me to turn on Enable Things URLs in Things, in Settings > General.
+   - Ask me whether my JDex is an Obsidian vault. If it is, the block gets "notes": { "adapter": "obsidian" }. The link that jd makes needs the Advanced URI community plugin. Look for the folder .obsidian/plugins/obsidian-advanced-uri in the vault. If the folder is missing, tell me to install the plugin.
+   - If I said yes to Things or to Obsidian, add a "workPackages" block to the entry of the system, with the parts above. Show me the block before you write it. If I said no to both, write no block. jd makes work packages without one.
+   - Make no folders and no templates. The first 'jd new wp' makes the folders and the templates that are missing, and names each one.
+   - Check your work. Run $_JD_CLI_DIR/bin/jd new wp --dry-run 11.11 A test. With --dry-run, jd makes nothing. It should print the note and the folder that jd would make. Then tell me that 'jd new wp --help' says more.
 
 Safety rules:
 

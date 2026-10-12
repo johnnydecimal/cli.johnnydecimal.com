@@ -95,11 +95,11 @@ usage: <system> [jdex] [target]
   <system> agent-setup  print a prompt for your agent, which writes the
                         config file for you. 'jd agent-setup --help' says more
   <system> new id 21 A title
-                        make the next free ID in category 21 (beta).
+                        make the next free ID in category 21.
                         'jd new id --help' says more
   <system> new wp 21.41 A title
-                        make a new work package (beta). 'jd new wp
-                        --help' says more
+                        make a new work package. 'jd new wp --help'
+                        says more
   <system> move <path> 21.34
                         move a file or folder into the folder for
                         21.34, and journal it (beta). 'jd move --help'

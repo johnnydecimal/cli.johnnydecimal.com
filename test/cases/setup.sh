@@ -52,6 +52,16 @@ _jd_t_contains 'no config: the prompt names config.fish for fish' \
   'config.fish' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt says never to overwrite a file' \
   'Never overwrite' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt asks about work packages' \
+  'Ask me whether I want jd to make work packages' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names the things adapter' \
+  '"tasks": { "adapter": "things" }' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names the obsidian adapter' \
+  '"notes": { "adapter": "obsidian" }' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt checks work packages with a dry run' \
+  "$JD_T_REPO/bin/jd new wp --dry-run" "$JD_T_OUT"
+_jd_t_lacks 'no config: the prompt does not tell the agent to turn beta on' \
+  'beta on' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt says what to do with no system' \
   'If you find no system, stop.' "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt is not an error' 'no config' "$JD_T_ERR"

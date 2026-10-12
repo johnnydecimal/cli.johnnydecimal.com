@@ -145,14 +145,14 @@ _jd_t_config "$JD_T_TMP/new.json"
 _jd_t_f21="$JD_FX_ROOT/20-29 Area two/21 Category twentyone"
 _jd_t_j21="$JD_FX_JDEX/20-29 Area two/21 Category twentyone"
 
-_jd_t_run env JD_BETA=1 "$JD_T_BIN" new id 21 A title --dry-run --json
+_jd_t_run "$JD_T_BIN" new id 21 A title --dry-run --json
 _jd_t_status 'new --json: exit status' 0
 _jd_t_eq 'new --json: one object' 'true' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.ok')"
 _jd_t_eq 'new --json: stdout is that one object and nothing else' '1' \
   "$(printf '%s' "$JD_T_OUT" | jq -s 'length')"
 
-_jd_t_run env JD_BETA=1 "$JD_T_BIN" new id 21 A title
+_jd_t_run "$JD_T_BIN" new id 21 A title
 _jd_t_status 'new: exit status' 0
 _jd_t_eq 'new: prints the folder it made' "$_jd_t_f21/21.36 A title" "$JD_T_OUT"
 _jd_t_at 'new: and does not move its caller' "$JD_T_TMP"
@@ -163,13 +163,13 @@ else
     'a folder and a note' 'at least one is missing'
 fi
 
-_jd_t_run env JD_BETA=1 JD_HOOK=1 "$JD_T_BIN" new id 21 Another title
+_jd_t_run env JD_HOOK=1 "$JD_T_BIN" new id 21 Another title
 _jd_t_status 'new: under the hook it exits 3' 3
 _jd_t_eq 'new: and prints the folder to go to' \
   "$_jd_t_f21/21.37 Another title" "$JD_T_OUT"
 
 # --json is the answer, so it never moves, hook or no hook.
-_jd_t_run env JD_BETA=1 JD_HOOK=1 "$JD_T_BIN" new id 21 A third title --json
+_jd_t_run env JD_HOOK=1 "$JD_T_BIN" new id 21 A third title --json
 _jd_t_status 'new --json: under the hook it still exits 0' 0
 _jd_t_eq 'new --json: and the object is the only thing on stdout' 'true' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.ok')"

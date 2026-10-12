@@ -59,9 +59,6 @@ usage: <system> new <noun> ...
   jd new wp 21.34 A title       make a work package for ID 21.34
 
 'jd new id --help' and 'jd new wp --help' say more.
-
-This is a beta feature. 'jd beta on' turns beta on. JD_BETA=1 turns it
-on for one shell.
 EOF
 }
 
@@ -118,8 +115,6 @@ A token with no value becomes its brief, 'What we hand over', or
 nothing. jd names each flag you did not set: in 'toFill' with --json,
 or on stderr otherwise. Anything else in double braces that jd does not
 know is left out of the note, and jd warns. The note never holds '{{'.
-
-This is a beta feature. 'jd beta on' turns beta on.
 EOF
 }
 
@@ -182,8 +177,6 @@ A token with no value becomes its brief, 'What we hand over', or
 nothing. jd names each flag you did not set: in 'toFill' with --json,
 or on stderr otherwise. Anything else in double braces that jd does not
 know is left out of the note, and jd warns. The note never holds '{{'.
-
-This is a beta feature. 'jd beta on' turns beta on.
 EOF
 }
 
@@ -608,14 +601,6 @@ _jd_new_inner() {
   command -v jq >/dev/null 2>&1 || { _jd_new_fail no_jq '' "jq is not installed"; return 1; }
   [ -f "$_JD_NEW_CFG" ] || {
     _jd_new_fail no_config "$_JD_NEW_CFG" "$(_jd_nav_no_config_msg "$_JD_NEW_CFG")"
-    return 1
-  }
-
-  # 'jd new' is a beta feature, gated by the one flag in lib/beta.sh.
-  # --help still works with beta off, because the flags are read above.
-  _jd_beta_on || {
-    _jd_new_fail beta_off "$_JD_NEW_CFG" "'jd new' is a beta feature - turn beta on with 'jd beta on'"
-    _jd_beta_warn
     return 1
   }
 

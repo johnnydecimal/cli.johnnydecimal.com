@@ -72,7 +72,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/nav-make-id.sh` | Making an ID folder from its JDex entry. |
 | `cases/paths.sh` | Where jd keeps its files: the XDG paths, `~/.jd`, the old place, and `jd paths`. |
 | `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |
-| `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun, help, beta. |
+| `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun and help. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
 | `cases/prompt.sh` | `_jd_pwd`, the zsh prompt path. |
 | `cases/setup.sh` | `jd agent-setup`, the prompt for your agent, and the `no config` error that names it. |

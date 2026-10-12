@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # new.sh - jd new wp, which makes a work package, and what every
-# 'jd new' shares: the noun, help, and the beta flag
+# 'jd new' shares: the noun and help
 #
 # The task app is never touched. Every config here leaves the tasks
 # adapter out, so it is 'none', and the suite talks to no other program.
@@ -16,10 +16,9 @@
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
 
-# 'jd new' is a beta feature. Every test runs with beta on, except the
-# ones at the end that turn it off.
-JD_BETA=1
-export JD_BETA
+# 'jd new' is not a beta feature. A JD_BETA from the shell that started
+# the suite must not reach a test, so every test runs with beta off.
+unset JD_BETA
 
 _jd_fx_build
 _jd_fx_build_templates
@@ -738,40 +737,28 @@ _jd_t_contains 'refresh with no task app: the adapter said why on stderr' \
   'no task app is set for this system' "$JD_T_ERR"
 
 # ------------------------------------------------------------------ beta
+#
+# 'jd new' was a beta feature up to 4.0.1. It is not one now: it makes a
+# work package with beta off, and says nothing about beta.
 
 _jd_fx_reset
 _jd_fx_build
 _jd_fx_build_templates
 _jd_fx_config_new "$JD_T_TMP/new.json"
 _jd_t_load "$JD_T_TMP/new.json"
-unset JD_BETA
 
+_jd_t_eq 'beta off: the config has no beta key' 'null' "$(jq -r '.beta' "$JD_T_TMP/new.json")"
 _jd_t_run jd new wp --json 21.35 Beta is off
-_jd_t_status 'beta off: exit status' 1
-_jd_t_eq 'beta off: the code is beta_off' 'beta_off' \
-  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
-_jd_t_contains 'beta off: says how to turn it on' "jd beta on" "$JD_T_ERR"
-_jd_t_contains 'beta off: warns' 'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_ERR"
-_jd_t_lacks 'beta off: the JSON message stays one line, with no warning' 'UNSTABLE' \
-  "$(printf '%s' "$JD_T_OUT" | jq -r '.message')"
-
-# Beta comes first. With beta off, a missing noun is still beta_off.
-_jd_t_run jd new --json
-_jd_t_eq 'beta off: before the noun is read' 'beta_off' \
-  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+_jd_t_status 'beta off: exit status' 0
+_jd_t_eq 'beta off: the work package is made' 'W0301' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
+_jd_t_lacks 'beta off: says nothing about beta' 'beta' "$JD_T_ERR"
 
 _jd_t_run jd new --help
-_jd_t_status 'beta off: help still works' 0
+_jd_t_lacks 'help: says nothing about beta' 'beta' "$JD_T_OUT"
 _jd_t_run jd new wp --help
-_jd_t_status 'beta off: help for a noun still works' 0
-
-jq '{version} + {beta: true} + del(.version)' "$JD_T_TMP/new.json" \
-  >"$JD_T_TMP/beta.json"
-_jd_t_load "$JD_T_TMP/beta.json"
-_jd_t_run jd new wp --dry-run 21.35 Beta in the config
-_jd_t_status 'beta in the config: turns it on' 0
-
-JD_BETA=1
-export JD_BETA
+_jd_t_lacks 'help wp: says nothing about beta' 'beta' "$JD_T_OUT"
+_jd_t_run jd new id --help
+_jd_t_lacks 'help id: says nothing about beta' 'beta' "$JD_T_OUT"
 
 _jd_t_summary

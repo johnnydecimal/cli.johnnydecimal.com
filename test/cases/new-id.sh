@@ -17,8 +17,7 @@
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
 
-JD_BETA=1
-export JD_BETA
+unset JD_BETA
 
 _jd_fx_build
 _jd_fx_build_templates
