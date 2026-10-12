@@ -213,6 +213,7 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 - It makes the next free W number, the project in your task app, the JDex note, and the folder.
 - The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd stops, and names the folder.
 - If the system has no `W0000-9999` folder, jd makes `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
+- If the area has no `W0003` folder, jd makes `W0003 Templates for area W0000-9999`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
 - If the JDex has no `W0000-9999` folder, jd makes `W0000-9999 Work packages` in the JDex. A flat JDex gets no folder: jd writes the note to the root.
 - The system's `workPackages` block in the config names the adapters. Refer to [lib/adapters/README.md](lib/adapters/README.md).
 
@@ -223,7 +224,7 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 | Template | Where jd looks | If there is none |
 | --- | --- | --- |
 | `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd says so. |
-| `Work package template.md` | `W0003` | The note is blank, and jd says so. |
+| `Work package template.md` | `W0003` | The note is blank, and jd says so. If there is no `W0003`, jd makes it, and copies its own template note into it. |
 | `Work package template/` | `W0003`. jd copies its contents into the new folder. | The folder is empty. |
 | `Work package template.things.json` | `W0003` | jd makes it from Things, if the config has `workPackages.tasks.source`. Otherwise jd copies its own, [templates/Work package template.things.json](templates/Work%20package%20template.things.json), into `W0003`. |
 
@@ -232,6 +233,7 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 - The note never holds `{{`.
   - `{{ID}}`, `{{TITLE}}` and `{{NAME}}` are filled in. A work package also has `{{W}}`, `{{w}}`, `{{NOTES_URL}}` and `{{TASKS_URL}}`.
   - Anything else in double braces that jd does not know is left out of the note, and jd warns.
+- A line that holds `{{NOTES_URL}}` or `{{TASKS_URL}}` is left out when there is no such link: no adapter is set, or you gave `--no-tasks`. This applies to the note and to the Things template.
 - A template note can hold a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.
   - Its flag is its name in lower case, with `-` for `_`: `--scope`, `--deliverable`.
   - Give the value after the title: `jd new wp 21.41 A title --scope "What we do" --deliverable=Video`.
@@ -243,7 +245,7 @@ Templates are in the filesystem. jd finds them by number, so the config does not
   - `jd new wp --refresh` does the same, and makes nothing.
   - `workPackages.tasks.source` in the config is the project's ID in Things.
 - The Things template, with no `workPackages.tasks.source`: you edit the file in `W0003`.
-  - If `W0003` has no file, jd copies its own into `W0003`. If the area has no `W0003`, jd makes `W0003 Templates for area W0000-9999` first.
+  - If `W0003` has no file, jd copies its own into `W0003`.
   - jd does not write to the file again.
 
 ### For agents

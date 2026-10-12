@@ -79,6 +79,7 @@ These helpers are there too.
 
 | Function | What it does |
 | --- | --- |
+| `_jd_new_links_json` | Leave out each line that holds `{{NOTES_URL}}` or `{{TASKS_URL}}` when that link is empty. `$1` the template, which is JSON. Call it before `_jd_new_fill` |
 | `_jd_new_fill` | Put the values into a template. `$1` the text, `$2` `json` to escape them for a JSON file |
 | `_jd_new_uri` | URL-encode `$1` |
 | `_jd_new_jstr` | Escape `$1` for the inside of a JSON string |
@@ -94,7 +95,7 @@ the note and the folder. Neither is written until it has worked.
 
 1. `jd_notes_check`, `jd_tasks_check`.
 2. `jd_notes_url`. `{{NOTES_URL}}` is now known.
-3. The work package area, `W0003` and `W0009` are made, if they are missing.
+3. The work package area, `W0003` and `W0009` are made, if they are missing. A new `W0003` gets jd's own template note.
 4. `jd_tasks_prepare`, then `jd_tasks_create`. `{{TASKS_URL}}` is now known.
 5. The JDex note is written, with both links in it.
 6. The folder is made.

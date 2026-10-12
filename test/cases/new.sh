@@ -150,8 +150,9 @@ _jd_t_note=$(cat "$_jd_t_jw/$_jd_t_name.md" 2>/dev/null)
 _jd_t_contains 'make: the note has the permalink' '- ^w0301' "$_jd_t_note"
 _jd_t_contains 'make: the note has the Obsidian link' \
   '[Obsidian](obsidian://adv-uri?vault=D25%20JDex&block=w0301)' "$_jd_t_note"
-_jd_t_contains 'make: the note has an empty task link' \
-  '[Things]()' "$_jd_t_note"
+# No task app is set, so there is no task link. The line that holds
+# {{TASKS_URL}} is left out: the note never holds a link to nothing.
+_jd_t_lacks 'make: the note has no empty task link' '[Things]' "$_jd_t_note"
 _jd_t_contains 'make: the note has the whole name in it' \
   "## Scope for $_jd_t_name" "$_jd_t_note"
 _jd_t_lacks 'make: no placeholder is left in the note' '{{' "$_jd_t_note"
@@ -240,14 +241,51 @@ _jd_t_at 'twice: it gets the next free number' \
 
 # ------------------------------------------------------- no templates
 #
-# No W0003 folder, and no workPackages block. A work package is still
-# made: a blank note, an empty folder, and no app is asked for a link.
-# jd says it found no template.
+# No W0003 folder, and no workPackages block. jd makes W0003, and
+# copies its own template note into it. The work package's note comes
+# from that template. No app is set, so the lines that hold a link are
+# left out.
 
 _jd_fx_reset
 _jd_fx_config_two "$JD_T_TMP/two.json"
 _jd_t_load "$JD_T_TMP/two.json"
 
+_jd_t_run jd new wp --dry-run --json 21.35 No templates for this
+_jd_t_status 'no W0003: dry run, exit status' 0
+_jd_t_eq 'no W0003: dry run reads the template in the repo' \
+  "$JD_T_REPO/templates/Work package template.md" \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.template')"
+_jd_t_eq 'no W0003: dry run lists the token to fill' '--scope' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.toFill | map(.flag) | join(",")')"
+if [ -e "$_jd_t_fw/$_jd_t_w3_made" ]; then
+  _jd_t_bad 'no W0003: dry run makes nothing' 'no folder' 'a folder'
+else
+  _jd_t_ok 'no W0003: dry run makes nothing'
+fi
+
+_jd_t_run jd new wp --json 21.35 No templates for this --scope 'What we do'
+_jd_t_status 'no W0003: exit status' 0
+_jd_t_eq 'no W0003: W0003 gets the template note' \
+  "$(cat "$JD_T_REPO/templates/Work package template.md")" \
+  "$(cat "$_jd_t_fw/$_jd_t_w3_made/Work package template.md" 2>/dev/null)"
+_jd_t_eq 'no W0003: no warning' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+_jd_t_note=$(cat "$_jd_t_jw/W0301~21.35 No templates for this.md" 2>/dev/null)
+_jd_t_contains 'no W0003: the note has the permalink' '^w0301' "$_jd_t_note"
+_jd_t_contains 'no W0003: the note has the scope' '- What we do' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note has no empty note link' '[Obsidian]' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note has no empty task link' '[Things]' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note holds no double brace' '{{' "$_jd_t_note"
+_jd_t_eq 'no W0003: no W0009 is made in an area that exists' 'no' \
+  "$([ -e "$_jd_t_fw/W0009 Archive" ] && printf yes || printf no)"
+_jd_t_eq 'no W0003: the folder is empty' '' \
+  "$(find "$_jd_t_fw/W0301~21.35 No templates for this" -mindepth 1 2>/dev/null)"
+
+# A W0003 with nothing in it. jd copies nothing into a W0003 that it
+# did not make. A work package is still made: a blank note, an empty
+# folder. jd says it found no template.
+_jd_fx_reset
+mkdir -p "$_jd_t_w3"
 _jd_t_run jd new wp --json 21.35 No templates for this
 _jd_t_status 'no templates: exit status' 0
 _jd_t_note_path="$_jd_t_jw/W0301~21.35 No templates for this.md"
@@ -264,11 +302,8 @@ _jd_t_eq 'no templates: the warning is no_template' 'no_template' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
 _jd_t_eq 'no templates: ok is still true' 'true' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.ok')"
-if [ -d "$_jd_t_fw/W0301~21.35 No templates for this" ]; then
-  _jd_t_ok 'no templates: the folder is made'
-else
-  _jd_t_bad 'no templates: the folder is made' 'a folder' 'nothing'
-fi
+_jd_t_eq 'no templates: W0003 is left empty' '' \
+  "$(find "$_jd_t_w3" -mindepth 1 2>/dev/null)"
 _jd_t_eq 'no templates: the folder is empty' '' \
   "$(find "$_jd_t_fw/W0301~21.35 No templates for this" -mindepth 1 2>/dev/null)"
 
@@ -283,8 +318,7 @@ _jd_t_eq 'note template only: no warning' '' \
 _jd_t_eq 'note template only: the folder is empty' '' \
   "$(find "$_jd_t_fw/W0301~21.35 A note template only" -mindepth 1 2>/dev/null)"
 
-# The area has no W0003, and no task app is set. jd makes no W0003,
-# because nothing needs one.
+# The area has a W0003, so jd makes no second one.
 if [ -e "$_jd_t_fw/$_jd_t_w3_made" ]; then
   _jd_t_bad 'note template only: no second W0003 is made' 'no folder' 'a folder'
 else
@@ -320,7 +354,7 @@ _jd_t_run jd new wp --json 21.35 No area
 _jd_t_status 'no area: exit status' 0
 _jd_t_eq 'no area: the first number is W0001' 'W0001' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
-if [ -d "$_jd_t_fw/$_jd_t_w3_made" ] && [ -d "$_jd_t_fw/W0009 Archive" ]; then
+if [ -f "$_jd_t_fw/$_jd_t_w3_made/Work package template.md" ] && [ -d "$_jd_t_fw/W0009 Archive" ]; then
   _jd_t_ok 'no area: W0003 and W0009 are made'
 else
   _jd_t_bad 'no area: W0003 and W0009 are made' 'two folders' "$(ls "$_jd_t_fw" 2>&1)"
@@ -428,6 +462,43 @@ _JD_NEW_NOTES_URL='obsidian://adv-uri?vault=D25%20JDex&block=w0301'
 _JD_NEW_TASKS_URL=''
 _jd_t_eq 'shipped template: filled in, the title is the name' "$_JD_NEW_NAME" \
   "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.title')"
+
+# The task link is empty until Things has made the project, so the line
+# that holds it is left out. The note link is there.
+_jd_t_eq 'shipped template: an empty link, the line is left out' \
+  "$(printf -- '- Related:\n\t- [Obsidian](%s)' "$_JD_NEW_NOTES_URL")" \
+  "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.notes')"
+_JD_NEW_TASKS_URL='things:///show?id=abc'
+_jd_t_contains 'shipped template: with both links, both lines are there' \
+  '[Things](things:///show?id=abc)' \
+  "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.notes')"
+
+# ------------------------------------------- the Advanced URI plugin
+#
+# The Obsidian link needs the plugin. If the JDex is a vault with no
+# such plugin, jd warns, and makes the work package all the same.
+
+_jd_fx_reset
+_jd_fx_build_templates
+_jd_fx_config_new "$JD_T_TMP/new.json"
+_jd_t_load "$JD_T_TMP/new.json"
+
+_jd_t_run jd new wp --dry-run --json 21.35 Not a vault
+_jd_t_eq 'plugin: a JDex with no .obsidian folder, no warning' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+
+mkdir -p "$JD_FX_JDEX/.obsidian/plugins"
+_jd_t_run jd new wp --dry-run --json 21.35 No plugin
+_jd_t_status 'plugin: a vault without it, exit status' 0
+_jd_t_eq 'plugin: a vault without it, the warning' 'notes_plugin_missing' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+_jd_t_contains 'plugin: a vault without it, names the plugin' \
+  'Advanced URI plugin' "$JD_T_ERR"
+
+mkdir -p "$JD_FX_JDEX/.obsidian/plugins/obsidian-advanced-uri"
+_jd_t_run jd new wp --dry-run --json 21.35 With the plugin
+_jd_t_eq 'plugin: a vault with it, no warning' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
 
 # ------------------------------------------------ the 2.5 template keys
 

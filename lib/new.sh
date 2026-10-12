@@ -26,7 +26,8 @@
 # With no template note, the note is blank, and jd says so. With no
 # template folder, the folder is empty. With no task app template, the
 # adapter copies jd's own into W0003, from the templates folder of this
-# repo.
+# repo. With no W0003 at all, jd makes it, and copies its own template
+# note into it.
 #
 # A system with no work package area gets one. Refer to the comments
 # above _jd_new_wp_make.
@@ -137,7 +138,9 @@ It makes, in this order:
 
 The templates are in the W0003 folder in the filesystem:
 
-  Work package template.md        the note. None: the note is blank
+  Work package template.md        the note. None: the note is blank.
+                                   No W0003: jd makes W0003, and
+                                   copies its own note into it
   Work package template/          copied into the new folder. None:
                                    the folder is empty
   Work package template.things.json
@@ -148,6 +151,9 @@ The templates are in the W0003 folder in the filesystem:
 If the system has no 'W0000-9999' folder, jd makes it, with a W0003
 folder and a W0009 folder in it. If the JDex has no 'W0000-9999'
 folder, jd makes it. In a flat JDex, the note goes in the root.
+
+A line of a template that holds {{NOTES_URL}} or {{TASKS_URL}} is left
+out when there is no such link: no adapter is set, or --no-tasks.
 
 The title needs no quotes. It is every word after the ID, up to the
 first word that starts with '--'. A '-' anywhere else is part of the
@@ -255,6 +261,10 @@ _jd_new_one() {
 #
 # The note is filled in one pass, so a value is put in exactly as it was
 # given, even one that holds '{{'.
+#
+# 'links' goes before 'fill'. It leaves out each line that holds
+# {{NOTES_URL}} or {{TASKS_URL}} when that link is empty, so that no
+# note holds '[Things]()', a link to nothing.
 _JD_NEW_JQ='
 def re: "\\{\\{(?<q>\\?)?(?<n>[^} \\n]*)(?: (?<b>[^}\\n]*))?\\}\\}";
 def caps: .captures | map({(.name): .string}) | add;
@@ -265,6 +275,9 @@ def tokens: reduce (match(re; "g") | caps | select(tok)) as $c ([];
   if any(.[]; .token == $c.n) then .
   else . + [{token: $c.n, brief: ($c.b // ""), flag: ($c.n | flag)}] end);
 def unknown: [match(re; "g") | .string as $s | caps | select((tok or fix) | not) | $s] | unique;
+def nolink: (contains("{{NOTES_URL}}") and $fixed.NOTES_URL == "")
+  or (contains("{{TASKS_URL}}") and $fixed.TASKS_URL == "");
+def links: split("\n") | map(select(nolink | not)) | join("\n");
 def fill: gsub(re; if tok then (.n as $n | $vals[$n]) // .b // ""
                    elif fix then (.n as $n | $fixed[$n]) else "" end);
 '
@@ -429,7 +442,19 @@ _jd_new_render() {
       --arg TITLE "$_JD_NEW_TITLE" --arg NAME "$_JD_NEW_NAME" \
       --arg NOTES_URL "$_JD_NEW_NOTES_URL" --arg TASKS_URL "$_JD_NEW_TASKS_URL" \
       '$ARGS.named')" \
-    "$_JD_NEW_JQ"' $t | fill'
+    "$_JD_NEW_JQ"' $t | links | fill'
+}
+
+# The task app's template, with each line that holds an empty link left
+# out of every string in it, the same as 'links' does for a note. $1 the
+# template, which is JSON. Prints JSON, with the placeholders still in
+# it. An adapter calls this before _jd_new_fill.
+_jd_new_links_json() {
+  printf '%s' "$1" | jq \
+    --argjson fixed "$(jq -cn --arg NOTES_URL "$_JD_NEW_NOTES_URL" \
+      --arg TASKS_URL "$_JD_NEW_TASKS_URL" '$ARGS.named')" \
+    --argjson vals '{}' \
+    "$_JD_NEW_JQ"' walk(if type == "string" then links else . end)'
 }
 
 # Say that no template was found, and that the note will be blank.
@@ -841,10 +866,12 @@ _jd_new_wp_missing() {
 #                                      in it
 #   no W0000... folder in the JDex     the area. A flat JDex gets no
 #                                      folder: the note goes in its root
-#   no W0003, and a task app is set    W0003, to hold the task app's
-#                                      template
+#   no W0003 in the area               W0003, with jd's own template
+#                                      note in it
 #
 # The names have no emoji, and are the ones at the top of this file.
+# $_JD_NEW_WP_NOTE_TO is the path the template note is copied to, or
+# empty.
 _jd_new_wp_make() {
   local d
   [ -n "$_JD_NEW_WP_MAKE" ] || return 0
@@ -856,14 +883,24 @@ _jd_new_wp_make() {
   done <<EOF
 $_JD_NEW_WP_MAKE
 EOF
+  [ -n "$_JD_NEW_WP_NOTE_TO" ] || return 0
+  if [ "${1-}" != dry ]; then
+    cp -- "$_JD_NEW_WP_NOTE_FROM" "$_JD_NEW_WP_NOTE_TO" || {
+      _jd_new_fail copy_failed "$_JD_NEW_WP_NOTE_FROM" "could not write $_JD_NEW_WP_NOTE_TO"
+      return 1
+    }
+  fi
+  _jd_new_say "copied  $_JD_NEW_WP_NOTE_TO"
 }
 
 _jd_new_wp() {
-  local jw fw w3 folder_tpl notes_ad tasks_ad note_path dir ep
+  local jw fw w3 new_w3 folder_tpl notes_ad tasks_ad note_path dir ep
 
   # Both work package areas, found by the start of the number, the same
   # way nav.sh finds them. A missing one is made later, with the rest.
   _JD_NEW_WP_MAKE=''
+  _JD_NEW_WP_NOTE_TO=''
+  _JD_NEW_WP_NOTE_FROM="$_JD_CLI_DIR/templates/$_JD_NEW_WP_TPL.md"
   jw=$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -iname 'W0000*')
   fw=$(_jd_nav_find "$_JD_NEW_ROOT" 1 d -iname 'W0000*')
   if [ "$(printf '%s' "$jw" | grep -c '^')" -gt 1 ]; then
@@ -900,21 +937,27 @@ _jd_new_wp() {
   [ "$_JD_NEW_USE_TASKS" -eq 1 ] || tasks_ad=none
 
   # The templates folder, W0003, in the filesystem work package area.
-  # A new area gets one. So does an area with none, when a task app is
-  # set, because the task app's template is a file in W0003.
+  # If there is none, jd makes it, and copies its own template note
+  # into it. A new area gets W0009, the archive, too.
+  new_w3=0
   if [ -z "$fw" ]; then
     fw="$_JD_NEW_ROOT/$_JD_NEW_WP_AREA"
     w3="$fw/$_JD_NEW_WP_W3"
+    new_w3=1
     _jd_new_wp_missing "$fw"
     _jd_new_wp_missing "$w3"
     _jd_new_wp_missing "$fw/$_JD_NEW_WP_W9"
   else
     _jd_new_one "$(_jd_nav_find "$fw" 1 d -iname 'W0003' -o -iname 'W0003 *')" W0003 || return 1
     w3=$_JD_NEW_ONE
-    if [ -z "$w3" ] && [ "$tasks_ad" != none ]; then
+    if [ -z "$w3" ]; then
       w3="$fw/$_JD_NEW_WP_W3"
+      new_w3=1
       _jd_new_wp_missing "$w3"
     fi
+  fi
+  if [ "$new_w3" -eq 1 ] && [ -f "$_JD_NEW_WP_NOTE_FROM" ]; then
+    _JD_NEW_WP_NOTE_TO="$w3/$_JD_NEW_WP_TPL.md"
   fi
 
   _JD_NEW_TASKS_TPL=''
@@ -971,11 +1014,12 @@ _jd_new_wp() {
 
   # The templates, read now, so that a problem stops the command before
   # it makes anything.
+  # A W0003 that jd is about to make holds nothing yet, so the note is
+  # read from jd's own template, which is what jd copies into it.
   folder_tpl=''
-  if [ -n "$w3" ]; then
-    [ -f "$w3/$_JD_NEW_WP_TPL.md" ] && _JD_NEW_TEMPLATE="$w3/$_JD_NEW_WP_TPL.md"
-    [ -d "$w3/$_JD_NEW_WP_TPL" ] && folder_tpl="$w3/$_JD_NEW_WP_TPL"
-  fi
+  [ -f "$w3/$_JD_NEW_WP_TPL.md" ] && _JD_NEW_TEMPLATE="$w3/$_JD_NEW_WP_TPL.md"
+  [ -d "$w3/$_JD_NEW_WP_TPL" ] && folder_tpl="$w3/$_JD_NEW_WP_TPL"
+  [ -n "$_JD_NEW_WP_NOTE_TO" ] && _JD_NEW_TEMPLATE=$_JD_NEW_WP_NOTE_FROM
   _jd_new_read_template "$_JD_NEW_TEMPLATE" || return 1
 
   _jd_new_adapter notes "$notes_ad" || return 1

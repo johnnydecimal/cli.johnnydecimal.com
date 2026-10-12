@@ -52,6 +52,10 @@ _jd_things_db() {
 _jd_things_payload() {
   local text
   text=$(cat "$_JD_NEW_TASKS_TPL") || return 1
+  text=$(_jd_new_links_json "$text") || {
+    _jd_nav_err "the template is not JSON: $_JD_NEW_TASKS_TPL"
+    return 1
+  }
   text=$(_jd_new_fill "$text" json)
   printf '%s' "$text" | jq -e . >/dev/null 2>&1 || {
     _jd_nav_err "the template is not JSON once the title is in it: $_JD_NEW_TASKS_TPL"
@@ -141,7 +145,7 @@ jd_tasks_create() {
     n=$((n + 1))
   done
   [ -n "$id" ] || {
-    _jd_nav_err "Things did not make a project named '$1' - look in Things before you try again"
+    _jd_nav_err "Things did not make a project named '$1' - check that 'Enable Things URLs' is on in Things > Settings > General, and look in Things before you try again"
     return 1
   }
   printf 'things:///show?id=%s' "$id"
