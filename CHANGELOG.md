@@ -7,6 +7,53 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.1.0 – 2026-10-13
+
+> AI generated. Reviewed by Johnny.
+
+`jd new` is no longer a beta feature. `jd new wp` now makes the
+folders and the templates that your system does not have. You do
+not have to do anything.
+
+### Features
+
+- `jd new id` and `jd new wp` operate with beta off.
+- `jd agent-setup` has a new step. Your agent asks if you want work
+  packages, if you use Things 3, and if your JDex is an Obsidian
+  vault. Then it writes the `workPackages` block in the
+  configuration file.
+- jd has its own templates, in the `templates` folder:
+  `Work package template.md` and
+  `Work package template.things.json`.
+- If your system has no `W0000-9999` folder, `jd new wp` makes
+  `W0000-9999 Work packages`. In that folder it makes
+  `W0003 Templates for area W0000-9999` and `W0009 Archive`.
+- If your JDex has no `W0000-9999` folder, `jd new wp` makes it. In
+  a flat JDex, jd makes no folder, and writes the note to the root.
+- If the work package area has no `W0003` folder, `jd new wp` makes
+  it, and copies its template note into it.
+- The Things adapter no longer needs `workPackages.tasks.source`.
+  If the configuration has no `source` and `W0003` has no Things
+  template, jd copies its own template into `W0003`. After that, the
+  file is yours to edit.
+- `jd new wp --dry-run` names each folder that jd would make.
+
+### Changes
+
+- A template line that contains `{{NOTES_URL}}` or `{{TASKS_URL}}`
+  is left out when that link is empty. A note no longer contains
+  `[Things]()`. This applies to the note and to the Things project.
+- `jd new` no longer gives the error code `beta_off`.
+- If the system or the JDex has more than one `W0000` folder, the
+  message says so. The codes `no_wp_area_root` and
+  `no_wp_area_jdex` now have only this meaning.
+- If Things does not make the project, the message tells you to
+  examine "Enable Things URLs" in Things > Settings > General.
+- If your JDex is an Obsidian vault without the Advanced URI
+  plugin, `jd new wp` gives a warning, and `--json` has the code
+  `notes_plugin_missing` in `warnings`. jd still makes the work
+  package.
+
 ## 4.0.1 – 2026-10-12
 
 > AI generated. Reviewed by Johnny.
