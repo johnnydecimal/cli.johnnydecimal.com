@@ -27,6 +27,11 @@
 #                                 Link'. With no source, the file is
 #                                 used as it is, and never refreshed.
 #
+# With no source and no file, jd copies its own template into W0003:
+# 'templates/Work package template.things.json' in this repo. new.sh
+# sets its path in $_JD_NEW_TASKS_DEFAULT. After that the copy is the
+# user's file, and jd does not write to it again.
+#
 # The template file holds the placeholders that new.sh fills:
 # {{NAME}} for the project title, {{NOTES_URL}} and {{TASKS_URL}} in the
 # project notes. Tags are not read: Things keeps them in a form the
@@ -83,10 +88,6 @@ jd_tasks_check() {
     _jd_nav_err "Things 3 is not installed"
     return 1
   }
-  [ -n "$_JD_NEW_TASKS_TPL" ] || {
-    _jd_nav_err "the things adapter needs a W0003 folder in the work package area, to hold its template"
-    return 1
-  }
   return 0
 }
 
@@ -94,6 +95,8 @@ jd_tasks_check() {
 #
 # A refresh that fails is not an error while an older file exists: jd
 # warns, and uses that file. With no file at all, it stops.
+#
+# With no source in the config and no file, it copies jd's own template.
 jd_tasks_prepare() {
   if [ -n "$_JD_NEW_TASKS_SOURCE" ]; then
     if _jd_things_sync; then
@@ -102,6 +105,12 @@ jd_tasks_prepare() {
       _jd_nav_err "could not refresh the template from Things, so jd uses the file as it is: $_JD_NEW_TASKS_TPL"
       _jd_new_warn tasks_refresh_failed
     fi
+  elif [ ! -f "$_JD_NEW_TASKS_TPL" ] && [ -f "$_JD_NEW_TASKS_DEFAULT" ]; then
+    cp -- "$_JD_NEW_TASKS_DEFAULT" "$_JD_NEW_TASKS_TPL" || {
+      _jd_nav_err "could not write $_JD_NEW_TASKS_TPL"
+      return 1
+    }
+    _jd_new_say "tasks   template copied to $_JD_NEW_TASKS_TPL"
   fi
   [ -f "$_JD_NEW_TASKS_TPL" ] || {
     _jd_nav_err "no template project at $_JD_NEW_TASKS_TPL - set workPackages.tasks.source in the config, then run 'jd new wp --refresh'"
@@ -170,10 +179,6 @@ _jd_things_sync() {
   _JD_THINGS_CHANGED=0
   [ -n "$_JD_NEW_TASKS_SOURCE" ] || {
     _jd_nav_err "a refresh needs workPackages.tasks.source in the config: the ID of the template project in Things"
-    return 1
-  }
-  [ -n "$_JD_NEW_TASKS_TPL" ] || {
-    _jd_nav_err "--refresh needs a W0003 folder in the work package area, to hold the template"
     return 1
   }
   command -v sqlite3 >/dev/null 2>&1 || {

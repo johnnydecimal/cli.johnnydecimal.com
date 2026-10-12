@@ -32,6 +32,10 @@ The config does not name the templates. They are in the `W0003` folder
 in the filesystem. A tasks adapter's template file is named for the
 adapter: `Work package template.things.json`.
 
+jd has its own copy of a template file, in the `templates` folder of
+this repo, with the same name. An adapter copies it into `W0003` when
+the user has no template file.
+
 `"adapter": "things"` loads `tasks/things.sh`. A name with no file is an
 error that names the folder.
 
@@ -66,7 +70,8 @@ them. It does not set them, except for a default of its own.
 | `_JD_NEW_NOTES_URL` | the note app's link. Empty until `jd_notes_url` has run |
 | `_JD_NEW_TASKS_URL` | the task app's link. Empty until `jd_tasks_create` has run |
 | `_JD_NEW_JDEX` | the JDex folder |
-| `_JD_NEW_TASKS_TPL` | the template file, `W0003/Work package template.<adapter>.json`, as a full path. Empty if there is no `W0003` folder |
+| `_JD_NEW_TASKS_TPL` | the template file, `W0003/Work package template.<adapter>.json`, as a full path. The file may not exist. The `W0003` folder exists by the time `jd_tasks_prepare` or `jd_tasks_refresh` runs, because jd makes it if it is missing. It may not exist when `jd_tasks_check` runs |
+| `_JD_NEW_TASKS_DEFAULT` | jd's own template file, `templates/Work package template.<adapter>.json` in this repo, as a full path. The file may not exist |
 | `_JD_NEW_TASKS_SOURCE` | the template project's ID in the app, from the config |
 | `_JD_NEW_NOTES_VAULT` | the vault name, from the config |
 
@@ -84,15 +89,16 @@ These helpers are there too.
 ## Order
 
 `jd new wp` runs the steps in this order, and the order matters. The task
-app is the only step that talks to another program, so it goes first.
-Nothing is written to disk until it has worked.
+app is the only step that talks to another program, so it goes before
+the note and the folder. Neither is written until it has worked.
 
 1. `jd_notes_check`, `jd_tasks_check`.
 2. `jd_notes_url`. `{{NOTES_URL}}` is now known.
-3. `jd_tasks_prepare`, then `jd_tasks_create`. `{{TASKS_URL}}` is now known.
-4. The JDex note is written, with both links in it.
-5. The folder is made.
-6. `jd_tasks_link` writes both links into the task app.
+3. The work package area, `W0003` and `W0009` are made, if they are missing.
+4. `jd_tasks_prepare`, then `jd_tasks_create`. `{{TASKS_URL}}` is now known.
+5. The JDex note is written, with both links in it.
+6. The folder is made.
+7. `jd_tasks_link` writes both links into the task app.
 
 ## Writing one
 

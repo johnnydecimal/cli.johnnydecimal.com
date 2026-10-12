@@ -1,0 +1,29 @@
+[
+  {
+    "type": "project",
+    "attributes": {
+      "title": "{{NAME}}",
+      "notes": "- Related:\n\t- [Obsidian]({{NOTES_URL}})\n\t- [Things]({{TASKS_URL}})",
+      "items": [
+        {
+          "type": "heading",
+          "attributes": {
+            "title": "↓ Before you complete this project…"
+          }
+        },
+        {
+          "type": "to-do",
+          "attributes": {
+            "title": "Are there any permanent notes to be stored in your JDex? Is that entry neat and tidy?"
+          }
+        },
+        {
+          "type": "to-do",
+          "attributes": {
+            "title": "Is there a follow-up project or is this piece of work finished? Create it now if so"
+          }
+        }
+      ]
+    }
+  }
+]

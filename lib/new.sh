@@ -24,7 +24,12 @@
 #                                   W0003. The task app's project
 #
 # With no template note, the note is blank, and jd says so. With no
-# template folder, the folder is empty.
+# template folder, the folder is empty. With no task app template, the
+# adapter copies jd's own into W0003, from the templates folder of this
+# repo.
+#
+# A system with no work package area gets one. Refer to the comments
+# above _jd_new_wp_make.
 #
 # The task app and the note app are adapters, in lib/adapters. The core
 # never names an app. Refer to lib/adapters/README.md.
@@ -38,6 +43,11 @@
 # The fixed names of the templates.
 _JD_NEW_ID_TPL='ID template.md'
 _JD_NEW_WP_TPL='Work package template'
+
+# The names of the folders that 'jd new wp' makes when they are missing.
+_JD_NEW_WP_AREA='W0000-9999 Work packages'
+_JD_NEW_WP_W3='W0003 Templates for area W0000-9999'
+_JD_NEW_WP_W9='W0009 Archive'
 
 _jd_new_usage() {
   cat <<'EOF'
@@ -132,7 +142,12 @@ The templates are in the W0003 folder in the filesystem:
                                    the folder is empty
   Work package template.things.json
                                    the task app's project, for the
-                                   things adapter
+                                   things adapter. None: jd copies
+                                   its own into W0003
+
+If the system has no 'W0000-9999' folder, jd makes it, with a W0003
+folder and a W0009 folder in it. If the JDex has no 'W0000-9999'
+folder, jd makes it. In a flat JDex, the note goes in the root.
 
 The title needs no quotes. It is every word after the ID, up to the
 first word that starts with '--'. A '-' anywhere else is part of the
@@ -611,6 +626,13 @@ _jd_new_inner() {
 
 # -------------------------------------------------------------------- id
 
+# Is the JDex flat? A flat JDex has no area folders, and its notes sit
+# in its root.
+_jd_new_jdex_flat() {
+  [ -z "$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9]-[0-9][0-9]' -o -name '[0-9][0-9]-[0-9][0-9] *')" ] &&
+    [ -n "$(_jd_nav_find "$_JD_NEW_JDEX" 1 a -name '[0-9][0-9].[0-9][0-9]*.md')" ]
+}
+
 # The two-digit IDs used in category $1, one per line. $2 the JDex
 # category.
 #
@@ -672,8 +694,7 @@ _jd_new_id() {
 
   # The category, in both trees, found by the start of its name.
   fcat=$(_jd_nav_find "$_JD_NEW_ROOT" 2 d -name "$c" -o -name "$c *")
-  if [ -z "$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9]-[0-9][0-9]' -o -name '[0-9][0-9]-[0-9][0-9] *')" ] &&
-    [ -n "$(_jd_nav_find "$_JD_NEW_JDEX" 1 a -name '[0-9][0-9].[0-9][0-9]*.md')" ]; then
+  if _jd_new_jdex_flat; then
     # A flat JDex: no area folders, the notes sit in the root. The root
     # is the category. Only the notes named c.NN count, so the other
     # categories in the root do not. No folder below the root is read
@@ -806,20 +827,60 @@ _jd_new_old_keys() {
   done
 }
 
+# Add $1 to the folders that _jd_new_wp_make makes.
+_jd_new_wp_missing() {
+  _JD_NEW_WP_MAKE="$_JD_NEW_WP_MAKE${_JD_NEW_WP_MAKE:+
+}$1"
+}
+
+# Make the folders that 'jd new wp' needs and the system does not have,
+# and name each one. They are in $_JD_NEW_WP_MAKE, one per line.
+# $1 'dry' to name them and make nothing.
+#
+#   no W0000... folder in the system   the area, and W0003 and W0009
+#                                      in it
+#   no W0000... folder in the JDex     the area. A flat JDex gets no
+#                                      folder: the note goes in its root
+#   no W0003, and a task app is set    W0003, to hold the task app's
+#                                      template
+#
+# The names have no emoji, and are the ones at the top of this file.
+_jd_new_wp_make() {
+  local d
+  [ -n "$_JD_NEW_WP_MAKE" ] || return 0
+  while IFS= read -r d; do
+    if [ "${1-}" != dry ]; then
+      mkdir -p -- "$d" || { _jd_new_fail mkdir_failed "$d" "could not make $d"; return 1; }
+    fi
+    _jd_new_say "folder  $d"
+  done <<EOF
+$_JD_NEW_WP_MAKE
+EOF
+}
+
 _jd_new_wp() {
   local jw fw w3 folder_tpl notes_ad tasks_ad note_path dir ep
 
   # Both work package areas, found by the start of the number, the same
-  # way nav.sh finds them.
+  # way nav.sh finds them. A missing one is made later, with the rest.
+  _JD_NEW_WP_MAKE=''
   jw=$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -iname 'W0000*')
   fw=$(_jd_nav_find "$_JD_NEW_ROOT" 1 d -iname 'W0000*')
-  if [ "$(printf '%s' "$jw" | grep -c '^')" -ne 1 ]; then
-    _jd_new_fail no_wp_area_jdex "$_JD_NEW_JDEX" "the JDex has no one folder named W0000... at the top: $_JD_NEW_JDEX"
+  if [ "$(printf '%s' "$jw" | grep -c '^')" -gt 1 ]; then
+    _jd_new_fail no_wp_area_jdex "$_JD_NEW_JDEX" "the JDex has more than one folder named W0000... at the top: $_JD_NEW_JDEX"
     return 1
   fi
-  if [ "$(printf '%s' "$fw" | grep -c '^')" -ne 1 ]; then
-    _jd_new_fail no_wp_area_root "$_JD_NEW_ROOT" "the system has no one folder named W0000... at the top: $_JD_NEW_ROOT"
+  if [ "$(printf '%s' "$fw" | grep -c '^')" -gt 1 ]; then
+    _jd_new_fail no_wp_area_root "$_JD_NEW_ROOT" "the system has more than one folder named W0000... at the top: $_JD_NEW_ROOT"
     return 1
+  fi
+  if [ -z "$jw" ]; then
+    if _jd_new_jdex_flat; then
+      jw=$_JD_NEW_JDEX
+    else
+      jw="$_JD_NEW_JDEX/$_JD_NEW_WP_AREA"
+      _jd_new_wp_missing "$jw"
+    fi
   fi
 
   # The ID, then the title and any flags after it.
@@ -832,18 +893,36 @@ _jd_new_wp() {
 
   _jd_new_old_keys
 
-  # The templates folder, W0003, in the filesystem work package area.
-  _jd_new_one "$(_jd_nav_find "$fw" 1 d -iname 'W0003' -o -iname 'W0003 *')" W0003 || return 1
-  w3=$_JD_NEW_ONE
-
   notes_ad=$(_jd_new_cfg '.workPackages.notes.adapter')
   tasks_ad=$(_jd_new_cfg '.workPackages.tasks.adapter')
   [ -n "$notes_ad" ] || notes_ad=none
   [ -n "$tasks_ad" ] || tasks_ad=none
   [ "$_JD_NEW_USE_TASKS" -eq 1 ] || tasks_ad=none
 
+  # The templates folder, W0003, in the filesystem work package area.
+  # A new area gets one. So does an area with none, when a task app is
+  # set, because the task app's template is a file in W0003.
+  if [ -z "$fw" ]; then
+    fw="$_JD_NEW_ROOT/$_JD_NEW_WP_AREA"
+    w3="$fw/$_JD_NEW_WP_W3"
+    _jd_new_wp_missing "$fw"
+    _jd_new_wp_missing "$w3"
+    _jd_new_wp_missing "$fw/$_JD_NEW_WP_W9"
+  else
+    _jd_new_one "$(_jd_nav_find "$fw" 1 d -iname 'W0003' -o -iname 'W0003 *')" W0003 || return 1
+    w3=$_JD_NEW_ONE
+    if [ -z "$w3" ] && [ "$tasks_ad" != none ]; then
+      w3="$fw/$_JD_NEW_WP_W3"
+      _jd_new_wp_missing "$w3"
+    fi
+  fi
+
   _JD_NEW_TASKS_TPL=''
-  [ -n "$w3" ] && _JD_NEW_TASKS_TPL="$w3/$_JD_NEW_WP_TPL.$tasks_ad.json"
+  _JD_NEW_TASKS_DEFAULT=''
+  if [ "$tasks_ad" != none ]; then
+    _JD_NEW_TASKS_TPL="$w3/$_JD_NEW_WP_TPL.$tasks_ad.json"
+    _JD_NEW_TASKS_DEFAULT="$_JD_CLI_DIR/templates/$_JD_NEW_WP_TPL.$tasks_ad.json"
+  fi
   _JD_NEW_TASKS_SOURCE=$(_jd_new_cfg '.workPackages.tasks.source')
   _JD_NEW_NOTES_VAULT=$(_jd_new_cfg '.workPackages.notes.vault')
 
@@ -856,6 +935,7 @@ _jd_new_wp() {
     }
     _jd_new_adapter tasks "$tasks_ad" || return 1
     jd_tasks_check || { _JD_NEW_CODE=tasks_check_failed; return 1; }
+    [ "$tasks_ad" = none ] || _jd_new_wp_make || return 1
     jd_tasks_refresh || { _JD_NEW_CODE=refresh_failed; return 1; }
     return 0
   fi
@@ -910,6 +990,7 @@ _jd_new_wp() {
   [ -n "$_JD_NEW_TEMPLATE" ] || _jd_new_no_template 'work package'
 
   if [ "$_JD_NEW_DRY" -eq 1 ]; then
+    _jd_new_wp_make dry
     _jd_new_say "note    $note_path"
     [ -n "$_JD_NEW_TEMPLATE" ] && _jd_new_say "from    $_JD_NEW_TEMPLATE"
     [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
@@ -922,10 +1003,14 @@ _jd_new_wp() {
     return 0
   fi
 
-  # The task app first. It is the only step that talks to another
+  # The folders the system does not have yet. They go first, because
+  # the task app's template is a file in one of them.
+  _jd_new_wp_make || return 1
+
+  # Then the task app. It is the only step that talks to another
   # program, so it is the only one that fails in a way this cannot
-  # predict. Nothing is written to disk until it is done, except the
-  # task app's own template file, which jd_tasks_prepare may refresh.
+  # predict. No note and no work package folder is written until it is
+  # done. jd_tasks_prepare may write the task app's own template file.
   # The adapter prints its own message on failure, so this only records
   # the code.
   if [ "$tasks_ad" != none ]; then

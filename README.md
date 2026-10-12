@@ -212,6 +212,8 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 
 - It makes the next free W number, the project in your task app, the JDex note, and the folder.
 - The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd stops, and names the folder.
+- If the system has no `W0000-9999` folder, jd makes `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
+- If the JDex has no `W0000-9999` folder, jd makes `W0000-9999 Work packages` in the JDex. A flat JDex gets no folder: jd writes the note to the root.
 - The system's `workPackages` block in the config names the adapters. Refer to [lib/adapters/README.md](lib/adapters/README.md).
 
 ### Templates
@@ -223,7 +225,7 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 | `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd says so. |
 | `Work package template.md` | `W0003` | The note is blank, and jd says so. |
 | `Work package template/` | `W0003`. jd copies its contents into the new folder. | The folder is empty. |
-| `Work package template.things.json` | `W0003` | jd makes it from Things. |
+| `Work package template.things.json` | `W0003` | jd makes it from Things, if the config has `workPackages.tasks.source`. Otherwise jd copies its own, [templates/Work package template.things.json](templates/Work%20package%20template.things.json), into `W0003`. |
 
 - The first `ID template.md` that jd finds is the one it uses. To give one category its own template, put a copy in that category's .03.
 - If there are two folders with the same templates number, jd stops. It cannot tell which folder to use.
@@ -236,10 +238,13 @@ Templates are in the filesystem. jd finds them by number, so the config does not
   - A token with no value becomes its brief, `What we hand over`, or nothing.
   - jd names each flag you did not set: in `toFill` with `--json`, or on stderr otherwise.
   - A flag for a token that the template does not have is an error. The error lists the flags the template has.
-- The Things template: you edit the template project in Things.
+- The Things template, with `workPackages.tasks.source` in the config: you edit the template project in Things.
   - Before it makes each work package, jd reads that project out of Things. If the project has changed, jd rewrites the file.
   - `jd new wp --refresh` does the same, and makes nothing.
   - `workPackages.tasks.source` in the config is the project's ID in Things.
+- The Things template, with no `workPackages.tasks.source`: you edit the file in `W0003`.
+  - If `W0003` has no file, jd copies its own into `W0003`. If the area has no `W0003`, jd makes `W0003 Templates for area W0000-9999` first.
+  - jd does not write to the file again.
 
 ### For agents
 

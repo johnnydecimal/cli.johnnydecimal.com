@@ -29,6 +29,8 @@ _jd_t_load "$JD_T_TMP/new.json"
 _jd_t_jw="$JD_FX_JDEX/W0000-9999 Work packages"
 _jd_t_fw="$JD_FX_ROOT/W0000-9999 Work packages"
 _jd_t_w3="$_jd_t_fw/W0003 Templates"
+# The name of the W0003 that jd makes, when the system has none.
+_jd_t_w3_made='W0003 Templates for area W0000-9999'
 
 # ------------------------------------------------------------------ help
 
@@ -280,6 +282,152 @@ _jd_t_eq 'note template only: no warning' '' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
 _jd_t_eq 'note template only: the folder is empty' '' \
   "$(find "$_jd_t_fw/W0301~21.35 A note template only" -mindepth 1 2>/dev/null)"
+
+# The area has no W0003, and no task app is set. jd makes no W0003,
+# because nothing needs one.
+if [ -e "$_jd_t_fw/$_jd_t_w3_made" ]; then
+  _jd_t_bad 'note template only: no second W0003 is made' 'no folder' 'a folder'
+else
+  _jd_t_ok 'note template only: no second W0003 is made'
+fi
+
+# ------------------------------------------- no work package area
+#
+# The system has no W0000-9999 folder, and nor does the JDex. jd makes
+# both, and W0003 and W0009 in the filesystem one. The names have no
+# emoji. The JDex has no work package, so the first number is W0001.
+
+_jd_fx_reset
+rm -rf "$_jd_t_fw" "$_jd_t_jw"
+_jd_fx_config_two "$JD_T_TMP/two.json"
+_jd_t_load "$JD_T_TMP/two.json"
+
+_jd_t_run jd new wp --dry-run 21.35 No area
+_jd_t_status 'no area: dry run, exit status' 0
+_jd_t_contains 'no area: dry run names the area' "folder  $_jd_t_fw" "$JD_T_ERR"
+_jd_t_contains 'no area: dry run names W0003' \
+  "folder  $_jd_t_fw/$_jd_t_w3_made" "$JD_T_ERR"
+_jd_t_contains 'no area: dry run names W0009' \
+  "folder  $_jd_t_fw/W0009 Archive" "$JD_T_ERR"
+_jd_t_contains 'no area: dry run names the JDex area' "folder  $_jd_t_jw" "$JD_T_ERR"
+if [ -e "$_jd_t_fw" ] || [ -e "$_jd_t_jw" ]; then
+  _jd_t_bad 'no area: dry run makes nothing' 'no folder' 'a folder'
+else
+  _jd_t_ok 'no area: dry run makes nothing'
+fi
+
+_jd_t_run jd new wp --json 21.35 No area
+_jd_t_status 'no area: exit status' 0
+_jd_t_eq 'no area: the first number is W0001' 'W0001' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
+if [ -d "$_jd_t_fw/$_jd_t_w3_made" ] && [ -d "$_jd_t_fw/W0009 Archive" ]; then
+  _jd_t_ok 'no area: W0003 and W0009 are made'
+else
+  _jd_t_bad 'no area: W0003 and W0009 are made' 'two folders' "$(ls "$_jd_t_fw" 2>&1)"
+fi
+if [ -f "$_jd_t_jw/W0001~21.35 No area.md" ] && [ -d "$_jd_t_fw/W0001~21.35 No area" ]; then
+  _jd_t_ok 'no area: the note and the folder are made'
+else
+  _jd_t_bad 'no area: the note and the folder are made' 'a note and a folder' 'not both'
+fi
+_jd_t_eq 'no area: the JDex area holds the note and nothing else' \
+  'W0001~21.35 No area.md' "$(ls "$_jd_t_jw" 2>/dev/null)"
+
+# The second one finds the folders, and makes none.
+_jd_t_run jd new wp 21.35 No area again
+_jd_t_status 'no area: the second one, exit status' 0
+_jd_t_lacks 'no area: the second one makes no area' "folder  $_jd_t_fw/W0003" "$JD_T_ERR"
+_jd_t_at 'no area: the second one is W0002' "$_jd_t_fw/W0002~21.35 No area again"
+
+# Two W0000 folders: jd cannot tell which one is the area, so it stops.
+_jd_fx_reset
+mkdir -p "$JD_FX_ROOT/W0000 A second area"
+_jd_t_run jd new wp --json 21.35 Two areas
+_jd_t_status 'two areas: exit status' 1
+_jd_t_eq 'two areas: the code is no_wp_area_root' 'no_wp_area_root' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.code')"
+_jd_t_contains 'two areas: says there is more than one' 'more than one folder' "$JD_T_ERR"
+
+# A flat JDex has no area folders, and its notes are in its root. jd
+# makes no folder in it: the note goes in the root. Its root holds one
+# work package, W0150, so the next is W0151.
+_jd_fx_reset
+_jd_t_keep_jdex=$JD_FX_JDEX
+_jd_t_flat="$JD_T_TMP/flat jdex"
+mkdir -p "$_jd_t_flat"
+_jd_fx_note "$_jd_t_flat/21.35 Some title.md"
+_jd_fx_note "$_jd_t_flat/W0150~21.35 An old one.md"
+JD_FX_JDEX=$_jd_t_flat
+_jd_fx_config_two "$JD_T_TMP/two-flat.json"
+JD_FX_JDEX=$_jd_t_keep_jdex
+_jd_t_load "$JD_T_TMP/two-flat.json"
+
+_jd_t_run jd new wp --json 21.35 Flat
+_jd_t_status 'flat: exit status' 0
+if [ -f "$_jd_t_flat/W0151~21.35 Flat.md" ]; then
+  _jd_t_ok 'flat: the note is in the JDex root, with the next number'
+else
+  _jd_t_bad 'flat: the note is in the JDex root, with the next number' \
+    "$_jd_t_flat/W0151~21.35 Flat.md" "$(ls "$_jd_t_flat" 2>&1)"
+fi
+_jd_t_eq 'flat: no folder is made in the JDex' '' \
+  "$(find "$_jd_t_flat" -mindepth 1 -type d 2>/dev/null)"
+rm -rf "$_jd_t_flat"
+
+# ------------------------------------------- the task app's template
+#
+# jd has its own Things template, in the templates folder of the repo.
+# The things adapter copies it into W0003 when the config has no source
+# and W0003 has no template. Nothing here talks to Things: the test
+# calls the one function that copies, in this shell.
+
+_jd_t_shipped="$JD_T_REPO/templates/Work package template.things.json"
+_jd_t_eq 'shipped template: it is JSON, and one project' 'project' \
+  "$(jq -r '.[0].type' "$_jd_t_shipped" 2>/dev/null)"
+_jd_t_eq 'shipped template: the title is {{NAME}}' '{{NAME}}' \
+  "$(jq -r '.[0].attributes.title' "$_jd_t_shipped" 2>/dev/null)"
+_jd_t_contains 'shipped template: the notes hold {{NOTES_URL}}' '{{NOTES_URL}}' \
+  "$(jq -r '.[0].attributes.notes' "$_jd_t_shipped" 2>/dev/null)"
+_jd_t_contains 'shipped template: the notes hold {{TASKS_URL}}' '{{TASKS_URL}}' \
+  "$(jq -r '.[0].attributes.notes' "$_jd_t_shipped" 2>/dev/null)"
+# An area is a name in one person's Things, so the template has none.
+_jd_t_eq 'shipped template: it names no Things area' 'null' \
+  "$(jq -r '.[0].attributes.area' "$_jd_t_shipped" 2>/dev/null)"
+
+_jd_fx_reset
+_jd_t_libs
+. "$JD_T_REPO/lib/adapters/tasks/things.sh"
+mkdir -p "$_jd_t_fw/$_jd_t_w3_made"
+_JD_NEW_WARNINGS_JSON='[]'
+_JD_NEW_TASKS_SOURCE=''
+_JD_NEW_TASKS_DEFAULT=$_jd_t_shipped
+_JD_NEW_TASKS_TPL="$_jd_t_fw/$_jd_t_w3_made/Work package template.things.json"
+
+_jd_t_run jd_tasks_prepare
+_jd_t_status 'shipped template: prepare, exit status' 0
+_jd_t_eq 'shipped template: W0003 gets a copy' "$(cat "$_jd_t_shipped")" \
+  "$(cat "$_JD_NEW_TASKS_TPL" 2>/dev/null)"
+_jd_t_contains 'shipped template: says it copied' 'template copied to' "$JD_T_ERR"
+
+# The copy is the user's file now. jd does not write to it again.
+printf '[{"type":"project","attributes":{"title":"{{NAME}}"}}]\n' >"$_JD_NEW_TASKS_TPL"
+_jd_t_run jd_tasks_prepare
+_jd_t_status 'shipped template: a file that exists, exit status' 0
+_jd_t_eq 'shipped template: a file that exists is left alone' \
+  '[{"type":"project","attributes":{"title":"{{NAME}}"}}]' "$(cat "$_JD_NEW_TASKS_TPL")"
+_jd_t_lacks 'shipped template: a file that exists, nothing is copied' \
+  'template copied to' "$JD_T_ERR"
+
+# Filled in, the copy is still JSON, whatever the title holds.
+cp "$_jd_t_shipped" "$_JD_NEW_TASKS_TPL"
+_JD_NEW_NUM=W0301
+_JD_NEW_ID=21.35
+_JD_NEW_TITLE='A "quoted" title \ with a backslash'
+_JD_NEW_NAME="W0301~21.35 $_JD_NEW_TITLE"
+_JD_NEW_NOTES_URL='obsidian://adv-uri?vault=D25%20JDex&block=w0301'
+_JD_NEW_TASKS_URL=''
+_jd_t_eq 'shipped template: filled in, the title is the name' "$_JD_NEW_NAME" \
+  "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.title')"
 
 # ------------------------------------------------ the 2.5 template keys
 
