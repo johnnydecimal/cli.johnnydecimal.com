@@ -7,6 +7,21 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.0.1 – 2026-10-12
+
+> AI generated. Reviewed by Johnny.
+
+`jd new id` now operates with a flat JDex. A flat JDex has no area
+folders, and its notes are in its root. You do not have to do
+anything.
+
+### Fixes
+
+- With a flat JDex, `jd new id` stopped with the error
+  `no_category_jdex`. Now it counts the notes in the root of the JDex
+  that start with the category's number, and it writes the new note
+  to the root. David Velasco contributed it in #19.
+
 ## 4.0.0 – 2026-10-06
 
 > AI generated. Reviewed by Johnny.
