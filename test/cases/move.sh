@@ -230,6 +230,12 @@ _jd_t_eq 'a folder that holds the current folder: code' holds_cwd "$(_jd_t_json 
 _jd_t_run_from "$JD_T_TMP/inbox-link" jd move "$_jd_t_mess/Inbox" 11.11 --json
 _jd_t_eq 'current folder through a symlink: code' holds_cwd "$(_jd_t_json .code)"
 
+# '/' comes out of _jd_move_abs as the current folder, so it is refused
+# here too.
+_jd_t_run_from "$_jd_t_mess/Inbox" "$JD_T_BIN" move / 11.11 --as X --json
+_jd_t_status "'/': exit status" 1
+_jd_t_exists "'/': nothing moved" "$_jd_t_mess/Inbox/Recipes.pdf"
+
 _jd_t_run_from "$_jd_t_mess/Inbox" jd move Cards 11.11 --dry-run --json
 _jd_t_eq 'a folder inside the current folder can move' true "$(_jd_t_json .ok)"
 
