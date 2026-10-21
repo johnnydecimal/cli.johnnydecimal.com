@@ -202,6 +202,41 @@ _jd_t_exists 'target inside source: nothing moved' "$_jd_t_f11"
 
 _jd_t_eq 'refusals: no journal lines' 3 "$(_jd_t_lines)"
 
+# ------------------------------------------------------ the current folder
+
+# The folder the shell is in, or one that holds it, is refused. With an
+# empty $f, "$PWD/$f" names the current folder, and an agent once moved
+# a person's whole Inbox into an ID that way. The checks are dry runs,
+# or refusals, so the journal does not change.
+mkdir -p "$_jd_t_mess/Inbox/Cards"
+printf 'r\n' >"$_jd_t_mess/Inbox/Recipes.pdf"
+ln -s "$_jd_t_mess/Inbox" "$JD_T_TMP/inbox-link"
+
+_jd_t_run_from "$_jd_t_mess/Inbox" jd move "$_jd_t_mess/Inbox" 11.11 --json
+_jd_t_status 'current folder: exit status' 1
+_jd_t_eq 'current folder: code' holds_cwd "$(_jd_t_json .code)"
+_jd_t_eq 'current folder: path' "$_jd_t_mess/Inbox" "$(_jd_t_json .path)"
+_jd_t_exists 'current folder: nothing moved' "$_jd_t_mess/Inbox/Recipes.pdf"
+
+_jd_t_run_from "$_jd_t_mess/Inbox" "$JD_T_BIN" move "$_jd_t_mess/Inbox" 11.11 --json
+_jd_t_eq 'current folder, the program: code' holds_cwd "$(_jd_t_json .code)"
+
+_jd_t_run_from "$_jd_t_mess/Inbox" jd move ../Inbox 11.11 --json
+_jd_t_eq 'current folder, a relative path: code' holds_cwd "$(_jd_t_json .code)"
+
+_jd_t_run_from "$_jd_t_mess/Inbox/Cards" jd move "$_jd_t_mess/Inbox" 11.11 --json
+_jd_t_eq 'a folder that holds the current folder: code' holds_cwd "$(_jd_t_json .code)"
+
+_jd_t_run_from "$JD_T_TMP/inbox-link" jd move "$_jd_t_mess/Inbox" 11.11 --json
+_jd_t_eq 'current folder through a symlink: code' holds_cwd "$(_jd_t_json .code)"
+
+_jd_t_run_from "$_jd_t_mess/Inbox" jd move Cards 11.11 --dry-run --json
+_jd_t_eq 'a folder inside the current folder can move' true "$(_jd_t_json .ok)"
+
+_jd_t_eq 'current folder: no journal lines' 3 "$(_jd_t_lines)"
+rm "$JD_T_TMP/inbox-link"
+rm -r "$_jd_t_mess/Inbox"
+
 # ------------------------------------------------- an id with no folder
 
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 12.99

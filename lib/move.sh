@@ -58,6 +58,8 @@ It refuses, and moves nothing, when:
     downloaded. Download it first. A Dropbox file that is online-only
     is not detected: jd moves the placeholder
   - the target folder is inside the thing you are moving
+  - you are in the folder you are moving, or in a folder inside it. cd
+    out of it first
 
 Every move is one line in the journal: when, which system, the ID,
 from, to, and whether a person or a program asked. 'jd undo move' reads
@@ -409,6 +411,18 @@ _jd_move_check_name() {
   esac
 }
 
+# Whether the current folder is $1 or is inside it. $1 a folder, from
+# _jd_move_abs.
+_jd_move_holds_cwd() {
+  local from=$1 from_p cwd cwd_p
+  from_p=$(cd -- "$from" 2>/dev/null && pwd -P) || from_p=$from
+  cwd=${PWD-}
+  cwd_p=$(pwd -P 2>/dev/null) || cwd_p=$cwd
+  case "$cwd/" in "$from"/* | "$from_p"/*) return 0 ;; esac
+  case "$cwd_p/" in "$from"/* | "$from_p"/*) return 0 ;; esac
+  return 1
+}
+
 _jd_move_inner() {
   local src id sub folder name
 
@@ -459,6 +473,15 @@ _jd_move_inner() {
     _JD_MOVE_KIND=folder
   else
     _JD_MOVE_KIND=file
+  fi
+
+  # The folder we are in, or one that holds it, is refused. It moves
+  # the shell with it, and it is almost never what was meant: "$PWD/$f"
+  # with an empty $f names it. The check is on both the logical and the
+  # physical path, so a symlink on the way in does not hide it.
+  if [ "$_JD_MOVE_KIND" = folder ] && _jd_move_holds_cwd "$_JD_MOVE_FROM"; then
+    _jd_move_fail holds_cwd "$_JD_MOVE_FROM" "you are in $_JD_MOVE_FROM, or in a folder inside it - check the path. To move it, cd out of it first"
+    return 1
   fi
 
   # The target folder.
