@@ -58,6 +58,9 @@ It refuses, and moves nothing, when:
     downloaded. Download it first. A Dropbox file that is online-only
     is not detected: jd moves the placeholder
   - the target folder is inside the thing you are moving
+  - the path ends in '/'. 'Photos/' means something in Photos, not
+    Photos itself. "$PWD/$f" with an empty $f ends in '/' this way.
+    To move the folder, leave the '/' off
   - you are in the folder you are moving, or in a folder inside it. cd
     out of it first
 
@@ -458,6 +461,15 @@ _jd_move_inner() {
   case $name in
     .*.icloud)
       _jd_move_fail not_downloaded "$src" "$name is an iCloud stub that is not downloaded - download it first"
+      return 1
+      ;;
+  esac
+  # A path that ends in '/' means something in that folder, not the
+  # folder. "$dir/$name" with an empty $name ends in '/' this way. So it
+  # is refused, though the folder exists.
+  case $src in
+    */)
+      _jd_move_fail ends_in_slash "$src" "$src ends in '/' - check the path. To move the folder, leave the '/' off"
       return 1
       ;;
   esac

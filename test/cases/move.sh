@@ -160,10 +160,22 @@ _jd_t_eq 'journal: a move has no undoes' null "$(_jd_t_jline 1 .undoes)"
 
 # -------------------------------------------------------- moving a folder
 
+# A path that ends in '/' is refused. "$dir/$f" with an empty $f ends
+# in '/', and names the folder.
 _jd_t_run jd move "$_jd_t_mess/Photos/" 11.11 --json
+_jd_t_status 'folder with a trailing slash: exit status' 1
+_jd_t_eq 'folder with a trailing slash: code' ends_in_slash "$(_jd_t_json .code)"
+_jd_t_exists 'folder with a trailing slash: nothing moved' "$_jd_t_mess/Photos/a.jpg"
+
+f=''
+_jd_t_run "$JD_T_BIN" move "$_jd_t_mess/$f" 11.11 --json
+_jd_t_eq 'an empty name in the path: code' ends_in_slash "$(_jd_t_json .code)"
+_jd_t_exists 'an empty name in the path: nothing moved' "$_jd_t_mess/plain.txt"
+
+_jd_t_run jd move "$_jd_t_mess/Photos" 11.11 --json
 _jd_t_status 'folder: exit status' 0
 _jd_t_eq 'folder: kind' folder "$(_jd_t_json .kind)"
-_jd_t_eq 'folder: a trailing slash is dropped' "$_jd_t_f11/Photos" "$(_jd_t_json .to)"
+_jd_t_eq 'folder: to' "$_jd_t_f11/Photos" "$(_jd_t_json .to)"
 _jd_t_exists 'folder: it moved whole' "$_jd_t_f11/Photos/a.jpg"
 _jd_t_eq 'folder: one journal line for the folder' 2 "$(_jd_t_lines)"
 
@@ -223,6 +235,12 @@ _jd_t_eq 'current folder, the program: code' holds_cwd "$(_jd_t_json .code)"
 
 _jd_t_run_from "$_jd_t_mess/Inbox" jd move ../Inbox 11.11 --json
 _jd_t_eq 'current folder, a relative path: code' holds_cwd "$(_jd_t_json .code)"
+
+f=''
+# The words are expanded before _jd_t_run_from goes there, so this is
+# "$PWD/$f" spelled out.
+_jd_t_run_from "$_jd_t_mess/Inbox" "$JD_T_BIN" move "$_jd_t_mess/Inbox/$f" 11.11 --json
+_jd_t_eq 'current folder and an empty name: code' ends_in_slash "$(_jd_t_json .code)"
 
 _jd_t_run_from "$_jd_t_mess/Inbox/Cards" jd move "$_jd_t_mess/Inbox" 11.11 --json
 _jd_t_eq 'a folder that holds the current folder: code' holds_cwd "$(_jd_t_json .code)"

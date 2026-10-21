@@ -276,6 +276,7 @@ jd undo move ~/D25/.../invoice.pdf       # move that thing back
 - It refuses, and moves nothing, when the target folder already holds something with that name. With `--as`, the check is on the new name.
 - It refuses an iCloud stub, a `.name.icloud` file that is not downloaded. A Dropbox online-only file is not detected.
 - It refuses when the target folder is inside the thing you are moving.
+- It refuses a path that ends in `/`. `Photos/` means something in Photos, not Photos itself. `"$PWD/$f"` with an empty `$f` ends in `/` this way. To move the folder, leave the `/` off.
 - It refuses when you are in the folder you are moving, or in a folder inside it. `cd` out of it first.
 - `--dry-run` says what it would do, and moves nothing.
 - Run `jd move --help` or `jd undo move --help` for the full text.
