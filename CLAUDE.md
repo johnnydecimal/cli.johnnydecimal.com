@@ -7,3 +7,7 @@
 - **Check `git branch --show-current` before every commit, and name the branch when you report the commit.** Never trust the branch from earlier in the session. I switch branches in another window, so the ground moves under you between turns.
 - Before any merge or push, compare the current branch against `origin/main` _and_ the other local `dev/*` branches. Work split across two branches without either of us noticing is the failure that actually happens.
 - If a branch's name stops describing what we're doing, stop and say so.
+
+## Release
+
+- The installed copy of jd on this machine is the folder that `jd paths install` prints. `/release-it` updates it as its last step.
