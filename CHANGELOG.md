@@ -7,6 +7,28 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.1.1 – 2026-10-23
+
+> AI generated. Reviewed by Johnny.
+
+`jd move` refuses two kinds of path that can name a folder you did
+not mean to move. If you move a folder with a path that ends in `/`,
+leave the `/` off.
+
+### Changes
+
+- `jd move` refuses a path that ends in `/`. `Photos/` means
+  something in Photos, not Photos itself. To move the folder, leave
+  the `/` off. With `--json`, the code is `ends_in_slash`.
+- `jd move` refuses the folder you are in, or a folder that holds
+  it. `cd` out of it first. With `--json`, the code is `holds_cwd`.
+
+### Fixes
+
+- A path made from a folder and an empty name, like `"$PWD/$f"` when
+  `$f` is empty, named the folder. `jd move` then moved the whole
+  folder. Both changes above stop this.
+
 ## 4.1.0 – 2026-10-13
 
 > AI generated. Reviewed by Johnny.
