@@ -495,6 +495,7 @@ else
 fi
 
 _jd_fx_reset
+
 # ------------------------------------------------------------------ beta
 #
 # 'jd move' and 'jd undo move' were beta features up to 4.1.1. They are

@@ -272,8 +272,6 @@ rm "$HOME/.jd"
 
 _jd_t_wipe
 _jd_t_put _jd_fx_config_two "$_jd_t_new"
-JD_BETA=1
-export JD_BETA
 
 # A fresh file in the mess, and its path on stdout.
 _jd_t_file() {
@@ -372,7 +370,6 @@ _jd_t_contains 'both journals: jd warns that the old one is not read' \
   'there is a journal in ~/.jd, the old place, that jd does not read' "$JD_T_ERR"
 _jd_t_eq 'both journals: the old one gets no line' 1 "$(grep -c '^' "$_jd_t_jold")"
 
-unset JD_BETA
 _jd_fx_reset
 rm -rf "$_jd_t_mess"
 
