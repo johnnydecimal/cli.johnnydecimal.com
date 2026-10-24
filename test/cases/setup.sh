@@ -37,7 +37,7 @@ _jd_t_contains 'no config: the prompt names the hook to source' \
 _jd_t_contains 'no config: the prompt names the template' \
   "$JD_T_REPO/config.example.json" "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names the configuration page' \
-  'https://johnnydecimal.com/jdhq/configuration' "$JD_T_OUT"
+  'https://johnnydecimal.com/documentation/configuration' "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt is the one home, it does not defer to install_cli' \
   'install_cli' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt sends a bought system to install_system' \

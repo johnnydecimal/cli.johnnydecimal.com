@@ -122,7 +122,7 @@ Read these before you change anything:
 
 - $_JD_CLI_DIR/README.md, the Installation section.
 - $_JD_CLI_DIR/config.example.json, the template.
-- https://johnnydecimal.com/jdhq/configuration, which says what each field means.
+- https://johnnydecimal.com/documentation/configuration, which says what each field means.
 $_JD_SETUP_MOVE
 1. Check that jq is installed. If it is not, tell me which package manager you are about to use, and wait for my yes: brew on macOS, apt on Debian or Ubuntu, dnf on Fedora. Stop until jq is installed.
 

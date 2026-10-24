@@ -6,11 +6,11 @@ Command-line tools for a Johnny.Decimal system. They operate in bash 3.2 and lat
 
 [^pr]: PRs welcome if you do.
 
-This repository documents installation. Usage is documented at [johnnydecimal.com/jdhq/jd-cli](https://johnnydecimal.com/jdhq/jd-cli).
+This repository documents installation. Usage is documented at [johnnydecimal.com/documentation/jd-cli](https://johnnydecimal.com/documentation/jd-cli).
 
 ## Requirements
 
-- [Configuration file](https://johnnydecimal.com/jdhq/configuration).
+- [Configuration file](https://johnnydecimal.com/documentation/configuration).
   - This repository contains a template.
 - [jq](https://jqlang.github.io/jq/).
 
@@ -180,7 +180,7 @@ The program reads the configuration each time it runs, so a system that has move
 
 Two things are read at shell start, and need a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the zsh prompt.
 
-Refer to [johnnydecimal.com/jdhq/configuration](https://johnnydecimal.com/jdhq/configuration) for the fields.
+Refer to [johnnydecimal.com/documentation/configuration](https://johnnydecimal.com/documentation/configuration) for the fields.
 
 ## `jd new`
 
