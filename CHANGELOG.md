@@ -7,6 +7,21 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.2.1 – 2026-10-24
+
+> AI generated. Reviewed by Johnny.
+
+jd links to its documentation at the new address. You do not
+have to do anything.
+
+### Changes
+
+- When jd finds no configuration file, its message links to
+  `jdcm.al/documentation/jd-cli`. Before, it linked to
+  `jdcm.al/jdhq/jd-cli`. The old link still works.
+- The prompt from `jd agent-setup` links to
+  `johnnydecimal.com/documentation/configuration`.
+
 ## 4.2.0 – 2026-10-24
 
 > AI generated. Reviewed by Johnny.
