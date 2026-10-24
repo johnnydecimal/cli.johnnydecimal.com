@@ -7,6 +7,26 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.2.0 – 2026-10-24
+
+> AI generated. Reviewed by Johnny.
+
+`jd move` and `jd undo move` are no longer beta features. They
+operate with beta off.
+
+### Changes
+
+- `jd move` and `jd undo move` no longer give the error code
+  `beta_off`.
+- The help for `jd move`, `jd undo move`, and `jd help` no longer
+  says that move is beta.
+
+### Fixes
+
+- If you moved a file, undid the move, and moved the file
+  again in the same second, `jd undo move` said there was
+  nothing to undo.
+
 ## 4.1.1 – 2026-10-23
 
 > AI generated. Reviewed by Johnny.
