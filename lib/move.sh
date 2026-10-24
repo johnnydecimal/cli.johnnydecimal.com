@@ -581,16 +581,20 @@ _jd_undo() {
 # system.
 #
 # A move is undone when a later line has 'undoes' set to its 'at' and
-# comes from where it went to. An undo line is never a candidate: undo
-# of an undo is a new move, not a thing this does.
+# comes from where it went to. Only a later line: 'at' is to the second,
+# so a move, its undo, and the same move again can share one 'at'. An
+# undo line is never a candidate: undo of an undo is a new move, not a
+# thing this does.
 _jd_undo_find() {
   jq -cs --arg sys "$2" --arg path "$3" '
     . as $all
-    | def undone: . as $o
-        | any($all[]; (.undoes // "") == $o.at and .from == $o.to);
-    map(select((.undoes // "") == ""))
-    | map(select(if $path == "" then .sys == $sys else .to == $path end))
-    | map(select(undone | not))
+    | def undone($n): . as $o
+        | any($all[$n + 1:][]; (.undoes // "") == $o.at and .from == $o.to);
+    [range(length) as $n
+      | $all[$n]
+      | select((.undoes // "") == "")
+      | select(if $path == "" then .sys == $sys else .to == $path end)
+      | select(undone($n) | not)]
     | last // empty
   ' "$1" 2>/dev/null
 }

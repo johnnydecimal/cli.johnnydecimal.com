@@ -494,6 +494,31 @@ else
   _jd_t_exists 'journal not writable: moves nothing' "$_jd_t_mess/Photos"
 fi
 
+# ------------------------------------------------------- the same second
+#
+# 'at' is to the second, so a move, its undo, and the same move again
+# can all have one 'at'. The undo counts only for the move above it. A
+# 'date' on $PATH that always prints one time makes this happen every
+# run, not only on a fast machine.
+
+_jd_t_mess_build
+mkdir -p "$JD_T_TMP/clock"
+printf '#!/bin/sh\nprintf "2026-10-24T00:00:00Z\\n"\n' >"$JD_T_TMP/clock/date"
+chmod +x "$JD_T_TMP/clock/date"
+_jd_t_path=$PATH
+PATH="$JD_T_TMP/clock:$PATH"
+_jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
+_jd_t_run jd undo move --json
+_jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
+_jd_t_eq 'same second: the clock is stopped' '2026-10-24T00:00:00Z' "$(_jd_t_json .at)"
+_jd_t_run jd undo move --json
+_jd_t_status 'same second: the second move can be undone' 0
+_jd_t_exists 'same second: the file is back' "$_jd_t_mess/plain.txt"
+_jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
+_jd_t_run jd undo move "$_jd_t_f11/plain.txt" --json
+_jd_t_status 'same second: undo by path finds the newest move' 0
+PATH=$_jd_t_path
+
 _jd_fx_reset
 
 # ------------------------------------------------------------------ beta
