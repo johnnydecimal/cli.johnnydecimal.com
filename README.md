@@ -268,7 +268,6 @@ jd undo move                             # move the last thing back
 jd undo move ~/D25/.../invoice.pdf       # move that thing back
 ```
 
-- `jd move` is a beta feature. Turn beta on first. See [Beta](#beta).
 - The target is an ID or a W number. It is found the same way `jd 21.34` finds it. An ID that is in the JDex but has no folder gets its folder made.
 - `<id>/<subfolder>` puts it in a subfolder of the ID's folder, one level down. jd makes the subfolder when it does not exist. An undo leaves the subfolder in place.
 - `--as <name>` gives it a new name as it moves. The journal keeps the old name in `from` and the new name in `to`. An undo gives the old name back.
@@ -303,7 +302,7 @@ Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jso
 
 ## Beta
 
-Some features are in beta. They may change, or go, without notice. One flag turns all of them on.
+Some features are in beta. They may change, or go, without notice. One flag turns all of them on. No feature is in beta in this version.
 
 ```sh
 jd beta          # say whether beta is on

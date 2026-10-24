@@ -15,8 +15,9 @@
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
 
-JD_BETA=1
-export JD_BETA
+# 'jd move' is not a beta feature. A JD_BETA from the shell that started
+# the suite must not reach a test, so every test runs with beta off.
+unset JD_BETA
 
 _jd_fx_build
 _jd_fx_config_two "$JD_T_TMP/two.json"
@@ -69,16 +70,7 @@ _jd_t_run jd help
 _jd_t_contains 'jd help: names move' 'move <path> 21.34' "$JD_T_OUT"
 _jd_t_contains 'jd help: names undo move' 'undo move' "$JD_T_OUT"
 
-# ------------------------------------------------------------------ beta
-
 _jd_t_mess_build
-JD_BETA=0 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
-_jd_t_status 'beta off: exit status' 1
-_jd_t_eq 'beta off: code' beta_off "$(_jd_t_json .code)"
-_jd_t_exists 'beta off: moves nothing' "$_jd_t_mess/plain.txt"
-
-JD_BETA=0 _jd_t_run jd move --help
-_jd_t_status 'beta off: help still works' 0
 
 # ------------------------------------------------------------- the words
 
@@ -503,4 +495,29 @@ else
 fi
 
 _jd_fx_reset
+# ------------------------------------------------------------------ beta
+#
+# 'jd move' and 'jd undo move' were beta features up to 4.1.1. They are
+# not now: they move with beta off, and say nothing about beta. These
+# run last, so that the journal counts above start from nothing.
+
+_jd_t_mess_build
+_jd_t_eq 'beta off: the config has no beta key' 'null' \
+  "$(jq -r '.beta' "$JD_T_TMP/two.json")"
+_jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
+_jd_t_status 'beta off: exit status' 0
+_jd_t_eq 'beta off: it moved' true "$(_jd_t_json .ok)"
+_jd_t_lacks 'beta off: says nothing about beta' 'beta' "$JD_T_ERR"
+_jd_t_run jd undo move --json
+_jd_t_status 'beta off: undo exit status' 0
+_jd_t_exists 'beta off: undo put it back' "$_jd_t_mess/plain.txt"
+_jd_t_lacks 'beta off: undo says nothing about beta' 'beta' "$JD_T_ERR"
+
+_jd_t_run jd move --help
+_jd_t_lacks 'help: says nothing about beta' 'beta' "$JD_T_OUT"
+_jd_t_run jd undo move --help
+_jd_t_lacks 'help undo: says nothing about beta' 'beta' "$JD_T_OUT"
+_jd_t_run jd help
+_jd_t_lacks 'jd help: move is not marked beta' 'journal it (beta)' "$JD_T_OUT"
+
 _jd_t_summary

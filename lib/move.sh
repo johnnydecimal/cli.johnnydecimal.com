@@ -74,9 +74,6 @@ into the JDex.
       --json          print one JSON object on stdout instead of the
                        usual lines. { "ok": true, ... } or, on error,
                        { "ok": false, "code": "...", ... }
-
-This is a beta feature. 'jd beta on' turns beta on. JD_BETA=1 turns it
-on for one shell.
 EOF
 }
 
@@ -103,8 +100,6 @@ It refuses, and moves nothing, when:
       --dry-run       say what it would do, and move nothing
       --json          print one JSON object on stdout instead of the
                        usual lines
-
-This is a beta feature. 'jd beta on' turns beta on.
 EOF
 }
 
@@ -347,19 +342,14 @@ _jd_move_words() {
   done
 }
 
-# The checks both commands make before anything else: jq, beta, the
-# journal. $1 the name of the command, for the message.
+# The checks both commands make before anything else: jq and the
+# journal.
 #
 # This is also where a journal that is still in ~/.jd, the old place,
-# gets its one line. It is said here, after beta, so that it comes once
-# for a command that will use the journal, and never with the help.
+# gets its one line. It is said here so that it comes once for a
+# command that will use the journal, and never with the help.
 _jd_move_gate() {
   command -v jq >/dev/null 2>&1 || { _jd_move_fail no_jq '' "jq is not installed"; return 1; }
-  _jd_beta_on || {
-    _jd_move_fail beta_off '' "'$1' is a beta feature - turn beta on with 'jd beta on'"
-    _jd_beta_warn
-    return 1
-  }
   _jd_paths_note journal
   _jd_move_journal_ready "$_JD_MOVE_JOURNAL" || {
     _jd_move_fail journal_not_writable "$_JD_MOVE_JOURNAL" "cannot write the journal, so nothing moves: $_JD_MOVE_JOURNAL"
@@ -434,7 +424,7 @@ _jd_move_inner() {
     _jd_move_usage
     return 0
   fi
-  _jd_move_gate 'jd move' || return 1
+  _jd_move_gate || return 1
 
   src=$_JD_MOVE_W1
   id=$_JD_MOVE_W2
@@ -631,7 +621,7 @@ _jd_undo_inner() {
       return 1
       ;;
   esac
-  _jd_move_gate 'jd undo move' || return 1
+  _jd_move_gate || return 1
 
   if [ -n "$path" ]; then
     path=$(_jd_move_abs "$path") || {

@@ -102,10 +102,9 @@ usage: <system> [jdex] [target]
                         says more
   <system> move <path> 21.34
                         move a file or folder into the folder for
-                        21.34, and journal it (beta). 'jd move --help'
-                        says more
-  <system> undo move    move it back (beta). 'jd undo move --help'
-                        says more
+                        21.34, and journal it. 'jd move --help' says
+                        more
+  <system> undo move    move it back. 'jd undo move --help' says more
   <system> beta on|off  turn beta features on or off. 'jd beta' says
                         which
   <system> paths        print where jd keeps its config and its journal,
