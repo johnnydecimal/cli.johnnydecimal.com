@@ -7,6 +7,18 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.3.1 – 2026-10-29
+
+> AI generated. Reviewed by Johnny.
+
+The help text, the messages, and the README use the standard technical terms for what software does. You do not have to do anything.
+
+### Changes
+
+- The help text, the messages on stderr, and the README use the standard technical verb for each operation. For example, jd creates a folder, a note contains a placeholder, and jd prints a warning. Before, the text said that jd makes a folder, a note holds a placeholder, and jd warns.
+- The error and warning codes in `--json` output did not change. Only the text of `message` changed. A script that matches on `code` does not need a change. A script that matches on the text of a message must match the new text.
+- The README section "Where jd keeps its files" is now "Where jd stores its files". A link to `#where-jd-keeps-its-files` now opens the README at the top.
+
 ## 4.3.0 – 2026-10-29
 
 > AI generated. Reviewed by Johnny.
