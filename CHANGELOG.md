@@ -7,6 +7,31 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.3.0 – 2026-10-29
+
+> AI generated. Reviewed by Johnny.
+
+A new work package note links to the note of its ID. To get the link in your own work package notes, add two lines to your work package template.
+
+### Features
+
+- A work package template can contain `{{PARENT_LINK}}`. With the obsidian adapter, jd replaces it with a wiki-link to the ID's JDex note, for example `[[21.41 Videos]]`. Obsidian then lists the work package in the backlinks of the ID's note. jd does not write to the ID's note.
+- jd's own template contains the link at the top, above `Permalink:`. jd copies its own template only into a `W0003` that it creates. If you already have a `W0003`, add these two lines at the top of its `Work package template.md`:
+
+      - Parent:
+      	- {{PARENT_LINK}}
+
+- If the JDex contains no note for the ID, or more than one, jd omits the link and warns with the code `no_parent_note`.
+- `jd new wp --json` returns the link in `parentLink`. `jd new wp --dry-run` prints it on a `parent` line.
+
+### Changes
+
+- jd omits a template line that has lines nested under it when it omits all of those lines. For example, jd omits `- Related:` when no link remains under it.
+
+### Fixes
+
+- jd reads an ID in the JDex that is a folder that contains its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This matches how the Obsidian 'Folder notes' plugin works. A flat JDex in which the IDs are folders like this is now flat to jd, and `jd new id` and `jd new wp` write the new note to its root. Before, `jd new id` exited with an error for a JDex like this.
+
 ## 4.2.1 – 2026-10-24
 
 > AI generated. Reviewed by Johnny.
