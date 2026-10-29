@@ -90,6 +90,8 @@ _jd_t_contains 'dry run: names the note template' \
 _jd_t_contains 'dry run: names the folder template' \
   "$_jd_t_w3/Work package template" "$JD_T_ERR"
 _jd_t_contains 'dry run: says it made nothing' 'nothing was made' "$JD_T_ERR"
+_jd_t_contains 'dry run: names the link to the ID' \
+  'parent  [[21.35 Some title]]' "$JD_T_ERR"
 _jd_t_at 'dry run: does not move us' "$JD_T_TMP"
 
 # A flag before the noun works too.
@@ -155,6 +157,15 @@ _jd_t_lacks 'make: the note has no empty task link' '[Things]' "$_jd_t_note"
 _jd_t_contains 'make: the note has the whole name in it' \
   "## Scope for $_jd_t_name" "$_jd_t_note"
 _jd_t_lacks 'make: no placeholder is left in the note' '{{' "$_jd_t_note"
+
+# The link to the ID's own note is the first thing in the note, above
+# the permalink. jd reads the ID's note for its name, and does not
+# write to it.
+_jd_t_eq 'make: the note opens with the link to the ID' \
+  "$(printf -- '- Parent:\n\t- [[21.35 Some title]]\n- Permalink:')" \
+  "$(printf '%s\n' "$_jd_t_note" | head -3)"
+_jd_t_eq 'make: the ID note is not written to' 'fixture note' \
+  "$(cat "$JD_FX_JDEX/20-29 Area two/21 Category twentyone/21.35 Some title.md")"
 
 # The work package is now in both trees, so the next one is W0302.
 _jd_t_run jd new wp --dry-run 21.35 The one after
@@ -274,6 +285,12 @@ _jd_t_contains 'no W0003: the note has the permalink' '^w0301' "$_jd_t_note"
 _jd_t_contains 'no W0003: the note has the scope' '- What we do' "$_jd_t_note"
 _jd_t_lacks 'no W0003: the note has no empty note link' '[Obsidian]' "$_jd_t_note"
 _jd_t_lacks 'no W0003: the note has no empty task link' '[Things]' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note has no link to the ID' '[[' "$_jd_t_note"
+# No link is left under either heading, so the headings go too.
+_jd_t_lacks 'no W0003: the note has no empty Parent heading' '- Parent:' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note has no empty Related heading' '- Related:' "$_jd_t_note"
+_jd_t_eq 'no W0003: the note opens with the permalink' '- Permalink:' \
+  "$(printf '%s\n' "$_jd_t_note" | head -1)"
 _jd_t_lacks 'no W0003: the note holds no double brace' '{{' "$_jd_t_note"
 _jd_t_eq 'no W0003: no W0009 is made in an area that exists' 'no' \
   "$([ -e "$_jd_t_fw/W0009 Archive" ] && printf yes || printf no)"
@@ -407,6 +424,105 @@ _jd_t_eq 'flat: no folder is made in the JDex' '' \
   "$(find "$_jd_t_flat" -mindepth 1 -type d 2>/dev/null)"
 rm -rf "$_jd_t_flat"
 
+# ------------------------------------------------- the link to the ID
+#
+# jd finds the ID's JDex note by its number, and links to it by its
+# name. With no note for the ID, or more than one, the line is left
+# out, and jd warns.
+
+_jd_fx_reset
+_jd_fx_build_templates
+_jd_fx_config_new "$JD_T_TMP/new.json"
+_jd_t_load "$JD_T_TMP/new.json"
+
+_jd_t_run jd new wp --dry-run --json 21.35 Linked
+_jd_t_eq 'parent: --json has the link' '[[21.35 Some title]]' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+_jd_t_eq 'parent: with a note for the ID, no warning' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+
+# The JDex has no 21.36.
+_jd_t_run jd new wp --json 21.36 No ID note
+_jd_t_status 'parent: no note for the ID, exit status' 0
+_jd_t_eq 'parent: no note for the ID, the warning' 'no_parent_note' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+_jd_t_contains 'parent: no note for the ID, says so' \
+  'the JDex has no one note for 21.36' "$JD_T_ERR"
+_jd_t_eq 'parent: no note for the ID, --json has no link' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+_jd_t_note=$(cat "$_jd_t_jw/W0301~21.36 No ID note.md" 2>/dev/null)
+_jd_t_lacks 'parent: no note for the ID, the note has no link' '[[' "$_jd_t_note"
+_jd_t_lacks 'parent: no note for the ID, no empty Parent heading' '- Parent:' "$_jd_t_note"
+_jd_t_contains 'parent: no note for the ID, Related keeps its link' \
+  "$(printf -- '- Related:\n\t- [Obsidian]')" "$_jd_t_note"
+_jd_t_lacks 'parent: no note for the ID, no placeholder is left' '{{' "$_jd_t_note"
+
+# Two notes for 21.35. jd cannot tell which one to link to.
+_jd_fx_note "$JD_FX_JDEX/20-29 Area two/21 Category twentyone/21.35 A second note.md"
+_jd_t_run jd new wp --dry-run --json 21.35 Two notes
+_jd_t_eq 'parent: two notes for the ID, the warning' 'no_parent_note' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+_jd_t_eq 'parent: two notes for the ID, --json has no link' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+rm -f "$JD_FX_JDEX/20-29 Area two/21 Category twentyone/21.35 A second note.md"
+
+# The ID is a folder that holds its note, with the same name.
+_jd_t_cat="$JD_FX_JDEX/20-29 Area two/21 Category twentyone"
+mkdir -p "$_jd_t_cat/21.37 A folder ID"
+_jd_fx_note "$_jd_t_cat/21.37 A folder ID/21.37 A folder ID.md"
+_jd_fx_note "$_jd_t_cat/21.37 A folder ID/21.37+ An extension.md"
+_jd_t_run jd new wp --dry-run --json 21.37 Folder note
+_jd_t_eq 'parent: an ID folder with its note, the link' '[[21.37 A folder ID]]' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+
+# A folder with no note of its own name is no note for the ID.
+mkdir -p "$_jd_t_cat/21.38 No note of its name"
+_jd_fx_note "$_jd_t_cat/21.38 No note of its name/21.38) A typo.md"
+_jd_t_run jd new wp --dry-run --json 21.38 Folder, no note
+_jd_t_eq 'parent: an ID folder with no note of its name, the warning' 'no_parent_note' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+rm -rf "$_jd_t_cat/21.37 A folder ID" "$_jd_t_cat/21.38 No note of its name"
+
+# A template with no {{PARENT_LINK}} does not want the link, so its
+# absence is no problem.
+_jd_fx_build_templates_tokens
+_jd_t_run jd new wp --dry-run --json 21.36 No link wanted
+_jd_t_eq 'parent: a template with no link, no warning' '' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.warnings | join(",")')"
+
+# A flat JDex has the ID's note in its root.
+_jd_fx_reset
+_jd_fx_build_templates
+_jd_t_keep_jdex=$JD_FX_JDEX
+_jd_t_flat="$JD_T_TMP/flat jdex"
+mkdir -p "$_jd_t_flat"
+_jd_fx_note "$_jd_t_flat/21.35 Some title.md"
+JD_FX_JDEX=$_jd_t_flat
+_jd_fx_config_new "$JD_T_TMP/new-flat.json"
+JD_FX_JDEX=$_jd_t_keep_jdex
+_jd_t_load "$JD_T_TMP/new-flat.json"
+_jd_t_run jd new wp --dry-run --json 21.35 Flat and linked
+_jd_t_eq 'parent: a flat JDex, the link' '[[21.35 Some title]]' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+
+# A flat JDex whose IDs are all folder notes is still flat: the note
+# goes in its root, and the link is to the folder note.
+rm -f "$_jd_t_flat/21.35 Some title.md"
+mkdir -p "$_jd_t_flat/21.35 Some title"
+_jd_fx_note "$_jd_t_flat/21.35 Some title/21.35 Some title.md"
+_jd_t_run jd new wp --dry-run --json 21.35 Flat folder note
+_jd_t_eq 'parent: a flat JDex of folder notes, the note is in the root' \
+  "$_jd_t_flat/W0001~21.35 Flat folder note.md" \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.note')"
+_jd_t_eq 'parent: a flat JDex of folder notes, the link' '[[21.35 Some title]]' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"
+rm -rf "$_jd_t_flat"
+
+# jd's own template has the link, first, above the permalink.
+_jd_t_eq 'parent: the shipped template opens with the link' \
+  "$(printf -- '- Parent:\n\t- {{PARENT_LINK}}\n- Permalink:')" \
+  "$(head -3 "$JD_T_REPO/templates/Work package template.md")"
+
 # ------------------------------------------- the task app's template
 #
 # jd has its own Things template, in the templates folder of the repo.
@@ -471,6 +587,29 @@ _JD_NEW_TASKS_URL='things:///show?id=abc'
 _jd_t_contains 'shipped template: with both links, both lines are there' \
   '[Things](things:///show?id=abc)' \
   "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.notes')"
+
+# With no link at all, '- Related:' has nothing under it, so it goes.
+_JD_NEW_NOTES_URL=''
+_JD_NEW_TASKS_URL=''
+_jd_t_eq 'shipped template: no links, no Related heading' '' \
+  "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.notes')"
+
+# A heading goes only when every line under it went. It works from the
+# bottom up, so a heading over an empty heading goes too. A line
+# indented no further, or a blank line, ends what is under a heading.
+_JD_NEW_PARENT_LINK=''
+_jd_t_eq 'links: a heading over an empty heading goes too' \
+  "$(printf -- '- Kept')" \
+  "$(_jd_new_links_json '"- A:\n\t- B:\n\t\t- [x]({{TASKS_URL}})\n- Kept"' | jq -r .)"
+_jd_t_eq 'links: a heading with a line left under it stays' \
+  "$(printf -- '- A:\n\t- B:\n\t\t- kept')" \
+  "$(_jd_new_links_json '"- A:\n\t- B:\n\t\t- [x]({{TASKS_URL}})\n\t\t- kept"' | jq -r .)"
+_jd_t_eq 'links: a line with nothing indented under it stays' \
+  "$(printf -- '- A:\n- B')" \
+  "$(_jd_new_links_json '"- A:\n- [x]({{TASKS_URL}})\n- B"' | jq -r .)"
+_jd_t_eq 'links: a blank line ends what is under a heading' \
+  "$(printf -- '\n\t\t- kept')" \
+  "$(_jd_new_links_json '"\t- A:\n\t\t- [x]({{TASKS_URL}})\n\n\t\t- kept"' | jq -r .)"
 
 # ------------------------------------------- the Advanced URI plugin
 #

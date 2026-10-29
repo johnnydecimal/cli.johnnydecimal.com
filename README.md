@@ -202,6 +202,7 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 - The next free ID is one more than the highest ID in the category.
   - It counts the IDs in the JDex: the entries directly in the category, and directly in its archive, the .09 ID. For category 21, that is `21` and `21.09`.
   - A JDex can be flat: it has no area folders, and the notes are in its root. Then jd counts the notes in the root that start with the category's number, and writes the new note to the root.
+  - An ID in the JDex can be a folder that holds its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This is the Obsidian folder note. jd reads an ID like this, and makes every new ID as a note.
   - A folder with no JDex entry is not an ID, so it is not counted. Nor is anything deeper inside an ID.
   - If the filesystem already has a folder with the new ID's number, jd stops, and names the folder.
   - It is never lower than .11.
@@ -230,9 +231,14 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 - The first `ID template.md` that jd finds is the one it uses. To give one category its own template, put a copy in that category's .03.
 - If there are two folders with the same templates number, jd stops. It cannot tell which folder to use.
 - The note never holds `{{`.
-  - `{{ID}}`, `{{TITLE}}` and `{{NAME}}` are filled in. A work package also has `{{W}}`, `{{w}}`, `{{NOTES_URL}}` and `{{TASKS_URL}}`.
+  - `{{ID}}`, `{{TITLE}}` and `{{NAME}}` are filled in. A work package also has `{{W}}`, `{{w}}`, `{{NOTES_URL}}`, `{{TASKS_URL}}` and `{{PARENT_LINK}}`.
   - Anything else in double braces that jd does not know is left out of the note, and jd warns.
 - A line that holds `{{NOTES_URL}}` or `{{TASKS_URL}}` is left out when there is no such link: no adapter is set, or you gave `--no-tasks`. This applies to the note and to the Things template.
+- A line with lines indented under it is left out when all of those lines are left out. So `- Related:` is left out when it has no link left under it.
+- `{{PARENT_LINK}}` is the note app's link to the ID's own JDex note. With the obsidian adapter it is a wiki-link, for example `[[21.41 Videos]]`, so the ID's note lists the work package in its backlinks. jd does not write to the ID's note.
+  - A line that holds `{{PARENT_LINK}}` is left out when no notes adapter is set.
+  - The ID's note can be in a folder with the same name: `21.41 Videos/21.41 Videos.md`.
+  - It is also left out when the JDex has no note for the ID, or more than one. jd warns, with the code `no_parent_note`.
 - A template note can hold a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.
   - Its flag is its name in lower case, with `-` for `_`: `--scope`, `--deliverable`.
   - Give the value after the title: `jd new wp 21.41 A title --scope "What we do" --deliverable=Video`.

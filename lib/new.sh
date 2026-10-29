@@ -148,7 +148,14 @@ folder and a W0009 folder in it. If the JDex has no 'W0000-9999'
 folder, jd makes it. In a flat JDex, the note goes in the root.
 
 A line of a template that holds {{NOTES_URL}} or {{TASKS_URL}} is left
-out when there is no such link: no adapter is set, or --no-tasks.
+out when there is no such link: no adapter is set, or --no-tasks. A
+line with nothing left indented under it, such as '- Related:', is left
+out too.
+
+{{PARENT_LINK}} is the note app's link to the ID's own JDex note, for
+example [[21.41 Videos]]. A line that holds it is left out when no notes
+adapter is set. It is also left out when the JDex has no one note for
+the ID, and jd warns.
 
 The title needs no quotes. It is every word after the ID, up to the
 first word that starts with '--'. A '-' anywhere else is part of the
@@ -256,8 +263,14 @@ _jd_new_one() {
 # given, even one that holds '{{'.
 #
 # 'links' goes before 'fill'. It leaves out each line that holds
-# {{NOTES_URL}} or {{TASKS_URL}} when that link is empty, so that no
-# note holds '[Things]()', a link to nothing.
+# {{NOTES_URL}}, {{TASKS_URL}} or {{PARENT_LINK}} when that link is
+# empty, so that no note holds '[Things]()', a link to nothing. Then it
+# leaves out each line that had lines indented under it, all of them
+# left out, so that no note holds '- Related:' with nothing under it.
+# It works from the last line up, so a heading over a heading that is
+# left out is left out too. The indented lines under a line end at the
+# first line that is indented no further than it. A blank line is not
+# indented, so it ends them.
 _JD_NEW_JQ='
 def re: "\\{\\{(?<q>\\?)?(?<n>[^} \\n]*)(?: (?<b>[^}\\n]*))?\\}\\}";
 def caps: .captures | map({(.name): .string}) | add;
@@ -269,15 +282,24 @@ def tokens: reduce (match(re; "g") | caps | select(tok)) as $c ([];
   else . + [{token: $c.n, brief: ($c.b // ""), flag: ($c.n | flag)}] end);
 def unknown: [match(re; "g") | .string as $s | caps | select((tok or fix) | not) | $s] | unique;
 def nolink: (contains("{{NOTES_URL}}") and $fixed.NOTES_URL == "")
-  or (contains("{{TASKS_URL}}") and $fixed.TASKS_URL == "");
-def links: split("\n") | map(select(nolink | not)) | join("\n");
+  or (contains("{{TASKS_URL}}") and $fixed.TASKS_URL == "")
+  or (contains("{{PARENT_LINK}}") and $fixed.PARENT_LINK == "");
+def indent: match("^[ \t]*").length;
+def links: split("\n") as $l | ($l | length) as $n
+  | reduce range($n - 1; -1; -1) as $i ($l | map(nolink);
+      if .[$i] then .
+      else ($l[$i] | indent) as $d
+        | (first(range($i + 1; $n) | select(($l[.] | indent) <= $d)) // $n) as $e
+        | if $e > $i + 1 and all(.[$i + 1:$e][]; .) then .[$i] = true else . end
+      end)
+  | [range($n) as $i | select(.[$i] | not) | $l[$i]] | join("\n");
 def fill: gsub(re; if tok then (.n as $n | $vals[$n]) // .b // ""
                    elif fix then (.n as $n | $fixed[$n]) else "" end);
 '
 
 # The placeholders jd knows, with no values, for when only the names
 # matter.
-_JD_NEW_FIXED_NAMES='{"W":"","w":"","ID":"","TITLE":"","NAME":"","NOTES_URL":"","TASKS_URL":""}'
+_JD_NEW_FIXED_NAMES='{"W":"","w":"","ID":"","TITLE":"","NAME":"","NOTES_URL":"","TASKS_URL":"","PARENT_LINK":""}'
 
 # Put the values into the task app's template. $1 the text. $2 'json'
 # to escape them for the inside of a JSON file. Anything else leaves
@@ -288,10 +310,11 @@ _JD_NEW_FIXED_NAMES='{"W":"","w":"","ID":"","TITLE":"","NAME":"","NOTES_URL":"",
 #   {{NAME}}       W0216~21.41 Video about ..., or 21.41 Video about ...
 #   {{NOTES_URL}}  the note app's link to this work package
 #   {{TASKS_URL}}  the task app's link to it, empty until it exists
+#   {{PARENT_LINK}}  the note app's link to the ID's JDex note
 #
 # An ID has no W number and no links, so those are empty for an ID.
 _jd_new_fill() {
-  local t=$1 mode=${2-plain} up lo id ti nm nu tu
+  local t=$1 mode=${2-plain} up lo id ti nm nu tu pl
   up=$_JD_NEW_NUM
   lo=$(printf '%s' "$up" | tr 'A-Z' 'a-z')
   id=$_JD_NEW_ID
@@ -299,6 +322,7 @@ _jd_new_fill() {
   nm=$_JD_NEW_NAME
   nu=$_JD_NEW_NOTES_URL
   tu=$_JD_NEW_TASKS_URL
+  pl=$_JD_NEW_PARENT_LINK
   if [ "$mode" = json ]; then
     up=$(_jd_new_jstr "$up")
     lo=$(_jd_new_jstr "$lo")
@@ -307,11 +331,13 @@ _jd_new_fill() {
     nm=$(_jd_new_jstr "$nm")
     nu=$(_jd_new_jstr "$nu")
     tu=$(_jd_new_jstr "$tu")
+    pl=$(_jd_new_jstr "$pl")
   fi
   t=${t//"{{NAME}}"/$nm}
   t=${t//"{{TITLE}}"/$ti}
   t=${t//"{{NOTES_URL}}"/$nu}
   t=${t//"{{TASKS_URL}}"/$tu}
+  t=${t//"{{PARENT_LINK}}"/$pl}
   t=${t//"{{ID}}"/$id}
   t=${t//"{{W}}"/$up}
   t=${t//"{{w}}"/$lo}
@@ -434,7 +460,7 @@ _jd_new_render() {
       --arg W "$_JD_NEW_NUM" --arg w "$lo" --arg ID "$_JD_NEW_ID" \
       --arg TITLE "$_JD_NEW_TITLE" --arg NAME "$_JD_NEW_NAME" \
       --arg NOTES_URL "$_JD_NEW_NOTES_URL" --arg TASKS_URL "$_JD_NEW_TASKS_URL" \
-      '$ARGS.named')" \
+      --arg PARENT_LINK "$_JD_NEW_PARENT_LINK" '$ARGS.named')" \
     "$_JD_NEW_JQ"' $t | links | fill'
 }
 
@@ -445,7 +471,8 @@ _jd_new_render() {
 _jd_new_links_json() {
   printf '%s' "$1" | jq \
     --argjson fixed "$(jq -cn --arg NOTES_URL "$_JD_NEW_NOTES_URL" \
-      --arg TASKS_URL "$_JD_NEW_TASKS_URL" '$ARGS.named')" \
+      --arg TASKS_URL "$_JD_NEW_TASKS_URL" \
+      --arg PARENT_LINK "$_JD_NEW_PARENT_LINK" '$ARGS.named')" \
     --argjson vals '{}' \
     "$_JD_NEW_JQ"' walk(if type == "string" then links else . end)'
 }
@@ -480,6 +507,9 @@ _jd_new_write_note() {
 #   id        the ID
 #   name      the name of the note and the folder
 #   template  the template note used. Empty when there was none
+#   parentLink  the note app's link to the ID's JDex note. Empty for an
+#             ID, with no notes adapter, or when the JDex has no one
+#             note for the ID
 #   toFill    the {{?TOKEN}} tokens that got no value, each with its
 #             brief and its flag. The note has the brief in its place
 #   warnings  codes for what went wrong but did not stop the command
@@ -496,12 +526,14 @@ _jd_new_emit_ok() {
     --arg template "$_JD_NEW_TEMPLATE" \
     --arg notesUrl "$_JD_NEW_NOTES_URL" \
     --arg tasksUrl "$_JD_NEW_TASKS_URL" \
+    --arg parentLink "$_JD_NEW_PARENT_LINK" \
     --argjson toFill "$_JD_NEW_TOFILL_JSON" \
     --argjson warnings "$_JD_NEW_WARNINGS_JSON" \
     --argjson dryRun "$1" \
     '{ok: true, noun: $noun, sys: $sys, num: $num, id: $id, title: $title,
       name: $name, note: $note, folder: $folder, template: $template,
-      notesUrl: $notesUrl, tasksUrl: $tasksUrl, toFill: $toFill,
+      notesUrl: $notesUrl, tasksUrl: $tasksUrl, parentLink: $parentLink,
+      toFill: $toFill,
       warnings: $warnings, dryRun: $dryRun}'
 }
 
@@ -553,6 +585,8 @@ _jd_new() {
   _JD_NEW_NAME=''
   _JD_NEW_NOTES_URL=''
   _JD_NEW_TASKS_URL=''
+  _JD_NEW_PARENT_NOTE=''
+  _JD_NEW_PARENT_LINK=''
   _jd_new_inner "$@"
   _JD_NEW_STATUS=$?
   if [ "$_JD_NEW_JSON" -eq 1 ] && [ "$_JD_NEW_STATUS" -ne 0 ]; then
@@ -636,11 +670,23 @@ _jd_new_inner() {
 
 # -------------------------------------------------------------------- id
 
+# Is $1 an ID folder that holds its own note? That is the Obsidian
+# folder note: '21.41 Videos/21.41 Videos.md'. The note's name is
+# exactly the folder's name.
+_jd_new_folder_note() { [ -f "$1/${1##*/}.md" ]; }
+
 # Is the JDex flat? A flat JDex has no area folders, and its notes sit
-# in its root.
+# in its root. An ID there can be a note, or a folder that holds its
+# own note.
 _jd_new_jdex_flat() {
-  [ -z "$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9]-[0-9][0-9]' -o -name '[0-9][0-9]-[0-9][0-9] *')" ] &&
-    [ -n "$(_jd_nav_find "$_JD_NEW_JDEX" 1 a -name '[0-9][0-9].[0-9][0-9]*.md')" ]
+  local d
+  [ -z "$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9]-[0-9][0-9]' -o -name '[0-9][0-9]-[0-9][0-9] *')" ] ||
+    return 1
+  [ -n "$(_jd_nav_find "$_JD_NEW_JDEX" 1 a -name '[0-9][0-9].[0-9][0-9]*.md')" ] && return 0
+  _jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9].[0-9][0-9]' -o -name '[0-9][0-9].[0-9][0-9] *' |
+    while IFS= read -r d; do
+      _jd_new_folder_note "$d" && { printf 'y'; break; }
+    done | grep -q y
 }
 
 # The two-digit IDs used in category $1, one per line. $2 the JDex
@@ -878,6 +924,31 @@ EOF
   _jd_new_say "copied  $_JD_NEW_WP_NOTE_TO"
 }
 
+# The ID's JDex note, by its name with no '.md', in
+# $_JD_NEW_PARENT_NOTE: '21.41 Videos'. A nested JDex has the note at
+# area/category/ID, and a flat one in its root. It is empty when the
+# JDex has no note for the ID, or more than one. jd reads the note's
+# name, and never writes to the note.
+#
+# The ID can be a folder that holds its own note. Refer to
+# _jd_new_folder_note. A folder with no such note has no note for the
+# ID.
+_jd_new_parent_note() {
+  local depth=3 m n
+  _JD_NEW_PARENT_NOTE=''
+  _jd_new_jdex_flat && depth=1
+  m=$(_jd_nav_find "$_JD_NEW_JDEX" "$depth" a -name "$_JD_NEW_ID.md" -o -name "$_JD_NEW_ID *.md" \
+    -o \( -type d \( -name "$_JD_NEW_ID" -o -name "$_JD_NEW_ID *" \) \))
+  [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 0
+  n=$(basename -- "$m")
+  if [ -d "$m" ]; then
+    _jd_new_folder_note "$m" || return 0
+  else
+    n=${n%.md}
+  fi
+  _JD_NEW_PARENT_NOTE=$n
+}
+
 _jd_new_wp() {
   local jw fw w3 new_w3 folder_tpl notes_ad tasks_ad note_path dir ep
 
@@ -1015,8 +1086,27 @@ _jd_new_wp() {
   _JD_NEW_NOTES_URL=$(jd_notes_url) || { _JD_NEW_CODE=notes_url_failed; return 1; }
   _JD_NEW_TASKS_URL=''
 
+  # The link to the ID's own note. jd writes it into the new note, and
+  # does not touch the ID's note: the note app shows the work package
+  # there as a backlink.
+  _jd_new_parent_note
+  if [ -n "$_JD_NEW_PARENT_NOTE" ]; then
+    _JD_NEW_PARENT_LINK=$(jd_notes_parent_link) || { _JD_NEW_CODE=notes_parent_failed; return 1; }
+  fi
+
   printf 'jd: %s\n' "$_JD_NEW_NAME" >&2
   [ -n "$_JD_NEW_TEMPLATE" ] || _jd_new_no_template 'work package'
+
+  # Only a note that would have had the link is short of it. With no
+  # notes adapter, the line is left out and nothing is wrong.
+  if [ -z "$_JD_NEW_PARENT_NOTE" ] && [ "$notes_ad" != none ]; then
+    case $_JD_NEW_TEXT in
+      *'{{PARENT_LINK}}'*)
+        _jd_nav_err "the JDex has no one note for $_JD_NEW_ID, so the note has no link to it"
+        _jd_new_warn no_parent_note
+        ;;
+    esac
+  fi
 
   if [ "$_JD_NEW_DRY" -eq 1 ]; then
     _jd_new_wp_make dry
@@ -1026,6 +1116,7 @@ _jd_new_wp() {
     _jd_new_say "folder  $dir"
     [ -n "$folder_tpl" ] && _jd_new_say "from    $folder_tpl"
     _jd_new_say "notes   $notes_ad, $_JD_NEW_NOTES_URL"
+    [ -n "$_JD_NEW_PARENT_LINK" ] && _jd_new_say "parent  $_JD_NEW_PARENT_LINK"
     _jd_new_say "tasks   $tasks_ad"
     _jd_new_say 'nothing was made'
     [ "$_JD_NEW_JSON" -eq 1 ] && _jd_new_emit_ok true "$note_path" "$dir"

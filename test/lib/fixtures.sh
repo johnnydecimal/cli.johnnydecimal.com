@@ -114,6 +114,8 @@ _jd_fx_build_templates() {
   # A .DS_Store in a template must not reach the new work package.
   printf 'junk\n' >"$tpl/.DS_Store"
   cat >"$w3/Work package template.md" <<'EOT'
+- Parent:
+	- {{PARENT_LINK}}
 - Permalink:
 	- ^{{w}}
 - Related:

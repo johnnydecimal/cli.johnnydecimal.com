@@ -437,6 +437,31 @@ _jd_t_contains 'flat: a folder named like the category is not the category' \
   "note    $_jd_t_flat/21.51 Flat with a folder.md" "$JD_T_ERR"
 rm -rf "$_jd_t_flat/attachments"
 
+# A flat JDex where every ID is a folder that holds its own note, the
+# Obsidian folder note. It is still flat, and the folders count.
+_jd_t_fnflat="$JD_T_TMP/folder note jdex"
+mkdir -p "$_jd_t_fnflat/21.11 Tripsy notes" "$_jd_t_fnflat/21.40 A folder ID"
+_jd_fx_note "$_jd_t_fnflat/21.11 Tripsy notes/21.11 Tripsy notes.md"
+_jd_fx_note "$_jd_t_fnflat/21.40 A folder ID/21.40 A folder ID.md"
+JD_FX_JDEX=$_jd_t_fnflat
+_jd_fx_config_new "$JD_T_TMP/new-fnflat.json"
+JD_FX_JDEX=$_jd_t_jdex_nested
+_jd_t_load "$JD_T_TMP/new-fnflat.json"
+_jd_t_run jd new id --dry-run 21 After the folders
+_jd_t_status 'flat, folder notes: exit status' 0
+_jd_t_contains 'flat, folder notes: the folders are counted, and the note goes in the root' \
+  "note    $_jd_t_fnflat/21.41 After the folders.md" "$JD_T_ERR"
+
+# A folder named like an ID, with no note of its own name, does not
+# make a JDex flat.
+rm -f "$_jd_t_fnflat/21.11 Tripsy notes/21.11 Tripsy notes.md" \
+  "$_jd_t_fnflat/21.40 A folder ID/21.40 A folder ID.md"
+_jd_t_run jd new id --json --dry-run 21 Not flat
+_jd_t_eq 'flat, folder notes: with no folder note, it is not flat' 'no_category_jdex' \
+  "$(_jd_t_json '.code')"
+rm -rf "$_jd_t_fnflat"
+_jd_t_load "$JD_T_TMP/new-flat.json"
+
 # A JDex with no folder and no NN.NN note is still not a JDex jd can write to.
 rm -f "$_jd_t_flat"/*.md
 _jd_t_run jd new id --json 21 Flat empty

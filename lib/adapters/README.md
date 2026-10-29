@@ -55,6 +55,7 @@ error that names the folder.
 | --- | --- |
 | `jd_notes_check` | Return 0 if the app can be used. Print why not, and return 1, if it cannot. |
 | `jd_notes_url` | Print the link to this work package's note. |
+| `jd_notes_parent_link` | Print the link to the ID's own JDex note, `_JD_NEW_PARENT_NOTE`. jd calls it only when the JDex has one note for the ID. |
 
 ## What an adapter can read
 
@@ -69,6 +70,8 @@ them. It does not set them, except for a default of its own.
 | `_JD_NEW_NAME` | `W0216~21.41 The title` |
 | `_JD_NEW_NOTES_URL` | the note app's link. Empty until `jd_notes_url` has run |
 | `_JD_NEW_TASKS_URL` | the task app's link. Empty until `jd_tasks_create` has run |
+| `_JD_NEW_PARENT_NOTE` | `21.41 Videos`, the name of the ID's JDex note, with no `.md`. Empty when the JDex has no note for the ID, or more than one |
+| `_JD_NEW_PARENT_LINK` | the note app's link to the ID's note. Empty until `jd_notes_parent_link` has run |
 | `_JD_NEW_JDEX` | the JDex folder |
 | `_JD_NEW_TASKS_TPL` | the template file, `W0003/Work package template.<adapter>.json`, as a full path. The file may not exist. The `W0003` folder exists by the time `jd_tasks_prepare` or `jd_tasks_refresh` runs, because jd makes it if it is missing. It may not exist when `jd_tasks_check` runs |
 | `_JD_NEW_TASKS_DEFAULT` | jd's own template file, `templates/Work package template.<adapter>.json` in this repo, as a full path. The file may not exist |
@@ -79,7 +82,7 @@ These helpers are there too.
 
 | Function | What it does |
 | --- | --- |
-| `_jd_new_links_json` | Leave out each line that holds `{{NOTES_URL}}` or `{{TASKS_URL}}` when that link is empty. `$1` the template, which is JSON. Call it before `_jd_new_fill` |
+| `_jd_new_links_json` | Leave out each line that holds `{{NOTES_URL}}`, `{{TASKS_URL}}` or `{{PARENT_LINK}}` when that link is empty. Then leave out each line that has nothing left indented under it. `$1` the template, which is JSON. Call it before `_jd_new_fill` |
 | `_jd_new_fill` | Put the values into a template. `$1` the text, `$2` `json` to escape them for a JSON file |
 | `_jd_new_uri` | URL-encode `$1` |
 | `_jd_new_jstr` | Escape `$1` for the inside of a JSON string |
@@ -94,7 +97,7 @@ app is the only step that talks to another program, so it goes before
 the note and the folder. Neither is written until it has worked.
 
 1. `jd_notes_check`, `jd_tasks_check`.
-2. `jd_notes_url`. `{{NOTES_URL}}` is now known.
+2. `jd_notes_url`, then `jd_notes_parent_link`. `{{NOTES_URL}}` and `{{PARENT_LINK}}` are now known.
 3. The work package area, `W0003` and `W0009` are made, if they are missing. A new `W0003` gets jd's own template note.
 4. `jd_tasks_prepare`, then `jd_tasks_create`. `{{TASKS_URL}}` is now known.
 5. The JDex note is written, with both links in it.

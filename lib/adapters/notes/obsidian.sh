@@ -7,6 +7,11 @@
 #
 #   obsidian://adv-uri?vault=D25%20JDex&block=w0216
 #
+# The link to the ID's own note is a wiki-link, [[21.41 Videos]].
+# Obsidian lists the work package in that note's backlinks, which it
+# does for a wiki-link and not for an obsidian:// link. If the ID's note
+# is renamed in Obsidian, Obsidian changes the link to match.
+#
 # The link needs the Advanced URI plugin. Nothing here talks to
 # Obsidian, so it works whether Obsidian is running or not. If the JDex
 # folder is the vault, and the vault does not have the plugin, jd warns,
@@ -36,4 +41,8 @@ jd_notes_url() {
   lo=$(printf '%s' "$_JD_NEW_NUM" | tr 'A-Z' 'a-z')
   printf 'obsidian://adv-uri?vault=%s&block=%s' \
     "$(_jd_new_uri "$_JD_NEW_NOTES_VAULT")" "$lo"
+}
+
+jd_notes_parent_link() {
+  printf '[[%s]]' "$_JD_NEW_PARENT_NOTE"
 }

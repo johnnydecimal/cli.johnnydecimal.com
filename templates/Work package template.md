@@ -1,3 +1,5 @@
+- Parent:
+	- {{PARENT_LINK}}
 - Permalink:
 	- ^{{w}}
 - Related:
