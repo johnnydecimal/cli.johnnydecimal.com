@@ -202,7 +202,7 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 - The next free ID is one more than the highest ID in the category.
   - It counts the IDs in the JDex: the entries directly in the category, and directly in its archive, the .09 ID. For category 21, that is `21` and `21.09`.
   - A JDex can be flat: it has no area folders, and the notes are in its root. Then jd counts the notes in the root that start with the category's number, and writes the new note to the root.
-  - An ID in the JDex can be a folder that holds its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This is the Obsidian folder note. jd reads an ID like this, and makes every new ID as a note.
+  - An ID in the JDex can be a folder that contains its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This matches how the Obsidian 'Folder notes' plugin works. jd reads an ID like this, and creates every new ID as a note.
   - A folder with no JDex entry is not an ID, so it is not counted. Nor is anything deeper inside an ID.
   - If the filesystem already has a folder with the new ID's number, jd stops, and names the folder.
   - It is never lower than .11.

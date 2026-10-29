@@ -670,9 +670,9 @@ _jd_new_inner() {
 
 # -------------------------------------------------------------------- id
 
-# Is $1 an ID folder that holds its own note? That is the Obsidian
-# folder note: '21.41 Videos/21.41 Videos.md'. The note's name is
-# exactly the folder's name.
+# Is $1 an ID folder that contains its own note? This matches how the
+# Obsidian 'Folder notes' plugin works: '21.41 Videos/21.41 Videos.md'.
+# The note's name is exactly the folder's name.
 _jd_new_folder_note() { [ -f "$1/${1##*/}.md" ]; }
 
 # Is the JDex flat? A flat JDex has no area folders, and its notes sit

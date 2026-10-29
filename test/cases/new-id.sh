@@ -437,8 +437,9 @@ _jd_t_contains 'flat: a folder named like the category is not the category' \
   "note    $_jd_t_flat/21.51 Flat with a folder.md" "$JD_T_ERR"
 rm -rf "$_jd_t_flat/attachments"
 
-# A flat JDex where every ID is a folder that holds its own note, the
-# Obsidian folder note. It is still flat, and the folders count.
+# A flat JDex where every ID is a folder that contains its own note, as
+# the Obsidian 'Folder notes' plugin does. It is still flat, and the
+# folders count.
 _jd_t_fnflat="$JD_T_TMP/folder note jdex"
 mkdir -p "$_jd_t_fnflat/21.11 Tripsy notes" "$_jd_t_fnflat/21.40 A folder ID"
 _jd_fx_note "$_jd_t_fnflat/21.11 Tripsy notes/21.11 Tripsy notes.md"
