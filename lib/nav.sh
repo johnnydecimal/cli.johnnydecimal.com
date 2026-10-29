@@ -2,44 +2,46 @@
 # nav.sh - Johnny.Decimal navigation
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
 # $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR, and after
-# lib/paths.sh, which says where the config is.
+# lib/paths.sh, which prints where the config is.
 #
 # It defines _jd_nav, which bin/jd calls with the system to act on and
-# the words the user typed. It reads the config to learn that system's
+# the words the user typed. It reads the config to find that system's
 # root folder and JDex.
 #
 # An empty system means the default one: the entry marked default: true,
 # else the first entry.
 #
 # Nothing here cd's. A move ends at _jd_nav_arrive, which prints the
-# folder. The comment at the top of bin/jd says why.
+# folder. The reason is in the comment at the top of bin/jd.
 #
 # 'jd new', 'jd move', 'jd undo' and 'jd paths' are words this file does
-# not act on. It hands the rest of the line to _jd_new, in lib/new.sh,
+# not act on. It passes the rest of the line to _jd_new, in lib/new.sh,
 # to _jd_move and _jd_undo, in lib/move.sh, or to _jd_paths, in
 # lib/paths.sh.
 #
-# Needs jq. Works in bash 3.2+ and zsh.
+# Requires jq. Works in bash 3.2+ and zsh.
 
 _jd_nav_err() { printf 'jd: %s\n' "$*" >&2; return 1; }
 
-# The one 'no config' message, so that every command that needs the
-# config says the same thing, and names the way out. $1 the config path.
+# The one 'no config' message, so that every command that requires the
+# config prints the same message, which names the fix. $1 the config
+# path.
 _jd_nav_no_config_msg() {
   printf "no config at %s\n    See %s for instructions.\n    To generate a prompt so your agent can do this for you: jd agent-setup" \
     "$1" "$_JD_CLI_HELP_URL"
 }
 
-# Arrive at a folder. $1 the absolute path. This is the one place a move
-# ends, and the only thing that writes a path to stdout.
+# Print the folder a move ends at. $1 the absolute path. This is the one
+# place a move ends, and the only thing that writes a path to stdout.
 #
-# On its own the program cannot move the shell that called it, so it
-# says where to go and stops: the path, one line, status 0. That is the
-# answer to 'where is 11.11', and it is what a script or an agent reads.
+# On its own the program cannot change the directory of the shell that
+# called it, so the program prints the folder and exits: the path, one
+# line, status 0. That is the answer to 'where is 11.11', and it is what
+# a script or an agent reads.
 #
-# jd.sh sets JD_HOOK, because it can move the shell. It gets the same
-# path and status 3, which no other thing here returns. The hook does
-# the cd.
+# jd.sh sets JD_HOOK, because jd.sh can change the directory of the
+# shell. jd.sh receives the same path and status 3, which no other thing
+# here returns. The hook runs the cd.
 _jd_nav_arrive() {
   printf '%s\n' "$1"
   [ -n "${JD_HOOK-}" ] && return 3
@@ -50,8 +52,8 @@ _jd_nav_arrive() {
 # true, else the first entry. An entry with no sys is named by its place
 # in the array, '#0', which _jd_nav reads as well as a sys id.
 #
-# Returns 1 if the config holds no system to name, which is also what a
-# config jq cannot read looks like from here.
+# Returns 1 if the config contains no system to name, which is also the
+# result for a config that jq cannot read.
 _jd_nav_default_sys() {
   local cfg sys idx
   cfg=$(_jd_paths_config)
@@ -68,7 +70,8 @@ _jd_nav_default_sys() {
   printf '%s' "$sys"
 }
 
-# Print the version if $1 asks for it. Returns 0 if it did.
+# Print the version if $1 is a version word. Returns 0 if it printed
+# the version.
 _jd_nav_is_version() {
   case ${1-} in
     -v|--version|version) printf 'jd %s\n' "$_JD_CLI_VERSION"; return 0 ;;
@@ -93,29 +96,31 @@ usage: <system> [jdex] [target]
   <system> jdex ...     same targets, in the JDex instead of the filesystem
   <system> version      print the version
   <system> agent-setup  print a prompt for your agent, which writes the
-                        config file for you. 'jd agent-setup --help' says more
+                        config file for you. 'jd agent-setup --help'
+                        prints more
   <system> new id 21 A title
-                        make the next free ID in category 21.
-                        'jd new id --help' says more
+                        create the next free ID in category 21.
+                        'jd new id --help' prints more
   <system> new wp 21.41 A title
-                        make a new work package. 'jd new wp --help'
-                        says more
+                        create a new work package. 'jd new wp --help'
+                        prints more
   <system> move <path> 21.34
                         move a file or folder into the folder for
-                        21.34, and journal it. 'jd move --help' says
+                        21.34, and journal it. 'jd move --help' prints
                         more
-  <system> undo move    move it back. 'jd undo move --help' says more
-  <system> beta on|off  turn beta features on or off. 'jd beta' says
+  <system> undo move    move it back. 'jd undo move --help' prints more
+  <system> beta on|off  turn beta features on or off. 'jd beta' prints
                         which
-  <system> paths        print where jd keeps its config and its journal,
-                        and where jd itself is. 'jd paths --help' says
+  <system> paths        print where jd stores its config and its journal,
+                        and where jd itself is. 'jd paths --help' prints
                         more
 
 jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
 
-Two or more matches are listed, not entered. Word search ignores case.
-An ID or work package in the JDex with no folder gets its folder made.
+If two or more folders match, jd prints the list and does not cd. Word
+search ignores case. If an ID or work package in the JDex has no
+folder, jd creates the folder.
 
 From a script or an agent, run the program. Nothing has to be sourced
 first. This copy of the program is:
@@ -129,10 +134,10 @@ EOF
   <program> 11.11             print the folder for 11.11
   <program> --system P76 22   act on another system. --system is
                               only read as the first word
-  <program> paths             print where jd keeps its files
+  <program> paths             print where jd stores its files
 
 A move prints the folder on stdout and exits 0. Set JD_HOOK and it
-prints the same folder and exits 3, which is how the shell knows to cd.
+prints the same folder and exits 3, and on status 3 the shell runs cd.
 EOF
 }
 
@@ -150,7 +155,8 @@ _jd_nav_find() {
 
 # Draw a sorted match list as a tree. Reads paths on stdin, one per
 # line, relative to the tree. Each match is shown under the folder that
-# holds it, and a folder is printed once however many matches it holds:
+# contains it, and a folder is printed once however many matches it
+# contains:
 #
 #   ├─ 21 Products & services
 #   │  ├─ 21.42 CLI tools
@@ -158,19 +164,21 @@ _jd_nav_find() {
 #   └─ W0000-9999 Work packages
 #      └─ W0213~31.13 A work package
 #
-# The area is dropped, because the ID number already says which area it
-# is in. A path with no folder above the match, like an area, prints on
-# its own.
+# The area is dropped, because the ID number already indicates which
+# area the ID is in. A path with no folder above the match, like an
+# area, is printed on its own.
 #
-# It needs awk, which is POSIX and on every machine. Without it the list
-# prints plain, which is what the tool did before 2.1.0.
+# It requires awk, which is POSIX and on every machine. Without awk the
+# function prints the list plain, which is what the tool did before
+# 2.1.0.
 _jd_nav_tree() {
   if ! command -v awk >/dev/null 2>&1; then
     while IFS= read -r _jd_p; do printf '  %s\n' "$_jd_p"; done
     return 0
   fi
   awk '
-    # Keep the match and the folder that holds it. Nothing above that.
+    # Store the match and the folder that contains it. Nothing above
+    # that.
     {
       m = split($0, p, "/")
       from = (m > 2) ? m - 1 : 1
@@ -184,12 +192,12 @@ _jd_nav_tree() {
         for (d = 1; d <= m; d++) {
           pre = ""
           for (k = 1; k < d; k++) pre = pre p[k] "/"
-          # A folder is printed once, however many matches sit in it.
+          # A folder is printed once, however many matches it contains.
           if (seen[pre p[d]]++) continue
 
-          # Last of its siblings? Then the branch closes, and the level
-          # below it needs no upright bar. The list is sorted, so a name
-          # that has changed never comes back.
+          # Last of its siblings? Then the branch ends, and the level
+          # below it requires no upright bar. The list is sorted, so a
+          # name that has changed never occurs again.
           last = 1
           for (j = i + 1; j <= NR; j++) {
             mj = split(line[j], q, "/")
@@ -209,7 +217,8 @@ _jd_nav_tree() {
   '
 }
 
-# Act on a match list: arrive if one, report if several, error if none.
+# Act on a match list: print the folder if one, print the list if
+# several, error if none.
 # $1 tree, $2 mode fs|jdex, $3 label for messages, $4 matches
 _jd_nav_go() {
   local tree=$1 mode=$2 label=$3 m=$4 n p
@@ -217,7 +226,8 @@ _jd_nav_go() {
   if [ "$n" -eq 0 ]; then
     _jd_nav_err "no match for $label"
   elif [ "$n" -eq 1 ]; then
-    # A JDex entry is usually a note file: go to its folder.
+    # A JDex entry is usually a note file: use the folder that contains
+    # it.
     if [ "$mode" = jdex ] && [ ! -d "$m" ]; then
       m=$(dirname "$m")
     fi
@@ -233,15 +243,15 @@ _jd_nav_go() {
   fi
 }
 
-# An ID is in the JDex but has no folder: make the folder from the JDex
+# An ID is in the JDex but has no folder: create the folder from the JDex
 # entry's name. $1 root, $2 jdex, $3 ID. Prints the new path on stdout.
 # Returns 1 if it does not apply, 2 if it applies but failed.
 #
-# A normal ID goes in its category, which its own number names. A work
-# package always goes in the W0000-9999 area. Its own number does not
-# say so, so the area is found by its number, and only the start of that
-# number is matched: a system that has renamed the rest of the folder
-# still works.
+# A normal ID is created in its category, which the ID's own number
+# names. A work package is always created in the W0000-9999 area. The
+# work package's number does not indicate that area, so the area is
+# found by the area's number, and only the start of that number is
+# matched: a system that has renamed the rest of the folder still works.
 _jd_nav_make_id() {
   local root=$1 jdex=$2 id=$3 jm name num what cm
   [ -n "$jdex" ] && [ -d "$jdex" ] || return 1
@@ -300,15 +310,15 @@ _jd_nav() {
   shift
   # 'jdex' as the first word is the JDex, whether the user typed it or
   # the jdex command passed it. It is read here so that 'jdex version'
-  # and 'jdex --help' answer the same as the jd forms.
+  # and 'jdex --help' print the same as the jd forms.
   mode=fs
   if [ "${1-}" = jdex ]; then
     mode=jdex
     shift
   fi
   _jd_nav_is_version "${1-}" && return 0
-  # Help needs no config and no system. Someone with neither is exactly
-  # the person reading it.
+  # Help requires no config and no system. Someone with neither is
+  # exactly the person reading it.
   case ${1-} in
     -h|--help|help) _jd_nav_usage; return 0 ;;
   esac
@@ -323,19 +333,19 @@ _jd_nav() {
     _jd_nav_err "lib/setup.sh is not loaded - run bin/jd, not lib/nav.sh"
     return 1
   fi
-  # 'paths' reads no config either. It says where the config is, so it
-  # must answer for the person who has none.
+  # 'paths' reads no config either. It prints where the config is, so it
+  # must work for the person who has none.
   if [ "${1-}" = paths ]; then
     shift
     _jd_paths "$@"
     return
   fi
-  # Everything from here reads the config. If it is still in ~/.jd, the
-  # old place, this says so, once, in one line.
+  # Everything from here reads the config. If the config is still in
+  # ~/.jd, the old place, this prints a message, once, in one line.
   _jd_paths_note config
   # 'beta' reads and writes one flag in the config, and no system, so it
-  # is taken before the system is looked up. A root folder that is not
-  # mounted does not stop 'jd beta off'.
+  # is handled before the system is looked up. 'jd beta off' works when
+  # the root folder is not mounted.
   if [ "${1-}" = beta ]; then
     shift
     if command -v _jd_beta >/dev/null 2>&1; then
@@ -348,9 +358,9 @@ _jd_nav() {
   cfg=$(_jd_paths_config)
   command -v jq >/dev/null 2>&1 || { _jd_nav_err "jq is not installed"; return 1; }
   [ -f "$cfg" ] || { _jd_nav_err "$(_jd_nav_no_config_msg "$cfg")"; return 1; }
-  # No system named means the default one. It is worked out here, at call
-  # time, so a $JD_CONFIG or a config that changed since the shell
-  # started is the one that answers.
+  # No system named means the default one. It is resolved here, at call
+  # time, so that jd reads the current $JD_CONFIG, and the current
+  # contents of the config, not those from when the shell started.
   if [ -z "$sys" ]; then
     sys=$(_jd_nav_default_sys) || { _jd_nav_err "no systems in $cfg"; return 1; }
   fi

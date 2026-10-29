@@ -2,35 +2,37 @@
 # fixtures.sh - the fake Johnny.Decimal systems the tests navigate
 #
 # Every test runs against a system built here, under $JD_T_TMP. Nothing
-# in the suite ever reads the machine's real config or touches a real
-# system. The harness refuses to load a $JD_CONFIG outside $JD_T_TMP.
+# in the suite ever reads the machine's real config or writes to a real
+# system. The harness exits with an error, and loads nothing, for a
+# $JD_CONFIG outside $JD_T_TMP.
 #
 # A case file calls _jd_fx_build once, near the top. It then has:
 #   $JD_FX_ROOT   the filesystem of the D25 test system
 #   $JD_FX_JDEX   the JDex of the D25 test system
 #   $JD_FX_ROOT2  the filesystem of the P76 test system, which has no JDex
 #
-# The paths hold spaces on purpose. Real system names do.
+# The paths contain spaces on purpose. Real system names do.
 #
-# Depths matter, because nav.sh looks for things at a fixed depth:
+# Depths matter, because nav.sh searches for things at a fixed depth:
 #   area      depth 1 from the root
 #   category  depth 2
 #   ID        depth 3
 #   work pkg  depth 2, i.e. inside an area, beside the categories
 #
-# The tree carries the awkward names on purpose:
-#   11.11+ Extension       an extend-the-end. 'jd 11.11' must not see it.
+# The tree contains the awkward names on purpose:
+#   11.11+ Extension       an extend-the-end. 'jd 11.11' must not find it.
 #   W0212~21.35 ...        the normal work package form. 2.0.4 fixed it.
 #   W0212+ Kettle child    another extend-the-end. 'jd W0212' must not
-#                          see it, and neither must the word search.
+#                          find it, and neither must the word search.
 #   notes                  a folder with no number, for the zsh prompt
-#   12.99 Made by jd.md    in the JDex only, so jd makes its folder
+#   12.99 Made by jd.md    in the JDex only, so jd creates its folder
 #   19.99 No category.md   in the JDex only, and its category is missing
-#   W0300~21.35 ...        in the JDex only, so jd makes its folder
-#   W0000-9999 Work ...    the area a work package folder is made in.
-#                          Empty in the filesystem, so a test can see
-#                          what jd puts there.
-#   13 Odds & ends         a name with the characters a shell minds:
+#   W0300~21.35 ...        in the JDex only, so jd creates its folder
+#   W0000-9999 Work ...    the area a work package folder is created in.
+#                          Empty in the filesystem, so a test can read
+#                          what jd creates there.
+#   13 Odds & ends         a name with characters that are special to a
+#                          shell:
 #                          '&', a comma, and more than one space
 
 JD_FX_DIR="$JD_T_TMP/fixtures"
@@ -96,10 +98,10 @@ _jd_fx_build_root2() {
 _jd_fx_note() { printf 'fixture note\n' >"$1"; }
 
 # The templates 'jd new' uses. Not part of _jd_fx_build, because the
-# filesystem work package area is empty on purpose: other cases look in
-# it to see what jd put there. A case that tests 'jd new' calls this.
+# filesystem work package area is empty on purpose: other cases search
+# it for what jd created there. A case that tests 'jd new' calls this.
 #
-# Templates live in the filesystem, in the templates ID at each level.
+# Templates are in the filesystem, in the templates ID at each level.
 #   W0003 Templates/Work package template.md   the work package note
 #   W0003 Templates/Work package template/     the work package folders
 #   21.03 .../ID template.md   category 21's own ID template
@@ -111,7 +113,7 @@ _jd_fx_build_templates() {
   tpl="$w3/Work package template"
   mkdir -p "$tpl/05 Planning" "$tpl/20 Words"
   printf 'fixture\n' >"$tpl/05 Planning/a file.txt"
-  # A .DS_Store in a template must not reach the new work package.
+  # A .DS_Store in a template must not be copied to the new work package.
   printf 'junk\n' >"$tpl/.DS_Store"
   cat >"$w3/Work package template.md" <<'EOT'
 - Parent:
@@ -129,15 +131,15 @@ EOT
   _jd_fx_build_id_templates
 }
 
-# The three ID templates, one per level. Each says which level it is, so
-# a test can tell which one jd used.
+# The three ID templates, one per level. Each states its level, so a
+# test can determine which one jd used.
 _jd_fx_build_id_templates() {
   local sys area cat
   sys="$JD_FX_ROOT/00-09 System area/00 System category/00.03 Templates for the system"
   area="$JD_FX_ROOT/20-29 Area two/20 Management of area 20-29/20.03 Templates for area 20-29"
   cat="$JD_FX_ROOT/20-29 Area two/21 Category twentyone/21.03 Templates for category 21"
   mkdir -p "$sys" "$area" "$cat"
-  # {{FOO}} is not a placeholder jd knows. It is left out of the note.
+  # jd does not recognize {{FOO}}. It is left out of the note.
   printf 'System template for {{NAME}}{{FOO}}\n' >"$sys/ID template.md"
   printf 'Area template for {{ID}}, {{TITLE}}\n' >"$area/ID template.md"
   cat >"$cat/ID template.md" <<'EOT'
@@ -147,8 +149,8 @@ Category template for {{NAME}}
 EOT
 }
 
-# A work package template note that holds '{{?TOKEN}}' tokens, for the
-# toFill tests. It takes the place of the one _jd_fx_build_templates
+# A work package template note that contains '{{?TOKEN}}' tokens, for
+# the toFill tests. It replaces the one that _jd_fx_build_templates
 # writes, so call it after that, or on its own.
 #   $JD_FX_ROOT/W0000-9999 .../W0003 Templates/Work package template.md
 _jd_fx_build_templates_tokens() {
@@ -170,12 +172,12 @@ EOT
 }
 
 # A $PATH with no jq on it, so the "jq is not installed" branch can be
-# tested. Some machines carry jq in /usr/bin, so hiding it by trimming
-# $PATH is not reliable. Build a bin folder instead and link in only the
+# tested. Some machines have jq in /usr/bin, so a trimmed $PATH does not
+# reliably hide it. Build a bin folder instead and link in only the
 # commands the tools and the harness use. Prints the folder.
 #
 # bash is in the list because bin/jd starts '#!/usr/bin/env bash', and
-# env looks the shell up on $PATH like anything else.
+# env searches $PATH for the shell like any other command.
 _jd_fx_nojq_bin() {
   local dir cmd src
   dir="$JD_T_TMP/nojq-bin"
@@ -187,9 +189,9 @@ _jd_fx_nojq_bin() {
   printf '%s' "$dir"
 }
 
-# Undo whatever a test made. jd makes a folder for an ID that is in the
-# JDex but not in the filesystem, so a case that exercises that must put
-# the tree back.
+# Undo whatever a test created. jd creates a folder for an ID that is in
+# the JDex but not in the filesystem, so a case that exercises that must
+# restore the tree.
 _jd_fx_reset() {
   rm -rf "$JD_FX_DIR"
   _jd_fx_build
@@ -197,8 +199,8 @@ _jd_fx_reset() {
 
 # --------------------------------------------------------------- configs
 #
-# Each writer takes the path to write. The paths inside hold spaces but
-# no quotes or backslashes, so they need no JSON escaping.
+# Each writer takes the path to write. The paths inside contain spaces
+# but no quotes or backslashes, so they do not require JSON escaping.
 
 # Two systems. D25 is the default and has a JDex. P76 has neither.
 _jd_fx_config_two() {
@@ -223,8 +225,8 @@ _jd_fx_config_two() {
 EOF
 }
 
-# One system, no sys. The docs say sys is only needed for more than one
-# system. 2.0.2 and 2.0.3 are about this shape.
+# One system, no sys. The docs state that sys is only required for more
+# than one system. 2.0.2 and 2.0.3 are about this shape.
 _jd_fx_config_single_nosys() {
   cat >"$1" <<EOF
 {
@@ -258,7 +260,7 @@ EOF
 }
 
 # One system, the second one. Used to show that $JD_CONFIG really does
-# decide which system jd acts on.
+# determine which system jd acts on.
 _jd_fx_config_second_only() {
   cat >"$1" <<EOF
 {
@@ -274,9 +276,9 @@ _jd_fx_config_second_only() {
 EOF
 }
 
-# Two systems, and D25 knows how to make a work package. The tasks
-# adapter is left out, so it is 'none': the suite never talks to a task
-# app.
+# Two systems, and D25 has the config to create a work package. The
+# tasks adapter is left out, so it is 'none': the suite never calls a
+# task app.
 _jd_fx_config_new() {
   cat >"$1" <<EOF
 {
@@ -302,8 +304,8 @@ _jd_fx_config_new() {
 EOF
 }
 
-# The same, but it still holds the template paths that 2.5 read. jd no
-# longer reads them, and says so.
+# The same, but it still contains the template paths that 2.5 read. jd
+# no longer reads them, and prints a message.
 _jd_fx_config_new_oldkeys() {
   cat >"$1" <<EOF
 {

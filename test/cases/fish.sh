@@ -2,18 +2,18 @@
 # fish.sh - the fish hook, jd.fish
 #
 # jd.fish is a thin port of jd.sh for fish: it runs the program, cds on
-# exit status 3, defines jd, jdex and one command per system, and puts
-# bin on $PATH. See jd.fish for the reasoning.
+# exit status 3, defines jd, jdex and one command per system, and adds
+# bin to $PATH. See jd.fish for the reasoning.
 #
 # A case file is bash or zsh, and jd.fish is neither, so this file does
 # not source it. It runs fish itself, as a subprocess, through
 # _jd_t_run - the way cases/bin.sh runs bin/jd as a subprocess. A
-# subprocess's cd cannot reach back into this shell either way, so
-# every assertion here reads $JD_T_OUT, what jd.fish prints after it
+# subprocess's cd cannot change the directory of this shell either way,
+# so every assertion here reads $JD_T_OUT, what jd.fish prints after it
 # cds, and never $JD_T_PWD.
 #
 # fish is a subprocess dependency here, like jq, not one of the shells
-# test/run.sh drives this file with. So it runs once, under bash, and
+# test/run.sh runs this file with. So it runs once, under bash, and
 # skips under zsh: the same fish subprocess a second time would not add
 # coverage.
 
@@ -52,9 +52,9 @@ _jd_t_fish 'jd 11.11'
 _jd_t_status 'jd: exit status' 0
 _jd_t_eq 'jd: cds and prints the new path' "$_jd_t_id" "$JD_T_OUT"
 
-# The printed line is jd's own report. Prove the cd itself reached the
-# calling script, not just a function-local scope, with a second, plain
-# pwd in the same fish process.
+# The printed line is jd's own output. Prove that the cd changed the
+# directory of the calling script, not just a function-local scope,
+# with a second, plain pwd in the same fish process.
 _jd_t_fish 'jd 11.11 >/dev/null; and pwd'
 _jd_t_eq 'jd: the cd really happened, not just the printed line' \
   "$_jd_t_id" "$JD_T_OUT"
@@ -90,14 +90,14 @@ _jd_t_contains 'many matches: the list is on stderr' \
 # -------------------------------------------------------------------- PATH
 
 _jd_t_fish 'echo $PATH'
-_jd_t_contains 'jd.fish puts bin on $PATH' "$JD_T_REPO/bin" "$JD_T_OUT"
+_jd_t_contains 'jd.fish adds bin to $PATH' "$JD_T_REPO/bin" "$JD_T_OUT"
 
-# ------------------------------------------------ sourcing moves no shell
+# ------------------------------------------ sourcing changes no directory
 #
-# The hook's one licence is to cd when you call a command. Sourcing it
-# must not: jd.sh finds its own directory with $(cd -- ... && pwd), a
-# subshell whose cd dies with it, and the first fish port copied that
-# line as written. Fish runs a command substitution in the calling
+# The hook runs cd only when you call a command. Sourcing the hook must
+# not: jd.sh finds its own directory with $(cd -- ... && pwd), a
+# subshell whose cd ends with the subshell, and the first fish port
+# contained that line as written. Fish runs a command substitution in the calling
 # shell, not a subshell, so that cd was real and every new shell
 # started in the repo. Compare pwd across the source in one fish, so
 # that a symlinked $JD_T_TMP cannot pass or fail this on its own.
@@ -106,20 +106,20 @@ _jd_t_run fish -c "cd '$JD_T_TMP'
   set -l before (pwd)
   source '$JD_T_REPO/jd.fish'
   test (pwd) = \$before; and echo unchanged; or echo (pwd)"
-_jd_t_eq 'sourcing jd.fish leaves the directory alone' 'unchanged' "$JD_T_OUT"
+_jd_t_eq 'sourcing jd.fish does not change the directory' 'unchanged' "$JD_T_OUT"
 
 # Sourced by a relative path, the hook must still resolve its own
-# directory to an absolute one: what cd && pwd was there for.
+# directory to an absolute one, which is the purpose of cd && pwd.
 
 _jd_t_run fish -c "cd '$JD_T_REPO'; source ./jd.fish; echo \$PATH"
-_jd_t_contains 'sourced by a relative path, bin goes on $PATH absolute' \
+_jd_t_contains 'sourced by a relative path, bin is added to $PATH absolute' \
   "$JD_T_REPO/bin" "$JD_T_OUT"
 
-# ----------------------------------------------------- what jd.fish makes
+# --------------------------------------------------- what jd.fish defines
 #
 # The same shape cases/bin.sh checks for jd.sh: each function must name
-# the program and hold no helper, because an agent's shell keeps jd and
-# drops every _jd_ name around it. fish is no different: 'functions'
+# the program and contain no helper, because an agent copies jd and
+# omits every _jd_ name around it. fish is no different: 'functions'
 # prints a function's source the way 'declare -f'/'typeset -f' does.
 
 for _jd_t_fn in jd jdex d25 p76; do
@@ -135,24 +135,24 @@ _jd_t_fish 'functions d25'
 _jd_t_contains 'd25: passes its own system' '--system D25' "$JD_T_OUT"
 
 _jd_t_fish 'functions jd'
-_jd_t_lacks 'jd: names no system, so the program picks the default' \
+_jd_t_lacks 'jd: names no system, so the program selects the default' \
   '--system' "$JD_T_OUT"
 
-# No _jd_hook_def or other setup helper survives sourcing: it is a
-# fixed, small set of names, the same as jd.sh leaves behind.
+# No _jd_hook_def or other setup helper remains after sourcing: it is a
+# fixed, small set of names, the same set that jd.sh leaves defined.
 _jd_t_fish 'functions -a'
-_jd_t_lacks 'sourcing cleans up its own helpers' '_jd_hook' "$JD_T_OUT"
+_jd_t_lacks 'sourcing removes its own helpers' '_jd_hook' "$JD_T_OUT"
 
 # ------------------------------------------------- where the config is
 #
-# jd.fish asks the program where the config is, as jd.sh does, so it
-# holds no copy of that rule. With no $JD_CONFIG, the per-system
-# commands come from the config in each place the program looks. The
-# rule itself is tested in cases/paths.sh.
+# jd.fish runs 'jd paths config', as jd.sh does, so jd.fish contains no
+# copy of that rule. With no $JD_CONFIG, jd.fish defines the per-system
+# commands from the config in each place the program searches. The rule
+# itself is tested in cases/paths.sh.
 
 _jd_t_no_config_var
 
-# Say whether jd.fish made the per-system command p76.
+# Print whether jd.fish defined the per-system command p76.
 _jd_t_fish_p76() {
   _jd_t_fish 'functions -q p76; and echo yes; or echo no'
 }
@@ -163,7 +163,7 @@ _jd_t_eq 'no config in any place: no per-system command' 'no' "$JD_T_OUT"
 mkdir -p "$HOME/.config/johnnydecimal"
 _jd_fx_config_two "$HOME/.config/johnnydecimal/config.json"
 _jd_t_fish_p76
-_jd_t_eq 'a config in ~/.config gives one command per system' 'yes' "$JD_T_OUT"
+_jd_t_eq 'a config in ~/.config: one command per system' 'yes' "$JD_T_OUT"
 rm -rf "$HOME/.config"
 
 mkdir -p "$JD_T_TMP/xdg/johnnydecimal"
@@ -171,19 +171,20 @@ _jd_fx_config_two "$JD_T_TMP/xdg/johnnydecimal/config.json"
 XDG_CONFIG_HOME="$JD_T_TMP/xdg"
 export XDG_CONFIG_HOME
 _jd_t_fish_p76
-_jd_t_eq 'a config in $XDG_CONFIG_HOME gives one command per system' 'yes' "$JD_T_OUT"
+_jd_t_eq 'a config in $XDG_CONFIG_HOME: one command per system' 'yes' "$JD_T_OUT"
 unset XDG_CONFIG_HOME
 
 # ~/.jd, the old place, which the program still reads for now. A new
-# shell says nothing about it: the line comes with the command.
+# shell prints nothing about it: jd prints the line when you run a
+# command.
 mkdir -p "$HOME/.jd"
 _jd_fx_config_two "$HOME/.jd/config.json"
 _jd_t_fish_p76
-_jd_t_eq 'a config in ~/.jd still gives one command per system' 'yes' "$JD_T_OUT"
-_jd_t_lacks 'a config in ~/.jd: sourcing says nothing about it' 'old place' "$JD_T_ERR"
+_jd_t_eq 'a config in ~/.jd: still one command per system' 'yes' "$JD_T_OUT"
+_jd_t_lacks 'a config in ~/.jd: sourcing prints nothing about it' 'old place' "$JD_T_ERR"
 _jd_t_fish 'jd 11.11'
-_jd_t_eq 'a config in ~/.jd: jd still moves the shell' "$_jd_t_id" "$JD_T_OUT"
-_jd_t_contains 'a config in ~/.jd: the command says it is in the old place' \
+_jd_t_eq 'a config in ~/.jd: jd still changes the directory of the shell' "$_jd_t_id" "$JD_T_OUT"
+_jd_t_contains 'a config in ~/.jd: the command prints that it is in the old place' \
   'the config is in ~/.jd, the old place' "$JD_T_ERR"
 rm -rf "$HOME/.jd"
 

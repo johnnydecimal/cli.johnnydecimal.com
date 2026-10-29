@@ -1,33 +1,35 @@
 # SPDX-License-Identifier: MIT
 # harness.sh - the test harness for the Johnny.Decimal command line
 #
-# Every file in test/cases sources this first. It gives a case file:
+# Every file in test/cases sources this first. It provides these to a
+# case file:
 #   - counters, and one result line per test, in a TAP-like format
 #   - assertions: _jd_t_eq, _jd_t_contains, _jd_t_lacks, _jd_t_status,
 #     _jd_t_at
-#   - _jd_t_run, which runs a jd command in this shell, records where it
-#     left us, then puts us back
+#   - _jd_t_run, which runs a jd command in this shell, records the
+#     folder that the command changed to, then changes back
 #   - _jd_t_load, which points $JD_CONFIG at a fixture config and sources
 #     jd.sh again
 #   - _jd_t_bin, the path of the program, and _jd_t_libs, which sources
-#     lib into this shell for the few tests that drive a lib function
+#     lib into this shell for the few tests that call a lib function
 #     directly
 #
 # Why a harness of our own: the tools must work in bash 3.2 and zsh with
-# jq as the only dependency, so the tests must too. Nothing here needs a
-# language runtime, a package manager, or a test framework. Everything is
-# plain shell that both shells parse the same way. There are no arrays,
-# because bash 3.2 has no associative arrays and array syntax differs.
+# jq as the only dependency, so the tests must too. Nothing here
+# requires a language runtime, a package manager, or a test framework.
+# Everything is plain shell that both shells parse the same way. There
+# are no arrays, because bash 3.2 has no associative arrays and array
+# syntax differs.
 #
 # The runner (test/run.sh) sets $JD_T_REPO, $JD_T_TMP, $JD_T_SHELL,
 # $JD_T_FILE and $JD_T_COUNTS before it starts a case file. Do not run a
 # case file by hand; run test/run.sh.
 #
 # jd cd's. So does every per-system function. _jd_t_run therefore records
-# $PWD after the command as $JD_T_PWD, then returns to where it started.
-# A case file never has to think about it.
+# $PWD after the command as $JD_T_PWD, then changes back to the folder
+# where it started. A case file never has to cd back.
 #
-# The program, bin/jd, does not cd: it prints the folder and stops. A
+# The program, bin/jd, does not cd: it prints the folder and exits. A
 # case that runs $JD_T_BIN reads $JD_T_OUT, not $JD_T_PWD.
 
 if [ -z "${JD_T_TMP-}" ] || [ -z "${JD_T_REPO-}" ]; then
@@ -74,12 +76,12 @@ _jd_t_skipped() {
   printf 'ok %s - %s # SKIP %s\n' "$_jd_t_n" "$1" "$2"
 }
 
-# A test for a bug that is known and not yet fixed. It says what the
-# right answer is, and it does not turn the suite red, because the suite
-# is red only for work that has gone backwards.
+# A test for a bug that is known and not yet fixed. It prints the right
+# answer, and it does not count as a failure, because a failure means a
+# regression.
 #
-# When the bug is fixed the line changes to say so. Move the test into
-# the case file it belongs in and use _jd_t_eq.
+# When the bug is fixed the line changes to indicate this. Move the
+# test into the case file it belongs in and use _jd_t_eq.
 #
 # $1 name, $2 expected, $3 actual, $4 note
 _jd_t_eq_known() {
@@ -136,7 +138,8 @@ _jd_t_status() {
   _jd_t_eq "$1" "status $2" "status $JD_T_STATUS"
 }
 
-# Where the last _jd_t_run left us. $1 name, $2 expected directory.
+# The working directory after the last _jd_t_run. $1 name, $2 expected
+# directory.
 _jd_t_at() {
   _jd_t_eq "$1" "$2" "$JD_T_PWD"
 }
@@ -145,7 +148,7 @@ _jd_t_at() {
 
 # Run a command from a directory and record everything about it.
 # $1 directory to start in, $2+ the command and its words.
-# Sets $JD_T_STATUS, $JD_T_OUT, $JD_T_ERR, $JD_T_PWD, then goes back.
+# Sets $JD_T_STATUS, $JD_T_OUT, $JD_T_ERR, $JD_T_PWD, then changes back.
 _jd_t_run_from() {
   local _jd_t_dir=$1 _jd_t_back=$PWD
   shift
@@ -166,21 +169,21 @@ _jd_t_run() {
 
 # ------------------------------------------------------- loading the CLI
 
-# The program. A case runs it with _jd_t_run to see the contract an
-# agent, a script or cron gets: no cd, the folder on stdout.
+# The program. A case runs it with _jd_t_run to test the contract that
+# an agent, a script or cron uses: no cd, the folder on stdout.
 JD_T_BIN=$JD_T_REPO/bin/jd
 
-# The version, which lives in bin/jd and nowhere else.
+# The version, which is defined in bin/jd and nowhere else.
 _jd_t_version() {
   sed -n 's/^_JD_CLI_VERSION="\([^"]*\)".*/\1/p' "$JD_T_BIN"
 }
 
-# Source lib into this shell, for the few tests that drive a lib
+# Source lib into this shell, for the few tests that call a lib
 # function directly rather than through a command. bin/jd sets the same
 # three variables before it sources the same files.
 #
-# It defines no command: jd and the rest still come from _jd_t_load, and
-# still run the program.
+# It defines no command: _jd_t_load still defines jd and the rest, and
+# they still run the program.
 _jd_t_libs() {
   _JD_CLI_DIR=$JD_T_REPO
   _JD_CLI_VERSION=$(_jd_t_version)
@@ -193,9 +196,9 @@ _jd_t_libs() {
   . "$JD_T_REPO/lib/move.sh"
 }
 
-# Forget the commands a previous _jd_t_load defined. jd.sh redefines jd
-# every time, but a per-system function from an old config would survive
-# into a config that no longer has that system.
+# Unset the commands a previous _jd_t_load defined. jd.sh redefines jd
+# every time, but a per-system function from an old config would stay
+# defined after a load of a config that no longer has that system.
 _jd_t_unload() {
   local _jd_t_f
   for _jd_t_f in jd d25 p76 x99; do
@@ -203,19 +206,19 @@ _jd_t_unload() {
   done
 }
 
-# Take $JD_CONFIG away, so that jd finds the config the way it does for
-# a person who has set nothing: $XDG_CONFIG_HOME, then ~/.config, then
-# ~/.jd. Only cases/paths.sh and the few tests like it need this. Every
-# other case names its config with _jd_t_config or _jd_t_load.
+# Unset $JD_CONFIG, so that jd finds the config the way it does for a
+# person who has set nothing: $XDG_CONFIG_HOME, then ~/.config, then
+# ~/.jd. Only cases/paths.sh and the few tests like it require this.
+# Every other case names its config with _jd_t_config or _jd_t_load.
 #
 # It is safe only because $HOME is a folder under $JD_T_TMP, which
-# test/run.sh sees to. If it is not, stop: the next jd would read the
+# test/run.sh ensures. If it is not, exit: the next jd would read the
 # real config, and the real journal.
 _jd_t_no_config_var() {
   case ${HOME-} in
     "$JD_T_TMP"/*) ;;
     *)
-      printf 'test: refusing to run - $HOME is outside $JD_T_TMP\n' >&2
+      printf 'test: cannot run - $HOME is outside $JD_T_TMP\n' >&2
       exit 2
       ;;
   esac
@@ -223,8 +226,8 @@ _jd_t_no_config_var() {
 }
 
 # Point $JD_CONFIG at a fixture config, and load nothing. This is what a
-# case that only runs the program needs. $1 path to the config. It need
-# not exist; that is a test too.
+# case that only runs the program requires. $1 path to the config. The
+# file need not exist; that is a test too.
 _jd_t_config() {
   JD_CONFIG=$1
   export JD_CONFIG
@@ -232,7 +235,7 @@ _jd_t_config() {
   case $JD_CONFIG in
     "$JD_T_TMP"/*) ;;
     *)
-      printf 'test: refusing to run - $JD_CONFIG is outside $JD_T_TMP\n' >&2
+      printf 'test: cannot run - $JD_CONFIG is outside $JD_T_TMP\n' >&2
       exit 2
       ;;
   esac

@@ -2,12 +2,12 @@
 # theme.sh - the whole-prompt theme, lib/theme.zsh
 #
 # The theme is zsh only, and jd.sh does not load it. The user sources it.
-# So these tests source it by hand, the way a .zshrc does, and look at
+# So these tests source it by hand, the way a .zshrc does, and read
 # PROMPT afterwards.
 #
-# The rule it must keep: sourcing it sets PROMPT, whatever PROMPT was
-# there. 2.1.0 tried to leave a prompt of the user's own alone, and
-# could not tell one from a prompt library's default. See the changelog
+# The requirement: sourcing it sets PROMPT, whatever PROMPT was there.
+# 2.1.0 attempted to leave a prompt of the user's own unchanged, and
+# could not distinguish one from a prompt library's default. See the changelog
 # for 2.2.0.
 
 [ -n "${JD_T_REPO-}" ] || {
@@ -18,7 +18,7 @@
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
 
-# Source the theme and record what it said. It changes this shell on
+# Source the theme and record what it printed. It changes this shell on
 # purpose, so there is no _jd_t_run here.
 _jd_th_source() {
   . "$JD_T_REPO/lib/theme.zsh" >"$JD_T_TMP/.out" 2>"$JD_T_TMP/.err"
@@ -27,7 +27,7 @@ _jd_th_source() {
   JD_T_ERR=$(cat "$JD_T_TMP/.err")
 }
 
-# Back to a shell that has never seen the theme.
+# Back to a shell that has never sourced the theme.
 _jd_th_forget() {
   unset -f gitprompt 2>/dev/null || true
   PROMPT='%m%# '
@@ -38,8 +38,8 @@ _jd_th_forget() {
 if [ -z "${ZSH_VERSION-}" ]; then
   PROMPT='%m%# '
   _jd_th_source
-  _jd_t_contains 'theme: bash is told it is zsh only' 'zsh only' "$JD_T_ERR"
-  _jd_t_eq 'theme: bash keeps its PROMPT' '%m%# ' "$PROMPT"
+  _jd_t_contains 'theme: in bash it prints that it is zsh only' 'zsh only' "$JD_T_ERR"
+  _jd_t_eq 'theme: in bash PROMPT does not change' '%m%# ' "$PROMPT"
   _jd_t_summary
 fi
 
@@ -52,8 +52,8 @@ _jd_t_load "$JD_T_TMP/two.json"
 _jd_th_forget
 _jd_th_source
 
-_jd_t_eq 'theme: it says nothing when it loads' '' "$JD_T_ERR"
-_jd_t_eq 'theme: it says nothing on stdout either' '' "$JD_T_OUT"
+_jd_t_eq 'theme: it prints nothing when it is sourced' '' "$JD_T_ERR"
+_jd_t_eq 'theme: it prints nothing on stdout either' '' "$JD_T_OUT"
 _jd_t_contains 'theme: the prompt has the JD path in it' '$(_jd_pwd)' "$PROMPT"
 _jd_t_contains 'theme: the prompt has the top corner' '┏╸' "$PROMPT"
 _jd_t_contains 'theme: the prompt has the bottom corner' '┗╸' "$PROMPT"
@@ -67,7 +67,7 @@ else
 fi
 
 # The prompt is a string until zsh expands it. Expand it here, the way a
-# prompt does, and the path must come out of it.
+# prompt does, and the expanded prompt must contain the path.
 _jd_th_back=$PWD
 cd -- "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" || exit 2
 _jd_th_shown=${(%%)PROMPT}
@@ -84,9 +84,9 @@ else
 fi
 _jd_t_eq 'theme: it leaves no marker variable behind' '' "${_JD_THEME_PROMPT-}"
 
-# ------------------------------------------------- it takes the prompt
+# ---------------------------------------------- it replaces the prompt
 
-# Any prompt is replaced, and nothing is said about it. The user asked
+# Any prompt is replaced, and nothing is printed about it. The user asked
 # for this prompt by sourcing the file.
 _jd_th_first=$PROMPT
 
@@ -94,21 +94,21 @@ _jd_th_forget
 PROMPT='%~ $ '
 _jd_th_source
 _jd_t_eq 'theme: a prompt of your own is replaced' "$_jd_th_first" "$PROMPT"
-_jd_t_eq 'theme: replacing it says nothing' '' "$JD_T_ERR"
+_jd_t_eq 'theme: replacing it prints nothing' '' "$JD_T_ERR"
 
 # git-prompt.zsh sets a PROMPT of its own unless it finds gitprompt in
-# the one you have. That is what 2.1.0 could not tell from a prompt of
-# the user's own. It must be replaced like any other.
+# the one you have. That is what 2.1.0 could not distinguish from a
+# prompt of the user's own. It must be replaced like any other.
 _jd_th_forget
 PROMPT='%B%40<..<%~ %b$(gitprompt)'
 _jd_th_source
 _jd_t_eq 'theme: a prompt library default is replaced' \
   "$_jd_th_first" "$PROMPT"
 
-# Sourcing it twice is quiet, and lands in the same place.
+# Sourcing it twice prints nothing, and sets the same prompt.
 _jd_th_source
-_jd_t_eq 'theme: sourcing it again says nothing' '' "$JD_T_ERR"
-_jd_t_eq 'theme: sourcing it again keeps the prompt' "$_jd_th_first" "$PROMPT"
+_jd_t_eq 'theme: sourcing it again prints nothing' '' "$JD_T_ERR"
+_jd_t_eq 'theme: sourcing it again does not change the prompt' "$_jd_th_first" "$PROMPT"
 
 # ------------------------------------------------------------- gitprompt
 
@@ -138,27 +138,28 @@ _jd_th_forget
 JD_CHEVRON1=blue
 JD_CHEVRON2=green
 _jd_th_source
-_jd_t_eq 'theme: your first chevron colour is kept' 'blue' "$JD_CHEVRON1"
-_jd_t_eq 'theme: your second chevron colour is kept' 'green' "$JD_CHEVRON2"
+_jd_t_eq 'theme: your first chevron colour does not change' 'blue' "$JD_CHEVRON1"
+_jd_t_eq 'theme: your second chevron colour does not change' 'green' "$JD_CHEVRON2"
 
 # They are read at every prompt, so setting them after the source line
 # works too.
 JD_CHEVRON1=magenta
 _jd_th_shown=${(%%)PROMPT}
-_jd_t_contains 'theme: a colour set after the source line still counts' \
+_jd_t_contains 'theme: a colour set after the source line still applies' \
   $'\033[35m' "$_jd_th_shown"
 unset JD_CHEVRON1 JD_CHEVRON2
 
 # ------------------------------------------------------- without jd.sh
 
-# A shell that has the theme but not jd.sh gets the ordinary path, and is
-# told to load jd.sh. _jd_pwd is what tells them apart.
+# A shell that has the theme but not jd.sh receives the ordinary path,
+# and a message to load jd.sh. The theme tests for _jd_pwd to
+# distinguish the two.
 _jd_th_forget
 unset -f _jd_pwd 2>/dev/null || true
 _jd_th_unloaded=$_JD_CLI_VERSION
 unset _JD_CLI_VERSION
 _jd_th_source
-_jd_t_contains 'theme: it says to load jd.sh first' 'source jd.sh' "$JD_T_ERR"
+_jd_t_contains 'theme: it prints a message to load jd.sh first' 'source jd.sh' "$JD_T_ERR"
 _jd_th_back=$PWD
 cd -- "$JD_FX_ROOT/10-19 Area one" || exit 2
 _jd_t_eq 'theme: the stub path has no system in it' \

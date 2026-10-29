@@ -101,8 +101,8 @@ _jd_t_eq 'no source: code' no_source "$(_jd_t_json .code)"
 _jd_t_eq 'no source: path' "$_jd_t_mess/nothing-here" "$(_jd_t_json .path)"
 
 _jd_t_run jd jdex move "$_jd_t_mess/plain.txt" 11.11
-_jd_t_status 'jdex move: refused' 1
-_jd_t_contains 'jdex move: says why' 'works in the filesystem' "$JD_T_ERR"
+_jd_t_status 'jdex move: exits with an error' 1
+_jd_t_contains 'jdex move: prints why' 'works in the filesystem' "$JD_T_ERR"
 
 _jd_t_run jd undo --json
 _jd_t_eq 'undo with no noun: code' no_noun "$(_jd_t_json .code)"
@@ -110,9 +110,9 @@ _jd_t_run jd undo new --json
 _jd_t_eq 'undo of another noun: code' unknown_noun "$(_jd_t_json .code)"
 
 if [ "$(_jd_t_lines)" -eq 0 ]; then
-  _jd_t_ok 'a refused move writes no journal line'
+  _jd_t_ok 'a rejected move writes no journal line'
 else
-  _jd_t_bad 'a refused move writes no journal line' '0 lines' "$(_jd_t_lines) lines"
+  _jd_t_bad 'a rejected move writes no journal line' '0 lines' "$(_jd_t_lines) lines"
 fi
 
 # --------------------------------------------------------------- dry run
@@ -122,9 +122,9 @@ _jd_t_status 'dry run: exit status' 0
 _jd_t_eq 'dry run: prints no path on stdout' '' "$JD_T_OUT"
 _jd_t_contains 'dry run: names the source' "from    $_jd_t_mess/plain.txt" "$JD_T_ERR"
 _jd_t_contains 'dry run: names the target' "to      $_jd_t_f11/plain.txt" "$JD_T_ERR"
-_jd_t_contains 'dry run: says it moved nothing' 'nothing was moved' "$JD_T_ERR"
+_jd_t_contains 'dry run: prints that it moved nothing' 'nothing was moved' "$JD_T_ERR"
 _jd_t_exists 'dry run: the file stays' "$_jd_t_mess/plain.txt"
-_jd_t_gone 'dry run: nothing arrives' "$_jd_t_f11/plain.txt"
+_jd_t_gone 'dry run: nothing is moved to the target' "$_jd_t_f11/plain.txt"
 _jd_t_eq 'dry run: no journal line' 0 "$(_jd_t_lines)"
 
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --dry-run --json
@@ -139,7 +139,7 @@ _jd_t_status 'file: exit status' 0
 _jd_t_eq 'file: prints the new path' "$_jd_t_f11/Invoice & co, 2026.pdf" "$JD_T_OUT"
 _jd_t_at 'file: the shell does not cd' "$_jd_t_mess"
 _jd_t_exists 'file: it is in the ID folder' "$_jd_t_f11/Invoice & co, 2026.pdf"
-_jd_t_gone 'file: it has left the mess' "$_jd_t_mess/Invoice & co, 2026.pdf"
+_jd_t_gone 'file: it is no longer in the mess' "$_jd_t_mess/Invoice & co, 2026.pdf"
 _jd_t_eq 'file: one journal line' 1 "$(_jd_t_lines)"
 _jd_t_eq 'journal: sys' D25 "$(_jd_t_jline 1 .sys)"
 _jd_t_eq 'journal: id' 11.11 "$(_jd_t_jline 1 .id)"
@@ -152,7 +152,7 @@ _jd_t_eq 'journal: a move has no undoes' null "$(_jd_t_jline 1 .undoes)"
 
 # -------------------------------------------------------- moving a folder
 
-# A path that ends in '/' is refused. "$dir/$f" with an empty $f ends
+# A path that ends in '/' is rejected. "$dir/$f" with an empty $f ends
 # in '/', and names the folder.
 _jd_t_run jd move "$_jd_t_mess/Photos/" 11.11 --json
 _jd_t_status 'folder with a trailing slash: exit status' 1
@@ -183,7 +183,7 @@ _jd_t_eq 'json: the program is a program' program "$(_jd_t_json .by)"
 _jd_t_eq 'json: names the journal' "$_jd_t_journal" "$(_jd_t_json .journal)"
 _jd_t_eq 'json: a move has no undoes' null "$(_jd_t_json .undoes)"
 
-# ----------------------------------------------------------- refusals
+# ------------------------------------------------------------- errors
 
 printf 'again\n' >"$_jd_t_mess/agent.txt"
 _jd_t_run jd move "$_jd_t_mess/agent.txt" W0189 --json
@@ -204,14 +204,14 @@ _jd_t_run jd move "$JD_FX_ROOT" 11.11 --json
 _jd_t_eq 'target inside source: code' nested "$(_jd_t_json .code)"
 _jd_t_exists 'target inside source: nothing moved' "$_jd_t_f11"
 
-_jd_t_eq 'refusals: no journal lines' 3 "$(_jd_t_lines)"
+_jd_t_eq 'errors: no journal lines' 3 "$(_jd_t_lines)"
 
 # ------------------------------------------------------ the current folder
 
-# The folder the shell is in, or one that holds it, is refused. With an
-# empty $f, "$PWD/$f" names the current folder, and an agent once moved
-# a person's whole Inbox into an ID that way. The checks are dry runs,
-# or refusals, so the journal does not change.
+# jd rejects the folder the shell is in, or one that contains it. With
+# an empty $f, "$PWD/$f" names the current folder, and an agent once
+# moved a person's whole Inbox into an ID that way. The checks are dry
+# runs, or errors, so the journal does not change.
 mkdir -p "$_jd_t_mess/Inbox/Cards"
 printf 'r\n' >"$_jd_t_mess/Inbox/Recipes.pdf"
 ln -s "$_jd_t_mess/Inbox" "$JD_T_TMP/inbox-link"
@@ -229,18 +229,18 @@ _jd_t_run_from "$_jd_t_mess/Inbox" jd move ../Inbox 11.11 --json
 _jd_t_eq 'current folder, a relative path: code' holds_cwd "$(_jd_t_json .code)"
 
 f=''
-# The words are expanded before _jd_t_run_from goes there, so this is
-# "$PWD/$f" spelled out.
+# The words are expanded before _jd_t_run_from changes to the folder,
+# so this is "$PWD/$f" spelled out.
 _jd_t_run_from "$_jd_t_mess/Inbox" "$JD_T_BIN" move "$_jd_t_mess/Inbox/$f" 11.11 --json
 _jd_t_eq 'current folder and an empty name: code' ends_in_slash "$(_jd_t_json .code)"
 
 _jd_t_run_from "$_jd_t_mess/Inbox/Cards" jd move "$_jd_t_mess/Inbox" 11.11 --json
-_jd_t_eq 'a folder that holds the current folder: code' holds_cwd "$(_jd_t_json .code)"
+_jd_t_eq 'a folder that contains the current folder: code' holds_cwd "$(_jd_t_json .code)"
 
 _jd_t_run_from "$JD_T_TMP/inbox-link" jd move "$_jd_t_mess/Inbox" 11.11 --json
 _jd_t_eq 'current folder through a symlink: code' holds_cwd "$(_jd_t_json .code)"
 
-# '/' comes out of _jd_move_abs as the current folder, so it is refused
+# '/' comes out of _jd_move_abs as the current folder, so jd rejects it
 # here too.
 _jd_t_run_from "$_jd_t_mess/Inbox" "$JD_T_BIN" move / 11.11 --as X --json
 _jd_t_status "'/': exit status" 1
@@ -257,7 +257,7 @@ rm -r "$_jd_t_mess/Inbox"
 
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 12.99
 _jd_t_status 'id in the JDex only: exit status' 0
-_jd_t_contains 'id in the JDex only: the folder is made first' 'created 12.99 Made by jd' "$JD_T_ERR"
+_jd_t_contains 'id in the JDex only: the folder is created first' 'created 12.99 Made by jd' "$JD_T_ERR"
 _jd_t_exists 'id in the JDex only: the file is in the new folder' "$_jd_t_f12/12.99 Made by jd/plain.txt"
 
 # --------------------------------------------------------- another system
@@ -276,21 +276,21 @@ _jd_t_eq 'after --: a path that starts with a dash is a path' "$_jd_t_f11/-flag"
 
 # ------------------------------------------------------------- --as
 
-# The name it arrives with. The journal keeps the old name in 'from' and
-# the new one in 'to', so an undo gives the old name back.
+# The new name at the target. The journal stores the old name in 'from'
+# and the new one in 'to', so an undo restores the old name.
 printf 'st\n' >"$_jd_t_mess/statement.pdf"
 _jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as '2024-03-14 Statement.pdf' --dry-run --json
 _jd_t_status 'as dry run: exit status' 0
 _jd_t_eq 'as dry run: to has the new name' "$_jd_t_f11/2024-03-14 Statement.pdf" "$(_jd_t_json .to)"
 _jd_t_eq 'as dry run: name is the new name' '2024-03-14 Statement.pdf' "$(_jd_t_json .name)"
-_jd_t_contains 'as dry run: says the new name' 'as      2024-03-14 Statement.pdf' "$JD_T_ERR"
+_jd_t_contains 'as dry run: prints the new name' 'as      2024-03-14 Statement.pdf' "$JD_T_ERR"
 _jd_t_exists 'as dry run: moves nothing' "$_jd_t_mess/statement.pdf"
 
 _jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as '2024-03-14 Statement.pdf'
 _jd_t_status 'as: exit status' 0
 _jd_t_eq 'as: prints the new path' "$_jd_t_f11/2024-03-14 Statement.pdf" "$JD_T_OUT"
-_jd_t_exists 'as: it arrives under the new name' "$_jd_t_f11/2024-03-14 Statement.pdf"
-_jd_t_gone 'as: it has left the mess' "$_jd_t_mess/statement.pdf"
+_jd_t_exists 'as: it is at the target under the new name' "$_jd_t_f11/2024-03-14 Statement.pdf"
+_jd_t_gone 'as: it is no longer in the mess' "$_jd_t_mess/statement.pdf"
 _jd_t_eq 'as journal: from has the old name' "$_jd_t_mess/statement.pdf" "$(_jd_t_jline 7 .from)"
 _jd_t_eq 'as journal: to has the new name' "$_jd_t_f11/2024-03-14 Statement.pdf" "$(_jd_t_jline 7 .to)"
 
@@ -309,11 +309,11 @@ _jd_t_run jd move --json "$_jd_t_mess/statement.pdf" 11.11 --as
 _jd_t_eq 'as with no value: code' no_value "$(_jd_t_json .code)"
 _jd_t_run jd move "$_jd_t_mess/statement.pdf" 11.11 --as .. --json
 _jd_t_eq 'as with dot dot: code' bad_name "$(_jd_t_json .code)"
-_jd_t_exists 'as refusals: the source stays' "$_jd_t_mess/statement.pdf"
-_jd_t_eq 'as refusals: no journal lines' 7 "$(_jd_t_lines)"
+_jd_t_exists 'as errors: the source stays' "$_jd_t_mess/statement.pdf"
+_jd_t_eq 'as errors: no journal lines' 7 "$(_jd_t_lines)"
 
 _jd_t_run jd undo move --json
-_jd_t_status 'undo of a rename: the old name is taken in the mess, so it refuses' 1
+_jd_t_status 'undo of a rename: the old name is taken in the mess, so jd exits with an error' 1
 _jd_t_eq 'undo of a rename: code' source_exists "$(_jd_t_json .code)"
 _jd_t_eq 'undo of a rename: path is the old name' "$_jd_t_mess/statement.pdf" "$(_jd_t_json .path)"
 rm "$_jd_t_mess/statement.pdf"
@@ -329,22 +329,22 @@ _jd_t_eq 'undo takes no --as: code' unknown_option "$(_jd_t_json .code)"
 
 # ------------------------------------------------------------- subfolder
 
-# '<id>/<subfolder>' is a subfolder of the ID's folder. It is made when
-# it does not exist, and an undo leaves it in place.
+# '<id>/<subfolder>' is a subfolder of the ID's folder. jd creates it
+# when it does not exist, and an undo does not delete it.
 printf 'b1\n' >"$_jd_t_mess/b1.pdf"
 printf 'b2\n' >"$_jd_t_mess/b2.pdf"
 _jd_t_run jd move "$_jd_t_mess/b1.pdf" '11.11/Bank statements' --dry-run --json
 _jd_t_status 'subfolder dry run: exit status' 0
 _jd_t_eq 'subfolder dry run: to' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_json .to)"
 _jd_t_eq 'subfolder dry run: folder' "$_jd_t_f11/Bank statements" "$(_jd_t_json .folder)"
-_jd_t_contains 'subfolder dry run: says it would make the subfolder' "makes   $_jd_t_f11/Bank statements" "$JD_T_ERR"
-_jd_t_gone 'subfolder dry run: makes nothing' "$_jd_t_f11/Bank statements"
+_jd_t_contains 'subfolder dry run: prints that it would create the subfolder' "creates $_jd_t_f11/Bank statements" "$JD_T_ERR"
+_jd_t_gone 'subfolder dry run: creates nothing' "$_jd_t_f11/Bank statements"
 
 _jd_t_run jd move "$_jd_t_mess/b1.pdf" '11.11/Bank statements' --json
 _jd_t_status 'subfolder: exit status' 0
 _jd_t_eq 'subfolder: id is the ID, not the subfolder' 11.11 "$(_jd_t_json .id)"
 _jd_t_eq 'subfolder: to' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_json .to)"
-_jd_t_exists 'subfolder: the subfolder is made' "$_jd_t_f11/Bank statements"
+_jd_t_exists 'subfolder: the subfolder is created' "$_jd_t_f11/Bank statements"
 _jd_t_exists 'subfolder: the file is in it' "$_jd_t_f11/Bank statements/b1.pdf"
 _jd_t_eq 'subfolder journal: to is the full path' "$_jd_t_f11/Bank statements/b1.pdf" "$(_jd_t_jline 9 .to)"
 _jd_t_eq 'subfolder journal: id' 11.11 "$(_jd_t_jline 9 .id)"
@@ -353,7 +353,7 @@ _jd_t_run jd move "$_jd_t_mess/b2.pdf" '11.11/Bank statements/' --as '2024-04-14
 _jd_t_status 'subfolder that exists, with --as: exit status' 0
 _jd_t_eq 'subfolder that exists, with --as: to' "$_jd_t_f11/Bank statements/2024-04-14 Statement.pdf" "$(_jd_t_json .to)"
 _jd_t_run jd move "$_jd_t_mess/b2.pdf" '11.11/Bank statements' --json
-_jd_t_eq 'subfolder that exists: no second folder made' "$(_jd_t_json .code)" no_source
+_jd_t_eq 'subfolder that exists: no second folder created' "$(_jd_t_json .code)" no_source
 
 printf 'w\n' >"$_jd_t_mess/w.txt"
 _jd_t_run jd move "$_jd_t_mess/w.txt" 'W0189/Sub' --json
@@ -376,8 +376,8 @@ _jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.11/Invoice & co, 2026.pdf' --json
 _jd_t_eq 'subfolder that is a file: code' not_a_folder "$(_jd_t_json .code)"
 _jd_t_run jd move "$_jd_t_mess/b3.pdf" '11.99/Sub' --json
 _jd_t_eq 'subfolder of an ID that does not exist: code' no_match "$(_jd_t_json .code)"
-_jd_t_gone 'subfolder refusals: no subfolder made' "$_jd_t_f11/a"
-_jd_t_exists 'subfolder refusals: the source stays' "$_jd_t_mess/b3.pdf"
+_jd_t_gone 'subfolder errors: no subfolder created' "$_jd_t_f11/a"
+_jd_t_exists 'subfolder errors: the source stays' "$_jd_t_mess/b3.pdf"
 rm "$_jd_t_mess/b3.pdf"
 
 _jd_t_run jd undo move "$_jd_t_f11/Bank statements/2024-04-14 Statement.pdf" --json
@@ -385,7 +385,7 @@ _jd_t_status 'undo out of a subfolder: exit status' 0
 _jd_t_eq 'undo out of a subfolder: back under the old name' "$_jd_t_mess/b2.pdf" "$(_jd_t_json .to)"
 _jd_t_run jd undo move "$_jd_t_f11/Bank statements/b1.pdf" --json
 _jd_t_status 'undo out of a subfolder, the last file: exit status' 0
-_jd_t_exists 'undo leaves the empty subfolder in place' "$_jd_t_f11/Bank statements"
+_jd_t_exists 'undo does not delete the empty subfolder' "$_jd_t_f11/Bank statements"
 rm "$_jd_t_mess/b1.pdf" "$_jd_t_mess/b2.pdf"
 rmdir "$_jd_t_f11/Bank statements"
 
@@ -405,10 +405,10 @@ _jd_t_eq 'undo dry run: no journal line' "$_jd_t_ln" "$(_jd_t_lines)"
 
 _jd_t_run_from "$_jd_t_mess" jd undo move
 _jd_t_status 'undo: exit status' 0
-_jd_t_eq 'undo: prints where it went back to' "$_jd_t_mess/-flag" "$JD_T_OUT"
+_jd_t_eq 'undo: prints the path it was moved back to' "$_jd_t_mess/-flag" "$JD_T_OUT"
 _jd_t_at 'undo: the shell does not cd' "$_jd_t_mess"
 _jd_t_exists 'undo: it is back' "$_jd_t_mess/-flag"
-_jd_t_gone 'undo: it has left the ID' "$_jd_t_f11/-flag"
+_jd_t_gone 'undo: it is no longer in the ID' "$_jd_t_f11/-flag"
 _jd_t_eq 'undo: one more journal line' "$((_jd_t_ln + 1))" "$(_jd_t_lines)"
 _jd_t_last=$(_jd_t_lines)
 _jd_t_eq 'undo journal: from is where it was' "$_jd_t_f11/-flag" "$(_jd_t_jline "$_jd_t_last" .from)"
@@ -426,7 +426,7 @@ _jd_t_exists 'undo skips what is undone: plain.txt is back' "$_jd_t_mess/plain.t
 _jd_t_run jd undo move "$_jd_t_w189/agent.txt" --json
 _jd_t_status 'undo by path: exit status' 0
 _jd_t_eq 'undo by path: undoes that move' "$_jd_t_w189/agent.txt" "$(_jd_t_json .from)"
-_jd_t_gone 'undo by path: it left the work package' "$_jd_t_w189/agent.txt"
+_jd_t_gone 'undo by path: it is no longer in the work package' "$_jd_t_w189/agent.txt"
 
 # By path in the other system, with no --system.
 _jd_t_run jd undo move "$_jd_t_p31/-dashed" --json
@@ -446,21 +446,21 @@ _jd_t_status 'undo with nothing left: exit status' 1
 _jd_t_eq 'undo with nothing left: code' nothing_to_undo "$(_jd_t_json .code)"
 _jd_t_exists 'undo: everything is back in the mess' "$_jd_t_mess/Invoice & co, 2026.pdf"
 
-# ------------------------------------------------------ undo refusals
+# -------------------------------------------------------- undo errors
 
 _jd_t_mess_build
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
 mv "$_jd_t_f11/plain.txt" "$_jd_t_f11/renamed.txt"
 _jd_t_run jd undo move --json
 _jd_t_eq 'moved since: code' moved_since "$(_jd_t_json .code)"
-_jd_t_eq 'moved since: path is where jd put it' "$_jd_t_f11/plain.txt" "$(_jd_t_json .path)"
+_jd_t_eq 'moved since: path is where jd moved it' "$_jd_t_f11/plain.txt" "$(_jd_t_json .path)"
 mv "$_jd_t_f11/renamed.txt" "$_jd_t_f11/plain.txt"
 
 printf 'other\n' >"$_jd_t_mess/plain.txt"
 _jd_t_run jd undo move --json
 _jd_t_eq 'source taken: code' source_exists "$(_jd_t_json .code)"
 _jd_t_eq 'source taken: path is the taken source' "$_jd_t_mess/plain.txt" "$(_jd_t_json .path)"
-_jd_t_exists 'source taken: the moved file stays put' "$_jd_t_f11/plain.txt"
+_jd_t_exists 'source taken: the moved file stays where it is' "$_jd_t_f11/plain.txt"
 rm "$_jd_t_mess/plain.txt"
 
 _jd_t_run jd undo move --json
@@ -482,7 +482,7 @@ else
   _jd_t_bad 'the journal is one JSON object per line' 'valid JSON lines' "$(cat "$_jd_t_journal")"
 fi
 
-# A journal that cannot be written stops the move before it starts.
+# If jd cannot write the journal, jd exits before the move.
 chmod 444 "$_jd_t_journal"
 _jd_t_run jd move "$_jd_t_mess/Photos" 11.11 --json
 chmod 644 "$_jd_t_journal"
@@ -497,9 +497,9 @@ fi
 # ------------------------------------------------------- the same second
 #
 # 'at' is to the second, so a move, its undo, and the same move again
-# can all have one 'at'. The undo counts only for the move above it. A
-# 'date' on $PATH that always prints one time makes this happen every
-# run, not only on a fast machine.
+# can all have one 'at'. The undo counts only for the move above it.
+# With a 'date' on $PATH that always prints one time, this happens on
+# every run, not only on a fast machine.
 
 _jd_t_mess_build
 mkdir -p "$JD_T_TMP/clock"
@@ -510,7 +510,7 @@ PATH="$JD_T_TMP/clock:$PATH"
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
 _jd_t_run jd undo move --json
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
-_jd_t_eq 'same second: the clock is stopped' '2026-10-24T00:00:00Z' "$(_jd_t_json .at)"
+_jd_t_eq 'same second: date prints one fixed time' '2026-10-24T00:00:00Z' "$(_jd_t_json .at)"
 _jd_t_run jd undo move --json
 _jd_t_status 'same second: the second move can be undone' 0
 _jd_t_exists 'same second: the file is back' "$_jd_t_mess/plain.txt"
@@ -524,7 +524,7 @@ _jd_fx_reset
 # ------------------------------------------------------------------ beta
 #
 # 'jd move' and 'jd undo move' were beta features up to 4.1.1. They are
-# not now: they move with beta off, and say nothing about beta. These
+# not now: they move with beta off, and print nothing about beta. These
 # run last, so that the journal counts above start from nothing.
 
 _jd_t_mess_build
@@ -533,16 +533,16 @@ _jd_t_eq 'beta off: the config has no beta key' 'null' \
 _jd_t_run jd move "$_jd_t_mess/plain.txt" 11.11 --json
 _jd_t_status 'beta off: exit status' 0
 _jd_t_eq 'beta off: it moved' true "$(_jd_t_json .ok)"
-_jd_t_lacks 'beta off: says nothing about beta' 'beta' "$JD_T_ERR"
+_jd_t_lacks 'beta off: prints nothing about beta' 'beta' "$JD_T_ERR"
 _jd_t_run jd undo move --json
 _jd_t_status 'beta off: undo exit status' 0
-_jd_t_exists 'beta off: undo put it back' "$_jd_t_mess/plain.txt"
-_jd_t_lacks 'beta off: undo says nothing about beta' 'beta' "$JD_T_ERR"
+_jd_t_exists 'beta off: undo moved it back' "$_jd_t_mess/plain.txt"
+_jd_t_lacks 'beta off: undo prints nothing about beta' 'beta' "$JD_T_ERR"
 
 _jd_t_run jd move --help
-_jd_t_lacks 'help: says nothing about beta' 'beta' "$JD_T_OUT"
+_jd_t_lacks 'help: prints nothing about beta' 'beta' "$JD_T_OUT"
 _jd_t_run jd undo move --help
-_jd_t_lacks 'help undo: says nothing about beta' 'beta' "$JD_T_OUT"
+_jd_t_lacks 'help undo: prints nothing about beta' 'beta' "$JD_T_OUT"
 _jd_t_run jd help
 _jd_t_lacks 'jd help: move is not marked beta' 'journal it (beta)' "$JD_T_OUT"
 

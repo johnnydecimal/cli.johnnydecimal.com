@@ -3,8 +3,8 @@
 #
 # It is the one command, apart from version and help, that works with no
 # config. What is tested is that it works then, that the prompt names
-# this install and this config, that only the prompt goes to stdout, and
-# that every 'no config' error names it.
+# this install and this config, that only the prompt is written to
+# stdout, and that every 'no config' error names it.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -28,7 +28,7 @@ _jd_t_run jd agent-setup
 _jd_t_status 'no config: jd agent-setup exit status' 0
 _jd_t_contains 'no config: the prompt names the config file' \
   "$_jd_t_none" "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt says the file does not exist' \
+_jd_t_contains 'no config: the prompt states that the file does not exist' \
   'It does not exist yet.' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names this copy of the program' \
   "$JD_T_REPO/bin/jd" "$JD_T_OUT"
@@ -38,40 +38,40 @@ _jd_t_contains 'no config: the prompt names the template' \
   "$JD_T_REPO/config.example.json" "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names the configuration page' \
   'https://johnnydecimal.com/documentation/configuration' "$JD_T_OUT"
-_jd_t_lacks 'no config: the prompt is the one home, it does not defer to install_cli' \
+_jd_t_lacks 'no config: the prompt is the one source, it does not refer to install_cli' \
   'install_cli' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt sends a bought system to install_system' \
+_jd_t_contains 'no config: the prompt names install_system for a bought system' \
   'install_system' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt says never to add the source line twice' \
+_jd_t_contains 'no config: the prompt instructs never to add the source line twice' \
   'Never add the line twice' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt resolves a symlinked rc file' \
+_jd_t_contains 'no config: the prompt instructs to resolve a symlinked rc file' \
   'symlink' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt warns that the theme takes PROMPT' \
+_jd_t_contains 'no config: the prompt states that the theme replaces PROMPT' \
   'whatever PROMPT' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names config.fish for fish' \
   'config.fish' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt says never to overwrite a file' \
+_jd_t_contains 'no config: the prompt instructs never to overwrite a file' \
   'Never overwrite' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt asks about work packages' \
-  'Ask me whether I want jd to make work packages' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt instructs the agent to ask about work packages' \
+  'Ask me whether I want jd to create work packages' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names the things adapter' \
   '"tasks": { "adapter": "things" }' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names the obsidian adapter' \
   '"notes": { "adapter": "obsidian" }' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt checks work packages with a dry run' \
+_jd_t_contains 'no config: the prompt instructs a dry run to check work packages' \
   "$JD_T_REPO/bin/jd new wp --dry-run" "$JD_T_OUT"
-_jd_t_lacks 'no config: the prompt does not tell the agent to turn beta on' \
+_jd_t_lacks 'no config: the prompt does not instruct the agent to turn beta on' \
   'beta on' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt says what to do with no system' \
+_jd_t_contains 'no config: the prompt states what to do with no system' \
   'If you find no system, stop.' "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt is not an error' 'no config' "$JD_T_ERR"
 _jd_t_lacks 'no config: nothing for the person is on stdout' 'jd:' "$JD_T_OUT"
-_jd_t_eq 'no config: nothing on stderr - the prompt speaks for itself' \
+_jd_t_eq 'no config: nothing on stderr, only the prompt on stdout' \
   '' "$JD_T_ERR"
-_jd_t_at 'no config: does not move us' "$JD_T_TMP"
+_jd_t_at 'no config: does not change the directory' "$JD_T_TMP"
 
 # The unquoted heredoc means a backtick or a dollar in the prompt would
-# be run by the shell, not printed. None must ever get in.
+# be run by the shell, not printed. None must ever be in the prompt.
 _jd_t_lacks 'the prompt text has no backtick' '`' \
   "$(sed -n '/<<EOF$/,/^EOF$/p' "$JD_T_REPO/lib/setup.sh")"
 _jd_t_lacks 'the prompt text has no dollar but its own variables' \
@@ -94,15 +94,15 @@ _jd_t_contains 'help: names pbcopy' 'pbcopy' "$JD_T_OUT"
 
 _jd_t_run jd agent-setup now
 _jd_t_status 'extra word: is an error' 1
-_jd_t_contains 'extra word: says agent-setup takes nothing' \
+_jd_t_contains 'extra word: prints that agent-setup takes nothing' \
   "'jd agent-setup' takes nothing after it" "$JD_T_ERR"
 _jd_t_eq 'extra word: nothing on stdout' '' "$JD_T_OUT"
 
 _jd_t_run jd help
 _jd_t_contains 'jd help: names agent-setup' '<system> agent-setup' "$JD_T_OUT"
 
-# Every command that needs the config says the same thing, and names
-# the way out.
+# Every command that requires the config prints the same message, which
+# names the fix.
 
 _jd_t_run jd 11.11
 _jd_t_contains 'no config: a move names jd agent-setup' 'jd agent-setup' "$JD_T_ERR"
@@ -124,11 +124,11 @@ _jd_t_run jd agent-setup
 _jd_t_status 'config exists: jd agent-setup still works' 0
 _jd_t_contains 'config exists: the prompt names the config file' \
   "$JD_T_TMP/two.json" "$JD_T_OUT"
-_jd_t_contains 'config exists: the prompt says to keep it' \
+_jd_t_contains 'config exists: the prompt instructs the agent to keep it' \
   'It exists already.' "$JD_T_OUT"
-_jd_t_lacks 'config exists: the prompt does not say it is missing' \
+_jd_t_lacks 'config exists: the prompt does not state that it is missing' \
   'does not exist' "$JD_T_OUT"
-_jd_t_contains 'config exists: the person is told it exists' \
+_jd_t_contains 'config exists: jd prints that it exists' \
   'you have a config at' "$JD_T_ERR"
 
 _jd_t_run d25 agent-setup

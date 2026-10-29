@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: MIT
 # tasks/things.sh - Things 3, on macOS
 #
-# Things cannot copy a project. Its AppleScript dictionary says so:
-# 'Projects can not be copied', error -1717. AppleScript can make a
-# project, but a to do it makes inside one lands in the Inbox, and it
-# cannot see headings at all.
+# Things cannot copy a project. Its AppleScript dictionary states this:
+# 'Projects can not be copied', error -1717. AppleScript's `make`
+# command can create a project, but a to-do that it creates inside one
+# appears in the Inbox, and AppleScript cannot read headings at all.
 #
-# So this adapter does not copy. It keeps the template project as a
+# So this adapter does not copy. It stores the template project as a
 # file, in the JSON that the Things URL scheme reads, and builds a new
 # project from that file. The file is written from the template project
 # in the Things database, read only. You edit the template in Things.
@@ -15,8 +15,8 @@
 # Things is never missed. It is rewritten only when the project has
 # changed. 'jd new wp --refresh' refreshes it on its own.
 #
-# The URL scheme has no way to hand an ID back to a shell, so the new
-# project is found by its name, which holds its W number and is unique.
+# The URL scheme cannot return an ID to a shell, so the new project is
+# found by its name, which contains its W number and is unique.
 #
 # The template file is 'Work package template.things.json', in W0003.
 # new.sh sets its path in $_JD_NEW_TASKS_TPL.
@@ -32,10 +32,10 @@
 # sets its path in $_JD_NEW_TASKS_DEFAULT. After that the copy is the
 # user's file, and jd does not write to it again.
 #
-# The template file holds the placeholders that new.sh fills:
+# The template file contains the placeholders that new.sh fills:
 # {{NAME}} for the project title, {{NOTES_URL}} and {{TASKS_URL}} in the
-# project notes. Tags are not read: Things keeps them in a form the
-# database does not spell out.
+# project notes. Tags are not read: Things stores them in a form that
+# the database schema does not document.
 
 _jd_things_db() {
   local p
@@ -82,10 +82,10 @@ EOF
 jd_tasks_check() {
   case $(uname -s) in
     Darwin) ;;
-    *) _jd_nav_err "the things adapter needs macOS"; return 1 ;;
+    *) _jd_nav_err "the things adapter requires macOS"; return 1 ;;
   esac
   command -v osascript >/dev/null 2>&1 || {
-    _jd_nav_err "the things adapter needs osascript"
+    _jd_nav_err "the things adapter requires osascript"
     return 1
   }
   open -Ra Things3 >/dev/null 2>&1 || {
@@ -98,7 +98,8 @@ jd_tasks_check() {
 # Refresh the template file from Things, then check that it exists.
 #
 # A refresh that fails is not an error while an older file exists: jd
-# warns, and uses that file. With no file at all, it stops.
+# prints a warning, and uses that file. With no file at all, jd exits
+# with an error.
 #
 # With no source in the config and no file, it copies jd's own template.
 jd_tasks_prepare() {
@@ -123,7 +124,7 @@ jd_tasks_prepare() {
   return 0
 }
 
-# Make the project. $1 its name. Prints its URL.
+# Create the project. $1 its name. Prints its URL.
 jd_tasks_create() {
   local data id n
   data=$(_jd_things_payload) || return 1
@@ -131,11 +132,11 @@ jd_tasks_create() {
 
   # -g leaves the terminal in front. Things still opens.
   open -g "things:///json?data=$data" || {
-    _jd_nav_err "Things did not take the new project"
+    _jd_nav_err "could not open the Things URL for the new project"
     return 1
   }
 
-  # The URL scheme answers nothing, so wait for the project to appear.
+  # The URL scheme returns nothing, so wait for the project to appear.
   # Things has to start if it was not running, which is the slow case.
   n=0
   while [ "$n" -lt 60 ]; do
@@ -145,7 +146,7 @@ jd_tasks_create() {
     n=$((n + 1))
   done
   [ -n "$id" ] || {
-    _jd_nav_err "Things did not make a project named '$1' - check that 'Enable Things URLs' is on in Things > Settings > General, and look in Things before you try again"
+    _jd_nav_err "Things did not create a project named '$1' - check that 'Enable Things URLs' is on in Things > Settings > General, and look in Things before you try again"
     return 1
   }
   printf 'things:///show?id=%s' "$id"
@@ -167,26 +168,27 @@ EOF
   return 0
 }
 
-# Read the template project out of Things. Write the template file if
+# Read the template project from Things. Write the template file if
 # it is different, or does not exist. Sets $_JD_THINGS_CHANGED to 1 if
 # it wrote the file, and 0 if it did not.
 #
-# It reads the database, not the app, because AppleScript cannot see
+# It reads the database, not the app, because AppleScript cannot read
 # headings. The file is opened read only and never written to. A
-# database that Things changes under the read is not a risk: the read
-# either sees the old row or the new one.
+# database that Things changes during the read is not a risk: the read
+# returns either the old row or the new one.
 #
 # Order. Things sorts headings by their own index, and the to dos under
-# a heading by theirs. A to do with no heading sits above every heading.
+# a heading by theirs. Things sorts a to do with no heading above every
+# heading.
 _jd_things_sync() {
   local db rows head items out old
   _JD_THINGS_CHANGED=0
   [ -n "$_JD_NEW_TASKS_SOURCE" ] || {
-    _jd_nav_err "a refresh needs workPackages.tasks.source in the config: the ID of the template project in Things"
+    _jd_nav_err "a refresh requires workPackages.tasks.source in the config: the ID of the template project in Things"
     return 1
   }
   command -v sqlite3 >/dev/null 2>&1 || {
-    _jd_nav_err "a refresh needs sqlite3"
+    _jd_nav_err "a refresh requires sqlite3"
     return 1
   }
   db=$(_jd_things_db) || {
@@ -257,8 +259,8 @@ _jd_things_sync() {
                 end ] }
         ) } ]') || return 1
 
-  # '$(cat)' drops the last newline, and so does '$(jq)', so the two
-  # compare equal when the file holds what would be written.
+  # '$(cat)' removes the last newline, and so does '$(jq)', so the two
+  # compare equal when the file contains what would be written.
   old=$(cat "$_JD_NEW_TASKS_TPL" 2>/dev/null)
   [ -f "$_JD_NEW_TASKS_TPL" ] && [ "$out" = "$old" ] && return 0
   printf '%s\n' "$out" >"$_JD_NEW_TASKS_TPL" || {
@@ -273,7 +275,7 @@ _jd_things_sync() {
   return 0
 }
 
-# 'jd new wp --refresh': refresh the template file, and say what
+# 'jd new wp --refresh': refresh the template file, and print what
 # happened.
 jd_tasks_refresh() {
   _jd_things_sync || return 1

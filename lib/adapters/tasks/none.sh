@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # tasks/none.sh - no task app
 #
-# The work package gets no project and no task app link.
+# The work package has no project and no task app link.
 # {{TASKS_URL}} is empty.
 
 jd_tasks_check() { return 0; }

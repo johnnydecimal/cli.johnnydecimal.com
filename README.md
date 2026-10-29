@@ -24,15 +24,15 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
      ~/.local/share/johnnydecimal/cli
    ```
 
-3. If `~/.config/johnnydecimal/config.json` does not exist, make it. Either way works.
+3. If `~/.config/johnnydecimal/config.json` does not exist, create it. Either way works.
 
-   Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems, writes the file, adds the source line, and offers the prompt. It is the one prompt for setup. The johnnydecimal.com MCP server's `install_cli` tool clones this repository and then sends an agent to it:
+   Let your agent write it. This prints a prompt. Paste it into whatever agent you use, and it finds your systems, writes the file, adds the source line, and offers the prompt. It is the one prompt for setup. With the johnnydecimal.com MCP server, the `install_cli` tool returns the steps to an agent: clone this repository, then run this command:
 
    ```sh
    ~/.local/share/johnnydecimal/cli/bin/jd agent-setup
    ```
 
-   On macOS, add `| pbcopy` to that line to put the prompt on the clipboard.
+   On macOS, add `| pbcopy` to that line to copy the prompt to the clipboard.
 
    Or copy the template and edit it for your systems:
 
@@ -54,11 +54,11 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    source ~/.local/share/johnnydecimal/cli/jd.fish
    ```
 
-   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and moves your shell to where the program says. In zsh it also loads the prompt.
+   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and changes to the folder that the program prints. In zsh it also loads the prompt.
 
 5. For the zsh prompt, add one of these two to `.zshrc`, after the `source` line.
 
-   A prompt of your own, with the Johnny.Decimal path in it. `_jd_pwd` needs single quotes, or `prompt_subst`:
+   A prompt of your own, with the Johnny.Decimal path in it. `_jd_pwd` requires single quotes, or `prompt_subst`:
 
    ```zsh
    setopt prompt_subst
@@ -73,7 +73,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 
 6. Start a new shell.
 
-- These are the default paths. If you set `$XDG_DATA_HOME` or `$XDG_CONFIG_HOME`, refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- These are the default paths. If you set `$XDG_DATA_HOME` or `$XDG_CONFIG_HOME`, refer to [Where jd stores its files](#where-jd-stores-its-files).
 - If you installed jd before 4.0.0, your files are in `~/.jd`. Refer to [Move from `~/.jd`](#move-from-jd).
 
 [^homebrew]: Requires [Homebrew](https://brew.sh).
@@ -86,11 +86,11 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
 ~/.local/share/johnnydecimal/cli/bin/jd 11.11             # the folder for ID 11.11
 ~/.local/share/johnnydecimal/cli/bin/jd --system P76 22   # a system other than the default
 ~/.local/share/johnnydecimal/cli/bin/jd version
-~/.local/share/johnnydecimal/cli/bin/jd paths             # where jd keeps its files
+~/.local/share/johnnydecimal/cli/bin/jd paths             # where jd stores its files
 ```
 
-- A move prints one absolute path on stdout and exits 0, so it reads as an answer: `cd "$(~/.local/share/johnnydecimal/cli/bin/jd 11.11)"`.
-- Match lists, reports, and errors go to stderr.
+- A move prints one absolute path on stdout and exits 0, so a command substitution can use it: `cd "$(~/.local/share/johnnydecimal/cli/bin/jd 11.11)"`.
+- jd prints match lists, reports, and errors on stderr.
 - `--system` is read as the first word and nowhere else, so it never collides with a title or with a flag of `jd new`.
 - `jd new` takes `--json`, which prints one JSON object on stdout. Refer to [For agents](#for-agents).
 
@@ -99,9 +99,9 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
   ```
 
 - `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
-- `jd paths` prints the path of the configuration file, the path of the journal, and the folder that contains the program. `jd paths --json` prints one JSON object. If a script or an agent needs one of these paths, it must get the path from `jd paths`. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
-- The `source` line in [Installation](#installation) also puts `bin` on `$PATH`, so a program started from your shell can run `jd` by name.
-- If `~/.local/bin` is on your `$PATH`, you can put a link to the program there. The program follows the link to find its other files:
+- `jd paths` prints the path of the configuration file, the path of the journal, and the folder that contains the program. `jd paths --json` prints one JSON object. A script or an agent that requires one of these paths must read the path from `jd paths`. Refer to [Where jd stores its files](#where-jd-stores-its-files).
+- The `source` line in [Installation](#installation) also adds `bin` to `$PATH`, so a program started from your shell can run `jd` by name.
+- If `~/.local/bin` is on your `$PATH`, you can create a link to the program there. The program follows the link to find its other files:
 
   ```sh
   ln -s ~/.local/share/johnnydecimal/cli/bin/jd ~/.local/bin/jd
@@ -130,9 +130,9 @@ source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
   ```
 
 - For git status, load [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme. If it is not loaded, the theme's own `gitprompt` function operates and prints nothing.
-- The symbols need a font that contains box-drawing characters.
+- The symbols require a font that contains box-drawing characters.
 
-## Where jd keeps its files
+## Where jd stores its files
 
 jd follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/). In each base directory, jd uses a folder with the name `johnnydecimal`.
 
@@ -144,12 +144,12 @@ jd follows the [XDG Base Directory Specification](https://specifications.freedes
 
 - `$JD_CONFIG` is the path of the configuration file. If you set `$JD_CONFIG`, jd reads only that file.
 - A path in an XDG variable must start with `/`. If the path does not start with `/`, jd uses the default path.
-- If you set `$XDG_CONFIG_HOME`, jd looks only in that directory. jd does not also look in `~/.config`.
-- If the folder for the journal does not exist, jd makes the folder with mode 700.
+- If you set `$XDG_CONFIG_HOME`, jd searches only that directory. jd does not also search `~/.config`.
+- If the folder for the journal does not exist, jd creates the folder with mode 700.
 - You can clone this repository to any folder. The program finds its other files from its own path. The third row is only the folder that these instructions use. If you use a different folder, put that folder in the `source` line.
 - The paths are the same on macOS. jd is a command-line tool, so it does not use `~/Library`.
 
-`jd paths` prints the paths that jd uses on this machine. `jd paths` does not need a configuration file or `jq`. Only `jd paths --json` needs `jq`.
+`jd paths` prints the paths that jd uses on this machine. `jd paths` does not require a configuration file or `jq`. Only `jd paths --json` requires `jq`.
 
 ```sh
 jd paths            # all three
@@ -165,7 +165,7 @@ install  /Users/you/.local/share/johnnydecimal/cli
 
 - `install` is the folder that contains this copy of jd.
 - If the configuration file or the journal is still in `~/.jd`, `jd paths` prints the path in `~/.jd`, because jd uses that file. `jd paths` also prints, on stderr, the commands that move the file. Refer to [Move from `~/.jd`](#move-from-jd).
-- The object from `jd paths --json` has a `warnings` list. Each code in the list tells you about one item in `~/.jd`:
+- The object from `jd paths --json` has a `warnings` list. Each code in the list indicates the state of one item in `~/.jd`:
   - `old_config`: jd reads the configuration file in `~/.jd`.
   - `old_journal`: jd uses the journal in `~/.jd`.
   - `old_install`: this copy of jd is in `~/.jd/cli`.
@@ -174,19 +174,19 @@ install  /Users/you/.local/share/johnnydecimal/cli
 
 ## Configuration
 
-All the tools read one configuration file. Refer to [Where jd keeps its files](#where-jd-keeps-its-files) for its path.
+All the tools read one configuration file. Refer to [Where jd stores its files](#where-jd-stores-its-files) for its path.
 
 The program reads the configuration each time it runs, so a system that has moved takes effect at once.
 
-Two things are read at shell start, and need a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the zsh prompt.
+Two things are read at shell start, and require a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the zsh prompt.
 
 Refer to [johnnydecimal.com/documentation/configuration](https://johnnydecimal.com/documentation/configuration) for the fields.
 
 ## `jd new`
 
-`jd new` makes a new thing. The word after `new` says what to make. It is required.
+`jd new` creates a new thing. The word after `new` specifies what to create. It is required.
 
-The title needs no quotes. It is every word after the category or ID, up to the first word that starts with `--`. A `-` anywhere else is part of the title, for example `SBS video - 14.20 Syncthing` or `Cut costs -20%`. Flags can go before the noun, after it, or after the title.
+The title does not require quotes. It is every word after the category or ID, up to the first word that starts with `--`. A `-` anywhere else is part of the title, for example `SBS video - 14.20 Syncthing` or `Cut costs -20%`. You can put flags before the noun, after it, or after the title.
 
 ```sh
 jd new id 21 A title        # the next free ID in category 21
@@ -198,56 +198,56 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 
 ### `jd new id`
 
-- It makes the JDex note and the folder.
+- It creates the JDex note and the folder.
 - The next free ID is one more than the highest ID in the category.
   - It counts the IDs in the JDex: the entries directly in the category, and directly in its archive, the .09 ID. For category 21, that is `21` and `21.09`.
   - A JDex can be flat: it has no area folders, and the notes are in its root. Then jd counts the notes in the root that start with the category's number, and writes the new note to the root.
   - An ID in the JDex can be a folder that contains its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This matches how the Obsidian 'Folder notes' plugin works. jd reads an ID like this, and creates every new ID as a note.
   - A folder with no JDex entry is not an ID, so it is not counted. Nor is anything deeper inside an ID.
-  - If the filesystem already has a folder with the new ID's number, jd stops, and names the folder.
+  - If the filesystem already has a folder with the new ID's number, jd exits with an error that names the folder.
   - It is never lower than .11.
   - A gap is not filled.
 
 ### `jd new wp`
 
-- It makes the next free W number, the project in your task app, the JDex note, and the folder.
-- The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd stops, and names the folder.
-- If the system has no `W0000-9999` folder, jd makes `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
-- If the area has no `W0003` folder, jd makes `W0003 Templates for area W0000-9999`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
-- If the JDex has no `W0000-9999` folder, jd makes `W0000-9999 Work packages` in the JDex. A flat JDex gets no folder: jd writes the note to the root.
+- It assigns the next free W number, and creates the project in your task app, the JDex note, and the folder.
+- The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd exits with an error that names the folder.
+- If the system has no `W0000-9999` folder, jd creates `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
+- If the area has no `W0003` folder, jd creates `W0003 Templates for area W0000-9999`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
+- If the JDex has no `W0000-9999` folder, jd creates `W0000-9999 Work packages` in the JDex. In a flat JDex, jd creates no folder: jd writes the note to the root.
 - The system's `workPackages` block in the config names the adapters. Refer to [lib/adapters/README.md](lib/adapters/README.md).
 
 ### Templates
 
 Templates are in the filesystem. jd finds them by number, so the config does not name them.
 
-| Template | Where jd looks | If there is none |
+| Template | Where jd searches | If there is none |
 | --- | --- | --- |
-| `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd says so. |
-| `Work package template.md` | `W0003` | The note is blank, and jd says so. If there is no `W0003`, jd makes it, and copies its own template note into it. |
+| `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd prints a warning. |
+| `Work package template.md` | `W0003` | The note is blank, and jd prints a warning. If there is no `W0003`, jd creates it, and copies its own template note into it. |
 | `Work package template/` | `W0003`. jd copies its contents into the new folder. | The folder is empty. |
-| `Work package template.things.json` | `W0003` | jd makes it from Things, if the config has `workPackages.tasks.source`. Otherwise jd copies its own, [templates/Work package template.things.json](templates/Work%20package%20template.things.json), into `W0003`. |
+| `Work package template.things.json` | `W0003` | jd creates it from Things, if the config has `workPackages.tasks.source`. Otherwise jd copies its own, [templates/Work package template.things.json](templates/Work%20package%20template.things.json), into `W0003`. |
 
 - The first `ID template.md` that jd finds is the one it uses. To give one category its own template, put a copy in that category's .03.
-- If there are two folders with the same templates number, jd stops. It cannot tell which folder to use.
-- The note never holds `{{`.
+- If there are two folders with the same templates number, jd exits with an error. jd cannot determine which folder to use.
+- The note never contains `{{`.
   - `{{ID}}`, `{{TITLE}}` and `{{NAME}}` are filled in. A work package also has `{{W}}`, `{{w}}`, `{{NOTES_URL}}`, `{{TASKS_URL}}` and `{{PARENT_LINK}}`.
-  - Anything else in double braces that jd does not know is left out of the note, and jd warns.
-- A line that holds `{{NOTES_URL}}` or `{{TASKS_URL}}` is left out when there is no such link: no adapter is set, or you gave `--no-tasks`. This applies to the note and to the Things template.
+  - Anything else in double braces that jd does not recognize is left out of the note, and jd prints a warning.
+- A line that contains `{{NOTES_URL}}` or `{{TASKS_URL}}` is left out when there is no such link: no adapter is set, or you gave `--no-tasks`. This applies to the note and to the Things template.
 - A line with lines indented under it is left out when all of those lines are left out. So `- Related:` is left out when it has no link left under it.
-- `{{PARENT_LINK}}` is the note app's link to the ID's own JDex note. With the obsidian adapter it is a wiki-link, for example `[[21.41 Videos]]`, so the ID's note lists the work package in its backlinks. jd does not write to the ID's note.
-  - A line that holds `{{PARENT_LINK}}` is left out when no notes adapter is set.
+- `{{PARENT_LINK}}` is the note app's link to the ID's own JDex note. With the obsidian adapter it is a wiki-link, for example `[[21.41 Videos]]`, so Obsidian lists the work package in the backlinks of the ID's note. jd does not write to the ID's note.
+  - A line that contains `{{PARENT_LINK}}` is left out when no notes adapter is set.
   - The ID's note can be in a folder with the same name: `21.41 Videos/21.41 Videos.md`.
-  - It is also left out when the JDex has no note for the ID, or more than one. jd warns, with the code `no_parent_note`.
-- A template note can hold a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.
+  - It is also left out when the JDex has no note for the ID, or more than one. jd prints a warning, with the code `no_parent_note`.
+- A template note can contain a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.
   - Its flag is its name in lower case, with `-` for `_`: `--scope`, `--deliverable`.
   - Give the value after the title: `jd new wp 21.41 A title --scope "What we do" --deliverable=Video`.
   - A token with no value becomes its brief, `What we hand over`, or nothing.
-  - jd names each flag you did not set: in `toFill` with `--json`, or on stderr otherwise.
+  - jd prints the name of each flag you did not set: in `toFill` with `--json`, or on stderr otherwise.
   - A flag for a token that the template does not have is an error. The error lists the flags the template has.
 - The Things template, with `workPackages.tasks.source` in the config: you edit the template project in Things.
-  - Before it makes each work package, jd reads that project out of Things. If the project has changed, jd rewrites the file.
-  - `jd new wp --refresh` does the same, and makes nothing.
+  - Before jd creates each work package, jd reads that project from Things. If the project has changed, jd rewrites the file.
+  - `jd new wp --refresh` does the same, and creates nothing.
   - `workPackages.tasks.source` in the config is the project's ID in Things.
 - The Things template, with no `workPackages.tasks.source`: you edit the file in `W0003`.
   - If `W0003` has no file, jd copies its own into `W0003`.
@@ -255,11 +255,11 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 
 ### For agents
 
-- `--json` prints one JSON object on stdout, in place of the usual lines. `{ "ok": true, ... }` on success, `{ "ok": false, "code": "...", "message": "...", "path": "..." }` on error. stderr still carries the human lines.
+- `--json` prints one JSON object on stdout, in place of the usual lines. `{ "ok": true, ... }` on success, `{ "ok": false, "code": "...", "message": "...", "path": "..." }` on error. jd still prints the lines for a person on stderr.
   - `code` is the stable part, and it is never empty. Match on it. The `message` is written for a person to read, so it may be reworded.
-  - `warnings` lists the codes for problems that did not stop the command, for example `no_template`.
+  - `warnings` lists the codes for problems that did not cause the command to exit, for example `no_template`.
 - To fill in the tokens, first run a dry run with `--json`. `toFill` lists each token with its `brief` and its `flag`. Then run the command again with a value for each flag.
-- `--dry-run` says what jd would make, and which templates it would use.
+- `--dry-run` prints what jd would create, and which templates it would use.
 
 ## `jd move`
 
@@ -274,16 +274,16 @@ jd undo move                             # move the last thing back
 jd undo move ~/D25/.../invoice.pdf       # move that thing back
 ```
 
-- The target is an ID or a W number. It is found the same way `jd 21.34` finds it. An ID that is in the JDex but has no folder gets its folder made.
-- `<id>/<subfolder>` puts it in a subfolder of the ID's folder, one level down. jd makes the subfolder when it does not exist. An undo leaves the subfolder in place.
-- `--as <name>` gives it a new name as it moves. The journal keeps the old name in `from` and the new name in `to`. An undo gives the old name back.
+- The target is an ID or a W number. It is found the same way `jd 21.34` finds it. If an ID is in the JDex but has no folder, jd creates its folder.
+- `<id>/<subfolder>` moves the file or folder into a subfolder of the ID's folder, one level down. jd creates the subfolder when it does not exist. An undo leaves the subfolder in place.
+- `--as <name>` renames the file or folder as jd moves it. The journal stores the old name in `from` and the new name in `to`. An undo restores the old name.
 - It prints the new path on stdout and exits 0. It does not cd.
-- It refuses, and moves nothing, when the target folder already holds something with that name. With `--as`, the check is on the new name.
-- It refuses an iCloud stub, a `.name.icloud` file that is not downloaded. A Dropbox online-only file is not detected.
-- It refuses when the target folder is inside the thing you are moving.
-- It refuses a path that ends in `/`. `Photos/` means something in Photos, not Photos itself. `"$PWD/$f"` with an empty `$f` ends in `/` this way. To move the folder, leave the `/` off.
-- It refuses when you are in the folder you are moving, or in a folder inside it. `cd` out of it first.
-- `--dry-run` says what it would do, and moves nothing.
+- It exits with an error, and moves nothing, when the target folder already contains something with that name. With `--as`, the check is on the new name.
+- It rejects an iCloud stub, a `.name.icloud` file that is not downloaded. A Dropbox online-only file is not detected.
+- It exits with an error when the target folder is inside the thing you are moving.
+- It rejects a path that ends in `/`. `Photos/` means something in Photos, not Photos itself. `"$PWD/$f"` with an empty `$f` ends in `/` this way. To move the folder, leave the `/` off.
+- It exits with an error when you are in the folder you are moving, or in a folder inside it. `cd` out of it first.
+- `--dry-run` prints what it would do, and moves nothing.
 - Run `jd move --help` or `jd undo move --help` for the full text.
 
 ### The journal
@@ -296,22 +296,22 @@ Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jso
 
 - `by` is `person` when the shell ran it, and `program` when a script or an agent ran the program.
 - An undo line has `undoes`, the `at` of the move it undid, and `from` and `to` the other way round.
-- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync. For this reason, jd keeps the journal in the XDG state directory. Refer to [Where jd keeps its files](#where-jd-keeps-its-files).
+- The journal is for this machine. The paths in it belong here, so it is not in the system, and it does not sync. For this reason, jd stores the journal in the XDG state directory. Refer to [Where jd stores its files](#where-jd-stores-its-files).
 - jd writes nothing into the JDex. An agent that files a mess reads the JSON result and writes the note itself.
 
 ### `jd undo move`
 
-- With no path, it undoes the newest move in the system that is not yet undone. `--system` picks the system.
-- With a path, it undoes the move that put that path where it is, in whichever system.
-- It refuses if the moved thing is no longer where jd put it, code `moved_since`, or if something else is now where it came from, code `source_exists`.
+- With no path, it undoes the newest move in the system that is not yet undone. `--system` selects the system.
+- With a path, it undoes the move that moved the file or folder to that path, in whichever system.
+- It exits with an error if the moved thing is no longer where jd moved it, code `moved_since`, or if something else is now at its original path, code `source_exists`.
 - An undo is never a candidate for undo.
 
 ## Beta
 
-Some features are in beta. They may change, or go, without notice. One flag turns all of them on. No feature is in beta in this version.
+Some features are in beta. They may change, or be removed, without notice. One flag turns all of them on. No feature is in beta in this version.
 
 ```sh
-jd beta          # say whether beta is on
+jd beta          # print whether beta is on
 jd beta on       # turn it on
 jd beta off      # turn it off
 ```
@@ -326,13 +326,13 @@ git -C ~/.local/share/johnnydecimal/cli pull
 
 ### Move from `~/.jd`
 
-Before 4.0.0, jd kept all its files in `~/.jd`: the configuration file, the journal, and this repository, which was in `~/.jd/cli`. From 4.0.0, jd uses the paths in [Where jd keeps its files](#where-jd-keeps-its-files).
+Before 4.0.0, jd stored all its files in `~/.jd`: the configuration file, the journal, and this repository, which was in `~/.jd/cli`. From 4.0.0, jd uses the paths in [Where jd stores its files](#where-jd-stores-its-files).
 
 jd continues to operate from `~/.jd` after you update it, and you do not have to move the files immediately.
 
 - If the new place has no configuration file, jd reads the configuration file in `~/.jd`.
 - If the new place has no journal, jd uses the journal in `~/.jd`.
-- Each command that uses a file in `~/.jd` prints one line to tell you.
+- Each command that uses a file in `~/.jd` prints one line that indicates this.
 - A later version of jd will not read `~/.jd`.
 
 To move the files:
@@ -345,7 +345,7 @@ To move the files:
 
 2. Move the files. Either way works.
 
-   Your agent can move the files. This command prints a prompt for your agent. The first step in the prompt tells the agent to move the files:
+   Your agent can move the files. This command prints a prompt for your agent. The first step in the prompt instructs the agent to move the files:
 
    ```sh
    ~/.jd/cli/bin/jd agent-setup
@@ -369,7 +369,7 @@ To move the files:
 
 - If you set `$JD_CONFIG`, jd continues to read that file. Do not move the configuration file.
 - If there is a configuration file in `~/.jd` and also in the new place, jd reads the file in the new place and prints a warning. Delete the file in `~/.jd`.
-- If you use the [Johnny.Decimal agent skills](https://github.com/johnnydecimal/skills), update the skills before you move the configuration file. An older skill looks for the configuration file in `~/.jd`.
+- If you use the [Johnny.Decimal agent skills](https://github.com/johnnydecimal/skills), update the skills before you move the configuration file. An older skill searches for the configuration file in `~/.jd`.
 - You can keep this repository in `~/.jd/cli`, because jd operates from any folder. But then you cannot remove `~/.jd`.
 
 ### From 1.x
@@ -385,12 +385,12 @@ test/run.sh
 ```
 
 The suite runs in bash and in zsh. It exits non-zero if a test fails. It
-needs `jq`, and nothing else. It runs against fixture systems in a temporary
+requires `jq`, and nothing else. It runs against fixture systems in a temporary
 folder, not against your system.
 
 `jd.fish` has its own coverage in `test/cases/fish.sh`, which runs fish
-as a subprocess. It needs `fish` too, and skips itself, with one line
-saying so, when there is none on the machine.
+as a subprocess. It requires `fish` too. When there is no `fish` on the
+machine, the case file skips itself and prints one line.
 
 Refer to [test/README.md](test/README.md) to add a test.
 

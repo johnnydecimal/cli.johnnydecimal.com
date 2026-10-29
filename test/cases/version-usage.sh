@@ -2,9 +2,9 @@
 # version-usage.sh - jd version, and jd help
 #
 # The version is not written out here. It is read from bin/jd, which is
-# the one place it lives, so a release does not need the tests edited.
-# What is tested is that the three spellings agree, that the version
-# reaches the user, and that the changelog was updated with it.
+# the one place it is set, so a release does not require edits to the
+# tests. What is tested is that the three spellings agree, that jd
+# prints the version, and that the changelog was updated with it.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -26,9 +26,9 @@ else
   _jd_t_bad 'version: bin/jd sets _JD_CLI_VERSION' 'a version' 'nothing'
 fi
 
-# The hook loads no lib, so it has no version of its own to get wrong,
-# and it leaves nothing in the shell for someone to read as one.
-_jd_t_eq 'version: sourcing jd.sh does not put a version in the shell' \
+# The hook loads no lib, so it has no version of its own that can be
+# wrong, and it leaves nothing in the shell for someone to read as one.
+_jd_t_eq 'version: sourcing jd.sh does not set a version in the shell' \
   'unset' "${_JD_CLI_VERSION-unset}"
 
 _jd_t_lacks 'version: jd.sh names no version' '_JD_CLI_VERSION' \
@@ -37,7 +37,7 @@ _jd_t_lacks 'version: jd.sh names no version' '_JD_CLI_VERSION' \
 _jd_t_run jd version
 _jd_t_status 'version: exit status' 0
 _jd_t_eq 'version: jd version' "jd $_jd_t_version" "$JD_T_OUT"
-_jd_t_at 'version: does not move us' "$JD_T_TMP"
+_jd_t_at 'version: does not change the directory' "$JD_T_TMP"
 
 _jd_t_run jd -v
 _jd_t_eq 'version: jd -v' "jd $_jd_t_version" "$JD_T_OUT"
@@ -49,7 +49,8 @@ _jd_t_run d25 version
 _jd_t_eq 'version: a per-system command prints it too' \
   "jd $_jd_t_version" "$JD_T_OUT"
 
-# The changelog is the record of releases, so it must know this version.
+# The changelog is the record of releases, so it must contain this
+# version.
 _jd_t_changelog=$(sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' "$JD_T_REPO/CHANGELOG.md" | head -1)
 _jd_t_eq 'version: the changelog names the current version first' \
   "$_jd_t_version" "$_jd_t_changelog"
@@ -64,9 +65,9 @@ _jd_t_contains 'help: prints the usage line' \
   'usage: <system> [jdex] [target]' "$JD_T_OUT"
 _jd_t_contains 'help: lists the jdex target' \
   '<system> jdex ...' "$JD_T_OUT"
-_jd_t_contains 'help: explains what many matches do' \
-  'Two or more matches are listed, not entered.' "$JD_T_OUT"
-_jd_t_at 'help: does not move us' "$JD_T_TMP"
+_jd_t_contains 'help: describes the case of many matches' \
+  'If two or more folders match, jd prints the list and does not cd.' "$JD_T_OUT"
+_jd_t_at 'help: does not change the directory' "$JD_T_TMP"
 
 _jd_t_run jd -h
 _jd_t_contains 'help: jd -h' 'usage: <system> [jdex] [target]' "$JD_T_OUT"
@@ -85,7 +86,7 @@ _jd_t_contains 'help: lists the jdex command' 'jdex [target]' "$JD_T_OUT"
 _jd_t_run jdex version
 _jd_t_status 'jdex command: version exit status' 0
 _jd_t_eq 'jdex command: jdex version' "jd $_jd_t_version" "$JD_T_OUT"
-_jd_t_at 'jdex command: version does not move us' "$JD_T_TMP"
+_jd_t_at 'jdex command: version does not change the directory' "$JD_T_TMP"
 
 _jd_t_run jdex -v
 _jd_t_eq 'jdex command: jdex -v' "jd $_jd_t_version" "$JD_T_OUT"

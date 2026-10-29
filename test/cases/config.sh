@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: MIT
 # config.sh - reading the config file, and what happens when it is wrong
 #
-# Everything reads one config file. $JD_CONFIG moves it, which is how the
-# whole suite keeps away from the real one. These tests cover the shapes
-# a config can take, good and bad, and check the message each bad shape
-# gives, because a silent failure is the bug 2.0.2 was about. Where jd
-# looks for the file when $JD_CONFIG is not set is in cases/paths.sh.
+# Everything reads one config file. $JD_CONFIG sets its path, which is
+# how the whole suite avoids the real one. These tests cover the shapes
+# a config can take, good and bad, and check the message jd prints for
+# each bad shape, because a silent failure is the bug 2.0.2 was about.
+# Where jd searches for the file when $JD_CONFIG is not set is in
+# cases/paths.sh.
 
 [ -n "${JD_T_REPO-}" ] || {
   printf 'test: run the suite with test/run.sh, not this file\n' >&2
@@ -30,25 +31,25 @@ _jd_fx_config_missing_root "$JD_T_TMP/missing-root.json"
 
 _jd_t_load "$JD_T_TMP/single.json"
 _jd_t_run jd
-_jd_t_at 'override: $JD_CONFIG picks the config' "$JD_FX_ROOT"
+_jd_t_at 'override: $JD_CONFIG selects the config' "$JD_FX_ROOT"
 
 _jd_t_load "$JD_T_TMP/second-only.json"
 _jd_t_run jd
-_jd_t_at 'override: a different $JD_CONFIG picks a different system' \
+_jd_t_at 'override: a different $JD_CONFIG selects a different system' \
   "$JD_FX_ROOT2"
 
 # --------------------------------------------------------- no config file
 
 _jd_t_load "$JD_T_TMP/nothing-here.json"
-_jd_t_eq 'no config: loading says nothing at shell start' '' "$JD_T_LOADERR"
+_jd_t_eq 'no config: loading prints nothing at shell start' '' "$JD_T_LOADERR"
 
 _jd_t_run jd
 _jd_t_status 'no config: jd is an error' 1
-_jd_t_contains 'no config: names the file it looked for' \
+_jd_t_contains 'no config: names the config path' \
   "no config at $JD_T_TMP/nothing-here.json" "$JD_T_ERR"
-_jd_t_contains 'no config: points at the help page' \
+_jd_t_contains 'no config: names the help page' \
   'https://jdcm.al/documentation/jd-cli' "$JD_T_ERR"
-_jd_t_contains 'no config: names jd agent-setup as the way out' \
+_jd_t_contains 'no config: names jd agent-setup as the fix' \
   'jd agent-setup' "$JD_T_ERR"
 
 _jd_t_run jd version
@@ -57,7 +58,7 @@ _jd_t_contains 'no config: jd version still prints a version' 'jd ' "$JD_T_OUT"
 
 _jd_t_run jdex
 _jd_t_status 'no config: jdex is an error' 1
-_jd_t_contains 'no config: jdex names the file it looked for' \
+_jd_t_contains 'no config: jdex names the config path' \
   "no config at $JD_T_TMP/nothing-here.json" "$JD_T_ERR"
 
 _jd_t_run jdex version
@@ -79,22 +80,22 @@ _jd_t_status 'malformed config: jd version still works' 0
 _jd_t_load "$JD_T_TMP/empty.json"
 _jd_t_run jd
 _jd_t_status 'empty config: jd is an error' 1
-_jd_t_contains 'empty config: says there are no systems' \
+_jd_t_contains 'empty config: prints that there are no systems' \
   "no systems in $JD_T_TMP/empty.json" "$JD_T_ERR"
 
 _jd_t_run jdex
 _jd_t_status 'empty config: jdex is an error' 1
-_jd_t_contains 'empty config: jdex says there are no systems' \
+_jd_t_contains 'empty config: jdex prints that there are no systems' \
   "no systems in $JD_T_TMP/empty.json" "$JD_T_ERR"
 
 # -------------------------------------------------------------- no sys key
 
 _jd_t_load "$JD_T_TMP/single-nosys.json"
-_jd_t_eq 'no sys, one system: nothing is said at shell start' \
+_jd_t_eq 'no sys, one system: nothing is printed at shell start' \
   '' "$JD_T_LOADERR"
 _jd_t_run jd
 _jd_t_status 'no sys, one system: jd works' 0
-_jd_t_at 'no sys, one system: jd goes to the root' "$JD_FX_ROOT"
+_jd_t_at 'no sys, one system: jd cds to the root' "$JD_FX_ROOT"
 
 _jd_t_load "$JD_T_TMP/multi-nosys.json"
 _jd_t_contains 'no sys, two systems: an error at shell start' \
@@ -104,7 +105,7 @@ _jd_t_contains 'no sys, two systems: an error at shell start' \
 
 _jd_t_load "$JD_T_TMP/default-second.json"
 _jd_t_run jd
-_jd_t_at 'default: jd follows default: true, not the first entry' \
+_jd_t_at 'default: jd uses default: true, not the first entry' \
   "$JD_FX_ROOT"
 
 _jd_t_run p76
@@ -126,7 +127,7 @@ fi
 
 _jd_t_run "$JD_T_BIN" --system X99
 _jd_t_status 'unknown system: an error' 1
-_jd_t_contains 'unknown system: says which one and where it looked' \
+_jd_t_contains 'unknown system: prints which one and which config it read' \
   "system 'X99' is not in $JD_T_TMP/two.json" "$JD_T_ERR"
 
 _jd_t_load "$JD_T_TMP/missing-root.json"
@@ -137,10 +138,10 @@ _jd_t_contains 'missing root: names the folder' \
 
 # ------------------------------------------------------------- no jq
 
-# jq is the one dependency. Without it jd must say so, and jd version
-# must still work, because someone with no jq needs to be able to tell
-# which version they have. _jd_fx_nojq_bin is a $PATH with every command
-# the tools use except jq.
+# jq is the one dependency. Without it jd must print an error, and jd
+# version must still work, because someone with no jq needs to be able
+# to tell which version they have. _jd_fx_nojq_bin is a $PATH with
+# every command the tools use except jq.
 _jd_t_path=$PATH
 PATH=$(_jd_fx_nojq_bin)
 if command -v jq >/dev/null 2>&1; then
@@ -150,13 +151,13 @@ else
   _jd_t_load "$JD_T_TMP/two.json"
   _jd_t_run jd
   _jd_t_status 'no jq: jd is an error' 1
-  _jd_t_contains 'no jq: jd says so' 'jq is not installed' "$JD_T_ERR"
+  _jd_t_contains 'no jq: jd prints an error' 'jq is not installed' "$JD_T_ERR"
   _jd_t_run jd version
   _jd_t_status 'no jq: jd version still works' 0
   _jd_t_contains 'no jq: jd version still prints a version' 'jd ' "$JD_T_OUT"
   _jd_t_run jdex
   _jd_t_status 'no jq: jdex is an error' 1
-  _jd_t_contains 'no jq: jdex says so' 'jq is not installed' "$JD_T_ERR"
+  _jd_t_contains 'no jq: jdex prints an error' 'jq is not installed' "$JD_T_ERR"
   _jd_t_run jdex version
   _jd_t_status 'no jq: jdex version still works' 0
   PATH=$_jd_t_path
@@ -165,10 +166,10 @@ fi
 # ------------------------------------------------- no leaks into the shell
 
 # The setup code used to assign idx without declaring it local, so idx
-# was left behind in the user's shell. It only happened on the path a
-# single system with no sys takes, which is the common one-system
+# was left behind in the user's shell. It only happened on the code path
+# for a single system with no sys, which is the common one-system
 # config. Fixed in 2.0.5. That code is now _jd_nav_default_sys, in the
-# program, where nothing it does can reach the shell at all - so this
+# program, where nothing it does can change the shell at all - so this
 # also checks that sourcing jd.sh leaves no variable of its own behind.
 
 unset idx

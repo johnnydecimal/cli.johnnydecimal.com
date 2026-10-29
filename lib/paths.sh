@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
-# paths.sh - where jd keeps its files, and 'jd paths', which prints them
+# paths.sh - where jd stores its files, and 'jd paths', which prints them
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
-# $_JD_CLI_DIR. It is sourced first, because the other files in lib ask
-# this one where the config and the journal are.
+# $_JD_CLI_DIR. It is sourced first, because the other files in lib call
+# this one for the paths of the config and the journal.
 #
 # jd follows the XDG Base Directory Specification. Each kind of file has
 # its own base directory, and jd's folder in each one is 'johnnydecimal':
@@ -14,22 +14,23 @@
 #   jd itself     $XDG_DATA_HOME/johnnydecimal/cli
 #                 The default is ~/.local/share/johnnydecimal/cli
 #
-# $JD_CONFIG names the config file itself, and wins over all of that.
+# $JD_CONFIG names the config file itself, and overrides all of that.
 #
 # jd itself is wherever this repo was cloned. bin/jd finds its own
-# folder, so the third pair is where the README says to clone it, and
-# nothing is read from there.
+# folder, so the third pair is the clone path that the README
+# specifies, and nothing is read from there.
 #
 # Up to 3.x all three were in ~/.jd, the old place. For now jd still
 # reads a config or a journal there when the new place has none, and
-# says so on stderr. A later release takes that out. It is everything
-# here with OLD or WAS in its name.
+# prints a message on stderr. A later release removes that. It is
+# everything here with OLD or WAS in its name.
 #
-# This is the one place that works a path out. The shell hooks ask
+# This is the one place that resolves a path. The shell hooks run
 # 'jd paths config'. The agent skills and the johnnydecimal.com MCP
-# server ask 'jd paths'. None of them holds a copy of the rule.
+# server run 'jd paths'. None of them contains a copy of the rule.
 #
-# 'jd paths' needs no config and no jq. 'jd paths --json' needs jq.
+# 'jd paths' requires no config and no jq. 'jd paths --json' requires
+# jq.
 # Works in bash 3.2+ and zsh.
 
 # jd's folder in each base directory.
@@ -56,20 +57,20 @@ directory, jd uses a folder with the name 'johnnydecimal'.
   journal   $XDG_STATE_HOME/johnnydecimal/journal.jsonl
             The default is ~/.local/state/johnnydecimal/journal.jsonl
   install   The folder that contains this copy of jd. The README
-            tells you to clone jd to $XDG_DATA_HOME/johnnydecimal/cli.
+            specifies $XDG_DATA_HOME/johnnydecimal/cli as the clone path.
             The default is ~/.local/share/johnnydecimal/cli
 
 A path in an XDG variable must start with '/'. If the path does not
 start with '/', jd uses the default.
 
-Before 4.0.0, jd kept all these files in ~/.jd. If the config or the
+Before 4.0.0, jd stored all these files in ~/.jd. If the config or the
 journal is still in ~/.jd, jd uses the file there, and 'jd paths'
 prints the commands that move the file. A later version of jd will
 not read ~/.jd.
 
-'jd paths' does not need a config or jq. Only 'jd paths --json' needs
-jq. If a file does not exist, 'jd paths' prints the path where jd
-looks for the file.
+'jd paths' does not require a config or jq. Only 'jd paths --json'
+requires jq. If a file does not exist, 'jd paths' prints the path where
+jd searches for the file.
 EOF
 }
 
@@ -78,12 +79,14 @@ EOF
 # An XDG base directory, in $_JD_PATHS_BASE. $1 the value of its
 # variable, $2 its default, below $HOME.
 #
-# The spec says the path in the variable must be absolute, and that one
-# which is not must be ignored. So a value with no leading '/' gets the
-# default, and so does a variable that is empty or not set.
+# The spec states that the path in the variable must be absolute, and
+# that one which is not must be ignored. So for a value with no leading
+# '/', jd uses the default, and the same for a variable that is empty or
+# not set.
 #
-# It sets a variable and does not print, so that working the paths out
-# costs no subshell. jd asks where the config is several times in a run.
+# It sets a variable and does not print, so that resolving the paths
+# requires no subshell. jd reads the config path several times in a
+# run.
 _jd_paths_base() {
   case ${1-} in
     /*) _JD_PATHS_BASE=${1%/} ;;
@@ -113,9 +116,9 @@ _jd_paths_pick() {
   fi
 }
 
-# Work out every path, into the variables below. It runs each time a
-# path is asked for, and nothing is kept from the last time: a variable
-# that changed, or a file that moved, is seen at once.
+# Resolve every path, into the variables below. It runs each time a
+# caller requests a path, and nothing is stored from the last run: jd
+# detects a variable that changed, or a file that moved, at once.
 #
 #   _JD_PATHS_CONFIG        the config jd reads
 #   _JD_PATHS_CONFIG_NEW    where the config belongs
@@ -123,7 +126,7 @@ _jd_paths_pick() {
 #   _JD_PATHS_CONFIG_WAS    '', old or both. See _jd_paths_pick
 #
 # The same four for JOURNAL, and for INSTALL. The install is never
-# picked: it is the folder this copy of jd is in. Its WAS is 'old' when
+# selected: it is the folder this copy of jd is in. Its WAS is 'old' when
 # that folder is the old place.
 _jd_paths_resolve() {
   local old=${HOME-}/.jd
@@ -132,7 +135,7 @@ _jd_paths_resolve() {
   _JD_PATHS_CONFIG_NEW=$_JD_PATHS_BASE/$_JD_PATHS_NAME/config.json
   _JD_PATHS_CONFIG_OLD=$old/config.json
   if [ -n "${JD_CONFIG-}" ]; then
-    # The user has named the file. The old place is not looked at.
+    # The user has named the file. jd does not check the old place.
     _JD_PATHS_CONFIG_NEW=$JD_CONFIG
     _JD_PATHS_CONFIG=$JD_CONFIG
     _JD_PATHS_CONFIG_WAS=''
@@ -173,14 +176,14 @@ _jd_paths_journal() {
 
 # -------------------------------------------------------- the old place
 
-# Say that a file is still in the old place, in one line on stderr.
-# $1 'config' or 'journal'. It says nothing when the old place holds
-# none.
+# Print that a file is still in the old place, in one line on stderr.
+# $1 'config' or 'journal'. It prints nothing when the old place
+# contains none.
 #
 # nav.sh calls it once in a command that reads the config, and move.sh
-# once in a command that uses the journal. The line is short because it
-# comes with every such command until the file is moved. 'jd paths' has
-# the commands that move it.
+# once in a command that uses the journal. The line is short because jd
+# prints it with every such command until the file is moved. 'jd paths'
+# has the commands that move it.
 _jd_paths_note() {
   local was=''
   _jd_paths_resolve
@@ -190,20 +193,21 @@ _jd_paths_note() {
   esac
   case $was in
     old)
-      printf "jd: the %s is in ~/.jd, the old place - 'jd paths' says how to move it\n" \
+      printf "jd: the %s is in ~/.jd, the old place - 'jd paths' prints the commands that move it\n" \
         "$1" >&2
       ;;
     both)
-      printf "jd: there is a %s in ~/.jd, the old place, that jd does not read - 'jd paths' says more\n" \
+      printf "jd: there is a %s in ~/.jd, the old place, that jd does not read - run 'jd paths' for more\n" \
         "$1" >&2
       ;;
   esac
   return 0
 }
 
-# A path as a person types it into a shell. Below $HOME, and with
-# nothing in it that a shell minds, it is ~/the/rest, which is short
-# enough not to wrap. Anything else is the whole path in single quotes.
+# A path as a person types it into a shell. Below $HOME, and with no
+# character in it that is special to a shell, it is ~/the/rest, which is
+# short enough not to wrap. Anything else is the whole path in single
+# quotes.
 _jd_paths_sh() {
   local p=$1 rest
   if [ -n "${HOME-}" ]; then
@@ -227,10 +231,10 @@ _jd_paths_sh() {
 }
 
 # The commands that move one thing out of the old place. $1 what it is,
-# $2 where it is, $3 the folder it goes into. It keeps its name.
+# $2 where it is, $3 the folder it goes into. The name does not change.
 #
-# The folder is made with mode 700, which is what the spec asks of a
-# program that makes one.
+# The printed mkdir creates the folder with mode 700, which is what the
+# spec requires of a program that creates one.
 _jd_paths_howto() {
   local to
   to=$(_jd_paths_sh "$3")
@@ -239,8 +243,8 @@ _jd_paths_howto() {
   printf '    mv %s %s/\n' "$(_jd_paths_sh "$2")" "$to"
 }
 
-# Everything 'jd paths' has to say about the old place, on stderr.
-# Nothing when the old place holds nothing. $_JD_PATHS_* are set.
+# Everything 'jd paths' prints about the old place, on stderr. Nothing
+# when the old place contains nothing. $_JD_PATHS_* are set.
 _jd_paths_report() {
   local said=0
   {
@@ -334,16 +338,16 @@ _jd_paths_fail() {
 # _jd_paths is the entry point nav.sh calls for 'jd paths'. $@ the words
 # after 'paths'.
 #
-# The paths go to stdout, because they are the answer. What there is to
-# say about the old place goes to stderr, so that stdout is three lines
-# of 'name path' and nothing else, whatever state the machine is in.
+# The paths go to stdout, because they are the result. The messages
+# about the old place go to stderr, so that stdout is three lines of
+# 'name path' and nothing else, whatever state the machine is in.
 #
-# 'jd paths config' prints one path and says nothing more, because the
+# 'jd paths config' prints one path and nothing more, because the
 # shell hooks run it every time a shell starts.
 _jd_paths() {
   local json=0 name='' w
-  # --json and help first, so that a bad word still gets the JSON error
-  # it asked for.
+  # --json and help first, so that jd prints a JSON error for a bad word
+  # too.
   for w in "$@"; do
     case $w in
       -h | --help | help)

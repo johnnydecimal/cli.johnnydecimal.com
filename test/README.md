@@ -26,28 +26,28 @@ The word is matched against the case filenames.
   `test/cases` runs under bash or zsh, because it sources `jd.sh`.
 - Most cases go through the shell hook, which is what a person types.
   `cases/bin.sh` runs `$JD_T_BIN`, the program, which is what a script,
-  cron or an agent gets. The program does not cd, so that file reads
+  cron or an agent runs. The program does not cd, so that file reads
   `$JD_T_OUT` and never `$JD_T_PWD`.
 - `cases/fish.sh` is the exception to "once per shell": jd.fish is
   neither bash nor zsh, so nothing sources it into the case file's own
   shell. It runs `fish -c ...` as a subprocess instead, through
   `_jd_t_run`, the same way `cases/bin.sh` runs `$JD_T_BIN`. Since fish
   is a subprocess dependency here, not a driver, the file runs once,
-  under bash, and skips under zsh - and skips outright, with one line
-  saying so, on a machine that has no fish.
-- Nothing needs installing. `jq` is the only dependency, the same as the
-  tools.
+  under bash, and skips under zsh - and skips outright, and prints one
+  line, on a machine that has no fish.
+- Nothing has to be installed. `jq` is the only dependency, the same as
+  the tools.
 - Environment:
   - `JD_TEST_SHELLS` – the shells to use. Default `/bin/bash zsh`.
-  - `JD_TEST_KEEP=1` – keep the temp folder so you can look at it.
+  - `JD_TEST_KEEP=1` – keep the temp folder so you can read it.
 
 ## Output
 
 The format is close to TAP.
 
 - `ok N - name` – it passed.
-- `not ok N - name` – it failed. The next lines say which file and shell,
-  what was expected, and what came back.
+- `not ok N - name` – it failed. The next lines name the file and the
+  shell, the expected value, and the actual value.
 - `ok N - name # SKIP reason` – it did not apply here, for example a zsh
   prompt test under bash.
 - `ok N - name # TODO known bug: ...` – see [Known bugs](#known-bugs).
@@ -58,19 +58,19 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 
 | Path | What it is |
 | --- | --- |
-| `run.sh` | The entry point. Finds the shells, makes a temp folder per case, totals the results. |
+| `run.sh` | The entry point. Finds the shells, creates a temp folder per case, totals the results. |
 | `lib/harness.sh` | Counters, assertions, and the helpers that run `jd` and load a config. |
-| `lib/fixtures.sh` | The fake systems, and every config shape the tests need. |
+| `lib/fixtures.sh` | The fake systems, and every config shape the tests require. |
 | `lib/corpus.sh` | Reads a conformance corpus. See [Conformance corpora](#conformance-corpora). |
-| `cases/bin.sh` | `bin/jd`, the program, and the shape of the functions `jd.sh` makes. |
+| `cases/bin.sh` | `bin/jd`, the program, and the shape of the functions `jd.sh` defines. |
 | `cases/config.sh` | Reading the config, and every way it can be wrong. |
 | `cases/corpus.sh` | Runs each corpus in `test/corpus`. |
-| `cases/fish.sh` | `jd.fish`, the fish hook, run as a subprocess. Needs fish. |
+| `cases/fish.sh` | `jd.fish`, the fish hook, run as a subprocess. Requires fish. |
 | `cases/known-bugs.sh` | Bugs the tests found, which nothing has fixed yet. |
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
-| `cases/nav-make-id.sh` | Making an ID folder from its JDex entry. |
-| `cases/paths.sh` | Where jd keeps its files: the XDG paths, `~/.jd`, the old place, and `jd paths`. |
+| `cases/nav-make-id.sh` | Creating an ID folder from its JDex entry. |
+| `cases/paths.sh` | Where jd stores its files: the XDG paths, `~/.jd`, the old place, and `jd paths`. |
 | `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |
 | `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun and help. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
@@ -83,38 +83,39 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 
 ## How the fixtures work
 
-- `test/run.sh` makes a temp folder for each case file, in each shell.
+- `test/run.sh` creates a temp folder for each case file, in each shell.
   It sets `$JD_T_TMP` to it, and `$HOME` to `$JD_T_TMP/home`. It unsets
   `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` and `$XDG_DATA_HOME`, so that
-  yours do not reach a test.
-- A case file calls `_jd_fx_build`. That makes three trees under
-  `$JD_T_TMP/fixtures`:
+  your values do not affect a test.
+- A case file calls `_jd_fx_build`. That function creates three trees
+  under `$JD_T_TMP/fixtures`:
   - `$JD_FX_ROOT` – the D25 test system.
   - `$JD_FX_JDEX` – its JDex, where an ID is a `.md` note, not a folder.
   - `$JD_FX_ROOT2` – the P76 test system, which has no JDex.
-- The names hold spaces, an ampersand, and a comma, because real system
-  names do.
-- The tree carries the awkward cases on purpose. `test/lib/fixtures.sh`
-  lists them at the top and says what each one is for.
+- The names contain spaces, an ampersand, and a comma, because real
+  system names do.
+- The tree contains the awkward cases on purpose. `test/lib/fixtures.sh`
+  lists them at the top and states the purpose of each one.
 - Configs are written by `_jd_fx_config_*`, one function per shape. Each
   takes the path to write.
 - A case file that changes the tree calls `_jd_fx_reset` when it is done.
   `cases/nav-make-id.sh` and `cases/move.sh` do.
 
-Nothing here reads the real config or the real journal, or goes near a
-real system. `_jd_t_load` refuses a `$JD_CONFIG` that is not under
-`$JD_T_TMP`. The journal is under `$HOME`, which is under `$JD_T_TMP`.
+Nothing here reads the real config or the real journal, or reads or
+writes a real system. `_jd_t_load` rejects a `$JD_CONFIG` that is not
+under `$JD_T_TMP`. The journal is under `$HOME`, which is under
+`$JD_T_TMP`.
 
-`cases/paths.sh` is the one file that takes `$JD_CONFIG` away, to test
-how jd finds the config without it. It calls `_jd_t_no_config_var`,
-which stops the file if `$HOME` is not under `$JD_T_TMP`.
+`cases/paths.sh` is the one file that unsets `$JD_CONFIG`, to test how
+jd finds the config without it. It calls `_jd_t_no_config_var`, which
+exits if `$HOME` is not under `$JD_T_TMP`.
 
 ## Add a test
 
 1. Pick the case file the test belongs in, or add one to `test/cases`.
-   `run.sh` finds it without being told.
-2. Start a new case file with the SPDX line, a comment block that says
-   what it covers, then:
+   `run.sh` finds every file in `test/cases`.
+2. Start a new case file with the SPDX line, a comment block that
+   describes what the file covers, then:
 
    ```sh
    . "$JD_T_REPO/test/lib/harness.sh"
@@ -126,34 +127,35 @@ which stops the file if `$HOME` is not under `$JD_T_TMP`.
    ```
 
 3. Write the test. `jd` changes directory, so run it through
-   `_jd_t_run`, which records where it went and then puts you back:
+   `_jd_t_run`, which records the folder that jd changed to, and then
+   changes back:
 
    ```sh
    _jd_t_run jd 11.11
    _jd_t_status 'id: exit status' 0
    _jd_t_at 'id: 11.11' "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID"
-   _jd_t_eq 'id: says nothing on stderr' '' "$JD_T_ERR"
+   _jd_t_eq 'id: prints nothing on stderr' '' "$JD_T_ERR"
    ```
 
 4. End the file with `_jd_t_summary`. It prints the counts and sets the
    exit status.
 
-### What the harness gives you
+### What the harness provides
 
 | Call | What it does |
 | --- | --- |
 | `_jd_t_config <config>` | Points `$JD_CONFIG` at a config, and loads nothing. For a case that only runs the program. |
 | `_jd_t_load <config>` | The same, and sources `jd.sh` again, so this shell has `jd`. Sets `$JD_T_LOADERR`. |
-| `_jd_t_no_config_var` | Unsets `$JD_CONFIG`, so that jd finds the config by the XDG paths. Stops if `$HOME` is not under `$JD_T_TMP`. |
-| `_jd_t_libs` | Sources `lib` into this shell, for a test that drives a lib function directly. |
-| `_jd_t_version` | The version, read from `bin/jd`, which is the one place it lives. |
+| `_jd_t_no_config_var` | Unsets `$JD_CONFIG`, so that jd finds the config by the XDG paths. Exits if `$HOME` is not under `$JD_T_TMP`. |
+| `_jd_t_libs` | Sources `lib` into this shell, for a test that calls a lib function directly. |
+| `_jd_t_version` | The version, read from `bin/jd`, which is the one place that defines it. |
 | `_jd_t_run <cmd> [words]` | Runs the command from `$JD_T_TMP`, then returns there. |
 | `_jd_t_run_from <dir> <cmd> [words]` | The same, from a directory you name. |
 | `_jd_t_eq <name> <expected> <actual>` | They must be the same string. |
-| `_jd_t_contains <name> <needle> <text>` | The text must hold the needle. |
-| `_jd_t_lacks <name> <needle> <text>` | The text must not hold it. |
+| `_jd_t_contains <name> <needle> <text>` | The text must contain the needle. |
+| `_jd_t_lacks <name> <needle> <text>` | The text must not contain the needle. |
 | `_jd_t_status <name> <expected>` | The exit status of the last run. |
-| `_jd_t_at <name> <dir>` | Where the last run left us. |
+| `_jd_t_at <name> <dir>` | The working directory after the last run. |
 | `_jd_t_skipped <name> <reason>` | This test does not apply here. |
 | `_jd_t_eq_known <name> <expected> <actual> <note>` | A known bug. See below. |
 
@@ -166,16 +168,16 @@ After a run you also have `$JD_T_STATUS`, `$JD_T_OUT`, `$JD_T_ERR` and
   differs between the shells.
 - No globs. zsh treats a glob that matches nothing as an error. Use
   `find` and read the list.
-- Quote every path. The fixture paths hold spaces.
-- One name for one thing. A test name says what should be true, not what
-  the code does.
+- Quote every path. The fixture paths contain spaces.
+- One name for one thing. A test name states what should be true, not
+  what the code does.
 
 ## Known bugs
 
-`cases/known-bugs.sh` holds tests for bugs that are real and not yet
+`cases/known-bugs.sh` contains tests for bugs that are real and not yet
 fixed. They use `_jd_t_eq_known`, which prints the right answer and the
-wrong one but does not turn the suite red. Red is for work that has gone
-backwards, and none of these ever worked.
+wrong one but does not count as a failure. A failure means a regression,
+and none of these ever worked.
 
 When a bug is fixed its line changes to `this now passes, so promote
 it`. Move the test into the case file it belongs in and change the call
@@ -186,11 +188,11 @@ to `_jd_t_eq`.
 A conformance corpus is one set of input lines plus the parse every
 implementation must produce for them. The check-in / check-out line
 grammar will have three implementations – a bash regex, an awk program,
-and TypeScript in an Obsidian plugin – and one corpus keeps them from
-drifting apart.
+and TypeScript in an Obsidian plugin – and one corpus ensures that all
+three return the same parse.
 
-There is no corpus yet. The seam is built, so adding one needs no new
-shell code. Two files go in `test/corpus`:
+There is no corpus yet. The seam is built, so adding one requires no
+new shell code. Two files go in `test/corpus`:
 
 - `<name>.tsv` – the data.
   - Tab separated. Field 1 is the input line. Fields 2 and after are the
@@ -207,8 +209,8 @@ shell code. Two files go in `test/corpus`:
   - For a line it rejects it prints nothing and returns non-zero.
 
 `cases/corpus.sh` finds every `.tsv`, sources the matching parser, and
-runs the rows. Until a `.tsv` exists it reports one skip, so the seam is
+runs the rows. Until a `.tsv` exists it prints one skip, so the seam is
 visible in the output.
 
 The other implementations read the same `.tsv` with their own runner.
-The data file is the only place the cases live.
+The data file is the only place that contains the cases.

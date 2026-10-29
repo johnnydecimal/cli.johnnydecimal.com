@@ -8,22 +8,22 @@
 #   jd 11.11              print the folder for ID 11.11
 #   jd --system P76 22    act on a system other than the default
 #   jd version            print the version
-#   jd paths              print where jd keeps its files
+#   jd paths              print where jd stores its files
 #   jd --help             the rest of it
 #
 # A move prints one absolute path on stdout and nothing else, and exits
-# 0. Match lists, reports and errors go to stderr. That is so the answer
-# can be read by a program:
+# 0. Match lists, reports and errors are written to stderr. That is so
+# a program can read the answer:
 #
 #   cd "$(jd 11.11)"
 #
 # The shell hook, jd.sh, sets JD_HOOK. A move then prints the same path
-# and exits 3, which tells the hook to cd there itself. No other exit
+# and exits 3, and on status 3 the hook runs cd itself. No other exit
 # status means that.
 #
-# Needs jq. Works in bash 3.2+ and zsh.
+# Requires jq. Works in bash 3.2+ and zsh.
 
-# The version of this repo, shared by every tool in it. Semver. It lives
+# The version of this repo, shared by every tool in it. Semver. It is set
 # here, and nowhere else.
 _JD_CLI_VERSION="4.3.0"
 _JD_CLI_HELP_URL="https://jdcm.al/documentation/jd-cli"
@@ -51,13 +51,13 @@ _JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
 
 # --system SYS, first and nowhere else, so that it can never be read as
 # a title or as a flag of 'jd new'. Without it the program acts on the
-# default system, which _jd_nav works out from the config at call time.
+# default system, which _jd_nav resolves from the config at call time.
 _jd_sys=''
 if [ "${1-}" = --system ]; then
   shift
   _jd_sys=${1-}
   if [ -z "$_jd_sys" ]; then
-    printf 'jd: --system needs a system id\n' >&2
+    printf 'jd: --system requires a system id\n' >&2
     exit 1
   fi
   shift

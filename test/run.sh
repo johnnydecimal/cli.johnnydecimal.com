@@ -11,11 +11,11 @@
 #
 # Environment:
 #   JD_TEST_SHELLS   space separated shells to use. Default: /bin/bash zsh
-#   JD_TEST_KEEP     set to 1 to keep the temp directory for a look
+#   JD_TEST_KEEP     set to 1 to keep the temp directory after the run
 #
-# Each case file gets its own temp directory, its own $HOME, and its own
+# Each case file has its own temp directory, its own $HOME, and its own
 # fixture systems. Nothing here reads the real config or the real
-# journal, or goes near a real Johnny.Decimal system.
+# journal, or reads or writes a real Johnny.Decimal system.
 #
 # This file is POSIX sh. The harness and the case files are not, because
 # they source jd.sh and so must run under bash or zsh.
@@ -28,10 +28,10 @@ export JD_T_REPO
 
 _jd_r_match=${1-}
 
-# jd finds its config and its journal through these, and they come in
-# from the shell that started the suite. Left set, a test would write
-# its journal into the real $XDG_STATE_HOME. A case that tests one sets
-# it again, to a folder under its own temp directory.
+# jd finds its config and its journal through these, and the suite
+# inherits them from the shell that started it. Left set, a test would
+# write its journal into the real $XDG_STATE_HOME. A case that tests one
+# sets it again, to a folder under its own temp directory.
 unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME
 
 # ------------------------------------------------------------ the shells
@@ -51,7 +51,7 @@ if [ -z "$_jd_r_shells" ]; then
 fi
 
 if ! command -v jq >/dev/null 2>&1; then
-  printf 'run.sh: jq is not installed, and the tools need it\n' >&2
+  printf 'run.sh: jq is not installed, and the tools require it\n' >&2
   exit 2
 fi
 

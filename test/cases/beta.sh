@@ -25,40 +25,40 @@ _jd_t_beta() { jq -r '.beta' "$1"; }
 _jd_t_run jd beta --help
 _jd_t_status 'help: exit status' 0
 _jd_t_contains 'help: prints the usage line' 'usage: <system> beta' "$JD_T_OUT"
-_jd_t_contains 'help: warns before you turn beta on' \
+_jd_t_contains 'help: prints a warning before you turn beta on' \
   'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_OUT"
 
 _jd_t_run jd beta
 _jd_t_status 'status: exit status' 0
-_jd_t_lacks 'status: gives no warning' 'UNSTABLE' "$JD_T_ERR"
+_jd_t_lacks 'status: prints no warning' 'UNSTABLE' "$JD_T_ERR"
 _jd_t_eq 'status: a config with no beta key is off' 'beta is off' "$JD_T_OUT"
 
 _jd_t_run jd beta status
-_jd_t_eq 'status: the word status says the same' 'beta is off' "$JD_T_OUT"
+_jd_t_eq 'status: the word status prints the same' 'beta is off' "$JD_T_OUT"
 
 # ---------------------------------------------------------------- on, off
 
 _jd_t_run jd beta on
 _jd_t_status 'on: exit status' 0
-_jd_t_eq 'on: says so' 'beta is on' "$JD_T_OUT"
+_jd_t_eq 'on: prints that beta is on' 'beta is on' "$JD_T_OUT"
 _jd_t_eq 'on: writes true' 'true' "$(_jd_t_beta "$_jd_t_cfg")"
-_jd_t_contains 'on: warns' 'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_ERR"
-_jd_t_contains 'on: warns, second line' "YOU PROBABLY SHOULDN'T USE THEM :-)" "$JD_T_ERR"
-_jd_t_eq 'on: the key goes straight after version' 'version,beta' \
+_jd_t_contains 'on: prints a warning' 'BETA FEATURES ARE UNSTABLE AND MODIFY YOUR DATA' "$JD_T_ERR"
+_jd_t_contains 'on: prints a warning, second line' "YOU PROBABLY SHOULDN'T USE THEM :-)" "$JD_T_ERR"
+_jd_t_eq 'on: the key is written straight after version' 'version,beta' \
   "$(jq -r 'keys_unsorted | .[0:2] | join(",")' "$_jd_t_cfg")"
-_jd_t_eq 'on: keeps the systems' 'D25' "$(jq -r '.systems[0].sys' "$_jd_t_cfg")"
+_jd_t_eq 'on: preserves the systems' 'D25' "$(jq -r '.systems[0].sys' "$_jd_t_cfg")"
 
 _jd_t_run jd beta
-_jd_t_eq 'on: status now says on' 'beta is on' "$JD_T_OUT"
+_jd_t_eq 'on: status now prints on' 'beta is on' "$JD_T_OUT"
 
 _jd_t_run jd beta off
 _jd_t_status 'off: exit status' 0
-_jd_t_eq 'off: says so' 'beta is off' "$JD_T_OUT"
+_jd_t_eq 'off: prints that beta is off' 'beta is off' "$JD_T_OUT"
 _jd_t_eq 'off: writes false' 'false' "$(_jd_t_beta "$_jd_t_cfg")"
-_jd_t_lacks 'off: gives no warning' 'UNSTABLE' "$JD_T_ERR"
+_jd_t_lacks 'off: prints no warning' 'UNSTABLE' "$JD_T_ERR"
 
-# A config already in the state asked for is not rewritten, so its own
-# layout survives.
+# A config already in the requested state is not rewritten, so its own
+# layout does not change.
 printf '{\n    "version": 1, "systems": %s\n}\n' \
   "$(jq -c '.systems' "$_jd_t_cfg")" >"$JD_T_TMP/layout.json"
 cp "$JD_T_TMP/layout.json" "$JD_T_TMP/layout.before"
@@ -77,18 +77,18 @@ _jd_t_load "$_jd_t_cfg"
 JD_BETA=1
 export JD_BETA
 _jd_t_run jd beta
-_jd_t_contains 'JD_BETA: status says it is on in this shell' \
+_jd_t_contains 'JD_BETA: status prints that it is on in this shell' \
   'because JD_BETA is set' "$JD_T_OUT"
 _jd_t_run jd beta off
-_jd_t_contains 'JD_BETA: off still says why it is on' \
+_jd_t_contains 'JD_BETA: off still prints why it is on' \
   'because JD_BETA is set' "$JD_T_OUT"
 _jd_t_eq 'JD_BETA: off writes nothing, because the config is already off' \
   'false' "$(_jd_t_beta "$_jd_t_cfg")"
 unset JD_BETA
 
-# --------------------------------------------------------- what it keeps
+# ----------------------------------------------------- what it preserves
 
-# A config with no version gets no "version": null.
+# jd writes no "version": null to a config with no version.
 jq 'del(.version)' "$_jd_t_cfg" >"$JD_T_TMP/nover.json"
 _jd_t_load "$JD_T_TMP/nover.json"
 _jd_t_run jd beta on
@@ -109,20 +109,20 @@ else
 fi
 _jd_t_eq 'symlink: the target is written' 'true' "$(_jd_t_beta "$JD_T_TMP/real.json")"
 
-# The mode is carried over.
+# The mode is copied.
 cp "$_jd_t_cfg" "$JD_T_TMP/mode.json"
 chmod 644 "$JD_T_TMP/mode.json"
 _jd_t_load "$JD_T_TMP/mode.json"
 _jd_t_run jd beta on
 _jd_t_eq 'mode: stays 644' '-rw-r--r--' "$(ls -l "$JD_T_TMP/mode.json" | cut -c1-10)"
 
-# --------------------------------------------------------- what it refuses
+# --------------------------------------------------------- what it rejects
 
 _jd_t_load "$_jd_t_cfg"
 
 _jd_t_run jd beta maybe
 _jd_t_status 'unknown word: exit status' 1
-_jd_t_contains 'unknown word: says so' 'not a beta command' "$JD_T_ERR"
+_jd_t_contains 'unknown word: prints an error' 'not a beta command' "$JD_T_ERR"
 
 _jd_t_run jd beta on now
 _jd_t_status 'extra words: exit status' 1
@@ -139,7 +139,7 @@ _jd_t_eq 'not JSON: the file is untouched' '{ not json' "$(cat "$JD_T_TMP/broken
 # A folder that cannot be written to: the write fails, and the config is
 # untouched. Root can write anywhere, so the test means nothing as root.
 if [ "$(id -u)" = 0 ]; then
-  _jd_t_skipped 'read-only folder: refuses' 'running as root'
+  _jd_t_skipped 'read-only folder: exits with an error' 'running as root'
 else
   mkdir "$JD_T_TMP/ro"
   cp "$_jd_t_cfg" "$JD_T_TMP/ro/config.json"
@@ -148,15 +148,15 @@ else
   _jd_t_run jd beta on
   chmod 755 "$JD_T_TMP/ro"
   _jd_t_status 'read-only folder: exit status' 1
-  _jd_t_contains 'read-only folder: says so' 'could not write' "$JD_T_ERR"
+  _jd_t_contains 'read-only folder: prints an error' 'could not write' "$JD_T_ERR"
   _jd_t_eq 'read-only folder: the config is untouched' 'false' \
     "$(_jd_t_beta "$JD_T_TMP/ro/config.json")"
 fi
 
 # ------------------------------------------------------- where it works
 
-# 'jd beta' reads no system, so a root folder that is not there does not
-# stop it.
+# 'jd beta' reads no system, so 'jd beta' works when the root folder
+# does not exist.
 jq '.systems[0].root = "/nonexistent-jd-test-root"' "$_jd_t_cfg" >"$JD_T_TMP/noroot.json"
 _jd_t_load "$JD_T_TMP/noroot.json"
 _jd_t_run jd beta

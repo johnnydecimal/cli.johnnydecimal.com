@@ -7,13 +7,14 @@
 # numbered folder and prints, for example:
 #   D25:…/11.11 Structure & registrations
 # A system with no sys in the config (fine when it is the only one) has
-# no label to print, so the anchor shows with no prefix: …/11.11 ...
+# no label to print, so the anchor is printed with no prefix:
+# …/11.11 ...
 #
-# It reads the systems from the config. jd.sh has asked the program
-# where the config is, and the answer is in $_jd_hook_cfg while this
-# file loads. Sourced on its own, with no jd.sh, this file asks the
-# program itself: %x is this file, and the program is two folders up.
-# Needs jq. The config is read once, when this file is sourced.
+# It reads the systems from the config. jd.sh has run 'jd paths config',
+# and $_jd_hook_cfg contains the path while this file is sourced.
+# Sourced on its own, with no jd.sh, this file runs the program itself:
+# %x is this file, and the program is two folders up.
+# Requires jq. The config is read once, when this file is sourced.
 
 _jd_prompt_sys=()
 _jd_prompt_root=()
@@ -22,7 +23,7 @@ if [[ -z "$_jd_prompt_cfg" ]]; then
   _jd_prompt_cfg="$("${${(%):-%x}:A:h:h}/bin/jd" paths config 2>/dev/null)"
 fi
 if [[ -f "$_jd_prompt_cfg" ]] && command -v jq >/dev/null; then
-  # A tab is IFS whitespace, so `read -r a b` silently drops a leading
+  # A tab is IFS whitespace, so `read -r a b` silently discards a leading
   # empty field (no sys) instead of splitting it off. Read the whole
   # line and slice it by hand instead, like nav.sh does.
   _jd_tab=$'\t'

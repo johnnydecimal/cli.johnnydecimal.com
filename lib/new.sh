@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MIT
-# new.sh - make a new ID or work package
+# new.sh - create a new ID or work package
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
 # $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR.
 #
 # It defines _jd_new, which nav.sh calls for 'jd new'. The word after
-# 'new' is the noun. It says what to make, and it is never left out:
+# 'new' is the noun. It names what to create, and it is never left out:
 #
 #   jd new id 21 A title       the next free ID in category 21
 #   jd new id 21.34 A title    exactly ID 21.34
@@ -14,7 +14,7 @@
 # number, and a project in a task app, with links from each to the
 # others.
 #
-# Templates live in the filesystem, and are found by number. No config
+# Templates are in the filesystem, and are found by number. No config
 # names them.
 #
 #   ID template.md                  21.03, then 20.03, then 00.03
@@ -23,29 +23,30 @@
 #   Work package template.<adapter>.json
 #                                   W0003. The task app's project
 #
-# With no template note, the note is blank, and jd says so. With no
-# template folder, the folder is empty. With no task app template, the
-# adapter copies jd's own into W0003, from the templates folder of this
-# repo. With no W0003 at all, jd makes it, and copies its own template
-# note into it.
+# With no template note, the note is blank, and jd prints a message.
+# With no template folder, the folder is empty. With no task app
+# template, the adapter copies jd's own into W0003, from the templates
+# folder of this repo. With no W0003 at all, jd creates it, and copies
+# its own template note into it.
 #
-# A system with no work package area gets one. Refer to the comments
-# above _jd_new_wp_make.
+# In a system with no work package area, jd creates one. Refer to the
+# comments above _jd_new_wp_make.
 #
 # The task app and the note app are adapters, in lib/adapters. The core
 # never names an app. Refer to lib/adapters/README.md.
 #
-# --json, with --dry-run, is the machine interface, for an agent that drives
-# this command. Refer to the comments above _jd_new_emit_ok for the
-# shape.
+# --json, with --dry-run, is the machine interface, for an agent that
+# runs this command. Refer to the comments above _jd_new_emit_ok for
+# the shape.
 #
-# Needs jq. Works in bash 3.2+ and zsh.
+# Requires jq. Runs in bash 3.2+ and zsh.
 
 # The fixed names of the templates.
 _JD_NEW_ID_TPL='ID template.md'
 _JD_NEW_WP_TPL='Work package template'
 
-# The names of the folders that 'jd new wp' makes when they are missing.
+# The names of the folders that 'jd new wp' creates when they are
+# missing.
 _JD_NEW_WP_AREA='W0000-9999 Work packages'
 _JD_NEW_WP_W3='W0003 Templates for area W0000-9999'
 _JD_NEW_WP_W9='W0009 Archive'
@@ -54,11 +55,11 @@ _jd_new_usage() {
   cat <<'EOF'
 usage: <system> new <noun> ...
 
-  jd new id 21 A title          make the next free ID in category 21
-  jd new id 21.34 A title       make ID 21.34
-  jd new wp 21.34 A title       make a work package for ID 21.34
+  jd new id 21 A title          create the next free ID in category 21
+  jd new id 21.34 A title       create ID 21.34
+  jd new wp 21.34 A title       create a work package for ID 21.34
 
-'jd new id --help' and 'jd new wp --help' say more.
+Run 'jd new id --help' or 'jd new wp --help' for more.
 EOF
 }
 
@@ -69,7 +70,7 @@ usage: <system> new id <category or ID> <title>
   jd new id 21 A title          the next free ID in category 21
   jd new id 21.34 A title       exactly ID 21.34, if it is not used
 
-It makes:
+It creates:
 
   - the JDex note, from the ID template
   - the folder
@@ -81,30 +82,30 @@ it is not counted. The ID is never lower than .11. A gap is not filled.
 
 A JDex can be flat: it has no area folders, and the notes are in its
 root. Then it counts the notes in the root that start with the
-category's number, and the new note goes in the root.
+category's number, and jd writes the new note to the root.
 
 If the filesystem already has a folder with the new ID's number, jd
-stops, and names the folder.
+exits with an error, names the folder, and creates nothing.
 
 The ID template is the first 'ID template.md' that jd finds in the
 filesystem, in the templates ID of the category, then of the area, then
 of the system. For category 21: 21.03, 20.03, 00.03. With no template,
-the note is blank, and jd says so.
+the note is blank, and jd prints a message.
 
-The title needs no quotes. It is every word after the category or ID,
-up to the first word that starts with '--'. A '-' anywhere else is part
-of the title. Flags can go before the noun, after it, or after the
-title.
+The title requires no quotes. It is every word after the category or
+ID, up to the first word that starts with '--'. A '-' anywhere else is
+part of the title. You can put flags before the noun, after it, or
+after the title.
 
-      --dry-run       say what it would make, and make nothing
+      --dry-run       print what it would create, and create nothing
       --json          print one JSON object on stdout instead of the
                        usual lines. { "ok": true, ... } or, on error,
                        { "ok": false, "code": "...", ... }
 
-The template can hold {{ID}}, {{TITLE}} and {{NAME}}, which is the ID
-and the title together.
+The template can contain {{ID}}, {{TITLE}} and {{NAME}}, which is the
+ID and the title together.
 
-A template note can hold a token, such as '{{?SCOPE}}' or
+A template note can contain a token, such as '{{?SCOPE}}' or
 '{{?DELIVERABLE What we hand over}}'. Its flag is its name in lower
 case, with '-' for '_': --scope, --deliverable. Give a value after the
 title:
@@ -112,9 +113,10 @@ title:
   jd new wp 21.41 A title --scope "What we do" --deliverable=Video
 
 A token with no value becomes its brief, 'What we hand over', or
-nothing. jd names each flag you did not set: in 'toFill' with --json,
-or on stderr otherwise. Anything else in double braces that jd does not
-know is left out of the note, and jd warns. The note never holds '{{'.
+nothing. jd prints the name of each flag you did not set: in 'toFill'
+with --json, or on stderr otherwise. Anything else in double braces
+that jd does not recognize is left out of the note, and jd prints a
+warning. The note never contains '{{'.
 EOF
 }
 
@@ -124,17 +126,17 @@ usage: <system> new wp <ID> <title>
 
   jd new wp 21.41 Video about work packages
 
-It makes, in this order:
+In this order, it:
 
-  - the next free W number, from the JDex and the filesystem
-  - the project in your task app, from the template project
-  - the JDex note, from the template note
-  - the folder, from the template folder
+  - assigns the next free W number, from the JDex and the filesystem
+  - creates the project in your task app, from the template project
+  - creates the JDex note, from the template note
+  - creates the folder, from the template folder
 
 The templates are in the W0003 folder in the filesystem:
 
   Work package template.md        the note. None: the note is blank.
-                                   No W0003: jd makes W0003, and
+                                   No W0003: jd creates W0003, and
                                    copies its own note into it
   Work package template/          copied into the new folder. None:
                                    the folder is empty
@@ -143,37 +145,37 @@ The templates are in the W0003 folder in the filesystem:
                                    things adapter. None: jd copies
                                    its own into W0003
 
-If the system has no 'W0000-9999' folder, jd makes it, with a W0003
+If the system has no 'W0000-9999' folder, jd creates it, with a W0003
 folder and a W0009 folder in it. If the JDex has no 'W0000-9999'
-folder, jd makes it. In a flat JDex, the note goes in the root.
+folder, jd creates it. In a flat JDex, jd writes the note to the root.
 
-A line of a template that holds {{NOTES_URL}} or {{TASKS_URL}} is left
-out when there is no such link: no adapter is set, or --no-tasks. A
-line with nothing left indented under it, such as '- Related:', is left
-out too.
+A line of a template that contains {{NOTES_URL}} or {{TASKS_URL}} is
+left out when there is no such link: no adapter is set, or --no-tasks.
+A line with nothing left indented under it, such as '- Related:', is
+left out too.
 
 {{PARENT_LINK}} is the note app's link to the ID's own JDex note, for
-example [[21.41 Videos]]. A line that holds it is left out when no notes
-adapter is set. It is also left out when the JDex has no one note for
-the ID, and jd warns.
+example [[21.41 Videos]]. A line that contains it is left out when no
+notes adapter is set. It is also left out when the JDex has no one note
+for the ID, and jd prints a warning.
 
-The title needs no quotes. It is every word after the ID, up to the
+The title requires no quotes. It is every word after the ID, up to the
 first word that starts with '--'. A '-' anywhere else is part of the
-title. Flags can go before the noun, after it, or after the title.
+title. You can put flags before the noun, after it, or after the title.
 
-      --dry-run       say what it would make, and make nothing
+      --dry-run       print what it would create, and create nothing
       --no-tasks      skip the task app
       --refresh       read the template project out of the task app
                       and write it to the template file. jd also does
-                      this before it makes each work package
+                      this before it creates each work package
       --json          print one JSON object on stdout instead of the
                        usual lines. { "ok": true, ... } or, on error,
                        { "ok": false, "code": "...", ... }
 
-The system's 'workPackages' block in the config says which adapters to
+The system's 'workPackages' block in the config sets the adapters to
 use.
 
-A template note can hold a token, such as '{{?SCOPE}}' or
+A template note can contain a token, such as '{{?SCOPE}}' or
 '{{?DELIVERABLE What we hand over}}'. Its flag is its name in lower
 case, with '-' for '_': --scope, --deliverable. Give a value after the
 title:
@@ -181,9 +183,10 @@ title:
   jd new wp 21.41 A title --scope "What we do" --deliverable=Video
 
 A token with no value becomes its brief, 'What we hand over', or
-nothing. jd names each flag you did not set: in 'toFill' with --json,
-or on stderr otherwise. Anything else in double braces that jd does not
-know is left out of the note, and jd warns. The note never holds '{{'.
+nothing. jd prints the name of each flag you did not set: in 'toFill'
+with --json, or on stderr otherwise. Anything else in double braces
+that jd does not recognize is left out of the note, and jd prints a
+warning. The note never contains '{{'.
 EOF
 }
 
@@ -212,13 +215,13 @@ _jd_new_adapter() {
   . "$f"
 }
 
-# Say what happened, on stderr, so that stdout stays the new path.
+# Print what happened, on stderr, so that stdout is only the new path.
 _jd_new_say() { printf '     %s\n' "$*" >&2; }
 
 # Record an error's code and path for --json, then print it the normal
 # way. $1 code, $2 path this error is about (may be empty), $3+ the
 # message. Always returns 1, the same as _jd_nav_err, so a caller still
-# needs its own 'return 1' to leave the function it is in.
+# requires its own 'return 1' to leave the function it is in.
 _jd_new_fail() {
   _JD_NEW_CODE=$1
   _JD_NEW_PATH=$2
@@ -227,8 +230,8 @@ _jd_new_fail() {
   _jd_nav_err "$@"
 }
 
-# Add a warning code for --json. A warning does not stop the command:
-# 'ok' stays true. Each code is listed once. $1 code.
+# Add a warning code for --json. jd does not exit on a warning: 'ok'
+# stays true. Each code is listed once. $1 code.
 _jd_new_warn() {
   _JD_NEW_WARNINGS_JSON=$(printf '%s' "$_JD_NEW_WARNINGS_JSON" |
     jq -c --arg c "$1" 'if index($c) then . else . + [$c] end')
@@ -242,7 +245,7 @@ _jd_new_one() {
   _JD_NEW_ONE=''
   if [ "$(printf '%s' "$1" | grep -c '^')" -gt 1 ]; then
     _jd_new_fail template_ambiguous "$(printf '%s' "$1" | head -1)" \
-      "there is more than one $2 folder, so jd cannot tell which one holds the templates"
+      "there is more than one $2 folder, so jd cannot determine which one contains the templates"
     return 1
   fi
   _JD_NEW_ONE=$1
@@ -251,23 +254,24 @@ _jd_new_one() {
 # The jq that reads a template note. One regular expression finds every
 # '{{...}}' in it, and sorts each into one of three kinds:
 #
-#   {{ID}}                  a placeholder jd knows. $fixed holds its value
+#   {{ID}}                  a placeholder that jd supports. $fixed
+#                           stores its value
 #   {{?SCOPE}}              a token. Its value comes from a flag, --scope,
-#   {{?SCOPE What we do}}   or else it is the brief. No brief gives ''
+#   {{?SCOPE What we do}}   or else it is the brief, or else ''
 #   {{anything else}}       unknown. It is left out of the note
 #
 # A token name is [A-Z][A-Z0-9_]*. Its flag is the name in lower case,
 # with '-' for '_': {{?DELIVERABLE_DATE}} is --deliverable-date.
 #
-# The note is filled in one pass, so a value is put in exactly as it was
-# given, even one that holds '{{'.
+# The note is filled in one pass, so a value is written exactly as it
+# was given, even one that contains '{{'.
 #
-# 'links' goes before 'fill'. It leaves out each line that holds
+# 'links' runs before 'fill'. It leaves out each line that contains
 # {{NOTES_URL}}, {{TASKS_URL}} or {{PARENT_LINK}} when that link is
-# empty, so that no note holds '[Things]()', a link to nothing. Then it
-# leaves out each line that had lines indented under it, all of them
-# left out, so that no note holds '- Related:' with nothing under it.
-# It works from the last line up, so a heading over a heading that is
+# empty, so that no note contains '[Things]()', a link to nothing. Then
+# it leaves out each line that had lines indented under it, all of them
+# left out, so that no note contains '- Related:' with nothing under it.
+# It reads from the last line up, so a heading over a heading that is
 # left out is left out too. The indented lines under a line end at the
 # first line that is indented no further than it. A blank line is not
 # indented, so it ends them.
@@ -297,13 +301,13 @@ def fill: gsub(re; if tok then (.n as $n | $vals[$n]) // .b // ""
                    elif fix then (.n as $n | $fixed[$n]) else "" end);
 '
 
-# The placeholders jd knows, with no values, for when only the names
-# matter.
+# The placeholders that jd supports, with no values, for when only the
+# names matter.
 _JD_NEW_FIXED_NAMES='{"W":"","w":"","ID":"","TITLE":"","NAME":"","NOTES_URL":"","TASKS_URL":"","PARENT_LINK":""}'
 
-# Put the values into the task app's template. $1 the text. $2 'json'
-# to escape them for the inside of a JSON file. Anything else leaves
-# them as they are. A note is filled by _jd_new_render, not this.
+# Fill the task app's template with the values. $1 the text. $2 'json'
+# to escape them for the inside of a JSON file. With anything else, they
+# are not escaped. A note is filled by _jd_new_render, not this.
 #
 #   {{W}}          W0216            {{ID}}         21.41
 #   {{w}}          w0216            {{TITLE}}      Video about ...
@@ -344,7 +348,8 @@ _jd_new_fill() {
   printf '%s' "$t"
 }
 
-# A flag that every 'jd new' knows. Returns 1 if $1 is not one.
+# A flag that every 'jd new' command supports. Returns 1 if $1 is not
+# one.
 _jd_new_flag() {
   case $1 in
     --help) _JD_NEW_HELP=1 ;;
@@ -361,9 +366,9 @@ _jd_new_flag() {
 # title, so 'SBS video - 14.20' and 'Cut costs -20%' are titles. After a
 # flag there is no more title. $@ the words.
 #
-# A flag jd does not know is a token flag, '--scope value' or
-# '--scope=value'. It is kept in $_JD_NEW_VALUES_JSON, by token name, and
-# checked against the template once the template is read.
+# A flag that jd does not recognize is a token flag, '--scope value' or
+# '--scope=value'. It is stored in $_JD_NEW_VALUES_JSON, by token name,
+# and checked against the template once the template is read.
 _jd_new_rest() {
   local words='' name val
   while [ $# -gt 0 ]; do
@@ -381,7 +386,7 @@ _jd_new_rest() {
       --[a-z]*)
         name=$1
         [ $# -gt 1 ] || {
-          _jd_new_fail no_value '' "'$name' needs a value: $name \"...\""
+          _jd_new_fail no_value '' "'$name' requires a value: $name \"...\""
           return 1
         }
         val=$2
@@ -389,7 +394,7 @@ _jd_new_rest() {
         ;;
       -*) _jd_new_fail unknown_option '' "unknown option '$1'"; return 1 ;;
       *)
-        _jd_new_fail unexpected_word '' "'$1' comes after a flag - the title goes before the flags"
+        _jd_new_fail unexpected_word '' "'$1' is after a flag - the title must be before the flags"
         return 1
         ;;
     esac
@@ -406,13 +411,14 @@ _jd_new_rest() {
 # Check the title. $_JD_NEW_TITLE, set by _jd_new_rest.
 _jd_new_title() {
   case $_JD_NEW_TITLE in
-    '') _jd_new_fail no_title '' "the new $_JD_NEW_NOUN_NAME needs a title"; return 1 ;;
-    */*) _jd_new_fail title_has_slash '' "a title cannot hold '/'"; return 1 ;;
+    '') _jd_new_fail no_title '' "the new $_JD_NEW_NOUN_NAME requires a title"; return 1 ;;
+    */*) _jd_new_fail title_has_slash '' "a title cannot contain '/'"; return 1 ;;
   esac
 }
 
 # Read the template note, or none. Sets $_JD_NEW_TEXT and the toFill
-# list, checks the token flags, and warns about unknown placeholders.
+# list, checks the token flags, and prints a warning about unknown
+# placeholders.
 # $1 the template file, or empty.
 _jd_new_read_template() {
   local tokens given bad unknown
@@ -421,8 +427,8 @@ _jd_new_read_template() {
   tokens=$(jq -cn --arg t "$_JD_NEW_TEXT" --argjson fixed "$_JD_NEW_FIXED_NAMES" --argjson vals '{}' \
     "$_JD_NEW_JQ"' $t | tokens')
 
-  # A token flag the template has no token for is a mistake. Say which
-  # flags the template does have.
+  # A token flag the template has no token for is an error. Print the
+  # flags that the template does have.
   bad=$(jq -rn --argjson tokens "$tokens" --argjson vals "$_JD_NEW_VALUES_JSON" \
     '$vals | keys - ($tokens | map(.token)) | first // empty')
   if [ -n "$bad" ]; then
@@ -436,7 +442,8 @@ _jd_new_read_template() {
     return 1
   fi
 
-  # toFill is every token that got no value. The note has its brief.
+  # toFill is every token that received no value. The note has its
+  # brief.
   _JD_NEW_TOFILL_JSON=$(jq -cn --argjson tokens "$tokens" --argjson vals "$_JD_NEW_VALUES_JSON" \
     '$tokens | map(select(.token as $t | $vals | has($t) | not))')
   _JD_NEW_TOFILL_NAMES=$(printf '%s' "$_JD_NEW_TOFILL_JSON" | jq -r 'map(.flag) | join(", ")')
@@ -444,7 +451,7 @@ _jd_new_read_template() {
   unknown=$(jq -rn --arg t "$_JD_NEW_TEXT" --argjson fixed "$_JD_NEW_FIXED_NAMES" --argjson vals '{}' \
     "$_JD_NEW_JQ"' $t | unknown | join(", ")')
   if [ -n "$unknown" ]; then
-    _jd_nav_err "the template has $unknown, which jd does not know, so the note leaves it out"
+    _jd_nav_err "the template has $unknown, which jd does not recognize, so the note does not contain it"
     _jd_new_warn unknown_placeholder
   fi
   return 0
@@ -464,10 +471,10 @@ _jd_new_render() {
     "$_JD_NEW_JQ"' $t | links | fill'
 }
 
-# The task app's template, with each line that holds an empty link left
-# out of every string in it, the same as 'links' does for a note. $1 the
-# template, which is JSON. Prints JSON, with the placeholders still in
-# it. An adapter calls this before _jd_new_fill.
+# The task app's template, with each line that contains an empty link
+# left out of every string in it, the same as 'links' does for a note.
+# $1 the template, which is JSON. Prints JSON, with the placeholders
+# still in it. An adapter calls this before _jd_new_fill.
 _jd_new_links_json() {
   printf '%s' "$1" | jq \
     --argjson fixed "$(jq -cn --arg NOTES_URL "$_JD_NEW_NOTES_URL" \
@@ -477,15 +484,15 @@ _jd_new_links_json() {
     "$_JD_NEW_JQ"' walk(if type == "string" then links else . end)'
 }
 
-# Say that no template was found, and that the note will be blank.
-# $1 what was looked for, for the message.
+# Print that no template was found, and that the note will be blank.
+# $1 what was searched for, for the message.
 _jd_new_no_template() {
   _jd_nav_err "no $1 template, so the JDex note is blank"
   _jd_new_warn no_template
 }
 
-# Write the note, from $_JD_NEW_TEXT. $1 the note path. A blank template
-# gives an empty file.
+# Write the note, from $_JD_NEW_TEXT. $1 the note path. With a blank
+# template, the file is empty.
 _jd_new_write_note() {
   _jd_new_render >"$1" || {
     _jd_new_fail write_failed "$1" "could not write $1"
@@ -510,9 +517,10 @@ _jd_new_write_note() {
 #   parentLink  the note app's link to the ID's JDex note. Empty for an
 #             ID, with no notes adapter, or when the JDex has no one
 #             note for the ID
-#   toFill    the {{?TOKEN}} tokens that got no value, each with its
-#             brief and its flag. The note has the brief in its place
-#   warnings  codes for what went wrong but did not stop the command
+#   toFill    the {{?TOKEN}} tokens that received no value, each with
+#             its brief and its flag. The note has the brief in its
+#             place
+#   warnings  codes for problems after which the command continued
 _jd_new_emit_ok() {
   jq -n \
     --arg noun "$_JD_NEW_NOUN" \
@@ -541,9 +549,10 @@ _jd_new_emit_ok() {
 # which _jd_new_fail sets as it prints the human error.
 #
 # Some failures come from an adapter, which prints its own message and
-# knows no code. The call site sets the code for those, and the message
-# stays empty. Both fall back here, so that 'code' is never empty: an
-# agent branches on it, and an empty string tells it nothing.
+# has no code. The call site sets the code for those, and the message
+# stays empty. Both have a default here, so that 'code' is never
+# empty: an agent branches on 'code', and an empty string indicates
+# nothing.
 _jd_new_emit_err() {
   local code=$_JD_NEW_CODE message=$_JD_NEW_MSG
   [ -n "$code" ] || code=unknown
@@ -558,9 +567,9 @@ _jd_new_emit_err() {
 # ---------------------------------------------------------- the command
 
 # _jd_new is the entry point nav.sh calls. It resets the state, runs
-# _jd_new_inner, and, only in --json mode, turns a failure into the
-# error object on stdout. A success prints its own object, because what
-# it holds depends on the noun and --dry-run.
+# _jd_new_inner, and, only in --json mode, converts a failure into the
+# error object on stdout. On success, _jd_new_inner prints the object,
+# because what the object contains depends on the noun and --dry-run.
 #
 # $1 the sys id, or '#N' for the system at index N. Then the user's words.
 _jd_new() {
@@ -605,7 +614,7 @@ _jd_new_inner() {
   esac
   _JD_NEW_CFG=$(_jd_paths_config)
 
-  # Flags can come before the noun, after it, or after the title. The
+  # A flag can be before the noun, after it, or after the title. The
   # first word that is not a flag is the noun. The next one is the ID.
   # _jd_new_rest reads the title and the flags after it.
   while [ $# -gt 0 ]; do
@@ -643,11 +652,11 @@ _jd_new_inner() {
     wp) _JD_NEW_NOUN_NAME='work package' ;;
     '')
       _jd_new_usage >&2
-      _jd_new_fail no_noun '' "say what to make: 'jd new id' or 'jd new wp'"
+      _jd_new_fail no_noun '' "name what to create: 'jd new id' or 'jd new wp'"
       return 1
       ;;
     *)
-      _jd_new_fail unknown_noun '' "cannot make '$_JD_NEW_NOUN' - say what to make: 'jd new id' or 'jd new wp'"
+      _jd_new_fail unknown_noun '' "cannot create '$_JD_NEW_NOUN' - name what to create: 'jd new id' or 'jd new wp'"
       return 1
       ;;
   esac
@@ -657,7 +666,7 @@ _jd_new_inner() {
   [ -n "$_JD_NEW_ROOT" ] || { _jd_new_fail unknown_system '' "system '$_JD_NEW_SYS' is not in $_JD_NEW_CFG"; return 1; }
   [ -d "$_JD_NEW_ROOT" ] || { _jd_new_fail no_root "$_JD_NEW_ROOT" "folder does not exist: $_JD_NEW_ROOT"; return 1; }
   [ -n "$_JD_NEW_JDEX" ] || {
-    _jd_new_fail no_jdex_path '' "'jd new' needs a jdex path for $_JD_NEW_SYS in $_JD_NEW_CFG"
+    _jd_new_fail no_jdex_path '' "'jd new' requires a jdex path for $_JD_NEW_SYS in $_JD_NEW_CFG"
     return 1
   }
   [ -d "$_JD_NEW_JDEX" ] || { _jd_new_fail no_jdex "$_JD_NEW_JDEX" "folder does not exist: $_JD_NEW_JDEX"; return 1; }
@@ -675,8 +684,8 @@ _jd_new_inner() {
 # The note's name is exactly the folder's name.
 _jd_new_folder_note() { [ -f "$1/${1##*/}.md" ]; }
 
-# Is the JDex flat? A flat JDex has no area folders, and its notes sit
-# in its root. An ID there can be a note, or a folder that holds its
+# Is the JDex flat? A flat JDex has no area folders, and its notes are
+# in its root. An ID there can be a note, or a folder that contains its
 # own note.
 _jd_new_jdex_flat() {
   local d
@@ -697,7 +706,7 @@ _jd_new_jdex_flat() {
 #
 # It reads the entries directly in the category, and the entries
 # directly in its archive, the .09 ID. Nothing deeper counts: a folder
-# deep inside an ID can hold names from some other system.
+# deep inside an ID can contain names from some other system.
 _jd_new_used_ids() {
   local a
   {
@@ -751,13 +760,13 @@ _jd_new_id() {
   # The category, in both trees, found by the start of its name.
   fcat=$(_jd_nav_find "$_JD_NEW_ROOT" 2 d -name "$c" -o -name "$c *")
   if _jd_new_jdex_flat; then
-    # A flat JDex: no area folders, the notes sit in the root. The root
+    # A flat JDex: no area folders, the notes are in the root. The root
     # is the category. Only the notes named c.NN count, so the other
     # categories in the root do not. No folder below the root is read
     # as a category, whatever its name.
     jcat=$_JD_NEW_JDEX
   else
-    # A nested JDex. A note in its root does not make it flat.
+    # A nested JDex. It can also have a note in its root.
     jcat=$(_jd_nav_find "$_JD_NEW_JDEX" 2 d -name "$c" -o -name "$c *")
   fi
   if [ "$(printf '%s' "$jcat" | grep -c '^')" -ne 1 ]; then
@@ -777,7 +786,7 @@ _jd_new_id() {
     fi
   else
     # One more than the highest, and never lower than .11. The leading
-    # zero goes first, because '08' is not a number to the shell.
+    # zero is removed first, because '08' is not a number to the shell.
     max=$(printf '%s\n' "$used" | tail -1)
     max=${max#0}
     [ -n "$max" ] || max=0
@@ -792,8 +801,8 @@ _jd_new_id() {
   _JD_NEW_ID="$c.$nn"
 
   # The ID is not in the JDex, but the filesystem may still have a folder
-  # with its number. jd does not make a second one. The name must be the
-  # ID alone or the ID and a space: '21.53+ Extension' is not 21.53.
+  # with its number. jd does not create a second one. The name must be
+  # the ID alone or the ID and a space: '21.53+ Extension' is not 21.53.
   dir=$(_jd_nav_find "$fcat" 1 a -name "$_JD_NEW_ID" -o -name "$_JD_NEW_ID *")
   if [ -n "$dir" ]; then
     dir=$(printf '%s' "$dir" | head -1)
@@ -821,18 +830,19 @@ _jd_new_id() {
     [ -n "$_JD_NEW_TEMPLATE" ] && _jd_new_say "from    $_JD_NEW_TEMPLATE"
     [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
     _jd_new_say "folder  $dir"
-    _jd_new_say 'nothing was made'
+    _jd_new_say 'nothing was created'
     [ "$_JD_NEW_JSON" -eq 1 ] && _jd_new_emit_ok true "$note_path" "$dir"
     return 0
   fi
 
   _jd_new_write_note "$note_path" || return 1
-  mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not make $dir"; return 1; }
+  mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not create $dir"; return 1; }
   _jd_new_say "folder  $dir"
 
-  # --json is the machine interface, and the object is the whole answer,
-  # so it never moves. Without it, the new folder is where you want to
-  # be, so it arrives there like any other move.
+  # --json is the machine interface, and the object is the whole output,
+  # so jd does not change folder. Without it, the new folder is where
+  # you want to be, so jd changes to it, the same as after any other
+  # move.
   if [ "$_JD_NEW_JSON" -eq 1 ]; then
     _jd_new_emit_ok false "$note_path" "$dir"
     return 0
@@ -847,7 +857,7 @@ _jd_new_id() {
 #
 # Only the JDex counts, the same as for an ID. It reads the entries
 # directly in the area, and the entries directly in its archive, W0009.
-# Nothing deeper counts: a folder deep inside a work package can hold
+# Nothing deeper counts: a folder deep inside a work package can contain
 # names from some other system.
 _jd_new_next_number() {
   local max n a
@@ -871,9 +881,9 @@ _jd_new_next_number() {
   printf 'W%04d' "$n"
 }
 
-# 2.5 read the template paths from the config. jd finds them in W0003
-# now, so a config that still names one is out of date. Say so, once
-# for each key, and carry on.
+# jd 2.5 read the template paths from the config. jd finds them in
+# W0003 now, so a config that still sets one is out of date. Print a
+# warning, once for each key, and continue.
 _jd_new_old_keys() {
   local k
   for k in noteTemplate folderTemplate tasks.template; do
@@ -883,20 +893,20 @@ _jd_new_old_keys() {
   done
 }
 
-# Add $1 to the folders that _jd_new_wp_make makes.
+# Add $1 to the folders that _jd_new_wp_make creates.
 _jd_new_wp_missing() {
   _JD_NEW_WP_MAKE="$_JD_NEW_WP_MAKE${_JD_NEW_WP_MAKE:+
 }$1"
 }
 
-# Make the folders that 'jd new wp' needs and the system does not have,
-# and name each one. They are in $_JD_NEW_WP_MAKE, one per line.
-# $1 'dry' to name them and make nothing.
+# Create the folders that 'jd new wp' requires and the system does not
+# have, and print each one. They are in $_JD_NEW_WP_MAKE, one per line.
+# $1 'dry' to print them and create nothing.
 #
 #   no W0000... folder in the system   the area, and W0003 and W0009
 #                                      in it
-#   no W0000... folder in the JDex     the area. A flat JDex gets no
-#                                      folder: the note goes in its root
+#   no W0000... folder in the JDex     the area, but not in a flat JDex:
+#                                      the note is in its root
 #   no W0003 in the area               W0003, with jd's own template
 #                                      note in it
 #
@@ -908,7 +918,7 @@ _jd_new_wp_make() {
   [ -n "$_JD_NEW_WP_MAKE" ] || return 0
   while IFS= read -r d; do
     if [ "${1-}" != dry ]; then
-      mkdir -p -- "$d" || { _jd_new_fail mkdir_failed "$d" "could not make $d"; return 1; }
+      mkdir -p -- "$d" || { _jd_new_fail mkdir_failed "$d" "could not create $d"; return 1; }
     fi
     _jd_new_say "folder  $d"
   done <<EOF
@@ -930,7 +940,7 @@ EOF
 # JDex has no note for the ID, or more than one. jd reads the note's
 # name, and never writes to the note.
 #
-# The ID can be a folder that holds its own note. Refer to
+# The ID can be a folder that contains its own note. Refer to
 # _jd_new_folder_note. A folder with no such note has no note for the
 # ID.
 _jd_new_parent_note() {
@@ -953,7 +963,8 @@ _jd_new_wp() {
   local jw fw w3 new_w3 folder_tpl notes_ad tasks_ad note_path dir ep
 
   # Both work package areas, found by the start of the number, the same
-  # way nav.sh finds them. A missing one is made later, with the rest.
+  # way nav.sh finds them. A missing one is created later, with the
+  # rest.
   _JD_NEW_WP_MAKE=''
   _JD_NEW_WP_NOTE_TO=''
   _JD_NEW_WP_NOTE_FROM="$_JD_CLI_DIR/templates/$_JD_NEW_WP_TPL.md"
@@ -993,8 +1004,8 @@ _jd_new_wp() {
   [ "$_JD_NEW_USE_TASKS" -eq 1 ] || tasks_ad=none
 
   # The templates folder, W0003, in the filesystem work package area.
-  # If there is none, jd makes it, and copies its own template note
-  # into it. A new area gets W0009, the archive, too.
+  # If there is none, jd creates it, and copies its own template note
+  # into it. In a new area, jd also creates W0009, the archive.
   new_w3=0
   if [ -z "$fw" ]; then
     fw="$_JD_NEW_ROOT/$_JD_NEW_WP_AREA"
@@ -1025,11 +1036,12 @@ _jd_new_wp() {
   _JD_NEW_TASKS_SOURCE=$(_jd_new_cfg '.workPackages.tasks.source')
   _JD_NEW_NOTES_VAULT=$(_jd_new_cfg '.workPackages.notes.vault')
 
-  # --refresh reads the template project out of the task app. It makes
-  # no work package, so it happens before the ID and title are read.
+  # --refresh reads the template project out of the task app. It
+  # creates no work package, so it runs before the ID and title are
+  # read.
   if [ "$_JD_NEW_REFRESH" -eq 1 ]; then
     [ -z "$_JD_NEW_ID" ] || {
-      _jd_new_fail unknown_option '' "--refresh makes no work package, so it takes no ID"
+      _jd_new_fail unknown_option '' "--refresh creates no work package, so it takes no ID"
       return 1
     }
     _jd_new_adapter tasks "$tasks_ad" || return 1
@@ -1049,8 +1061,8 @@ _jd_new_wp() {
   _JD_NEW_NUM=$(_jd_new_next_number "$jw") || return 1
 
   # The number is not in the JDex, but the filesystem may still have a
-  # folder with it. jd does not make a second one. 'W0301+ Extension' is
-  # not W0301.
+  # folder with it. jd does not create a second one. 'W0301+ Extension'
+  # is not W0301.
   dir=$(_jd_nav_find "$fw" 1 a -iname "$_JD_NEW_NUM" -o -iname "$_JD_NEW_NUM *" -o -iname "$_JD_NEW_NUM~*")
   if [ -n "$dir" ]; then
     dir=$(printf '%s' "$dir" | head -1)
@@ -1068,10 +1080,10 @@ _jd_new_wp() {
     return 1
   fi
 
-  # The templates, read now, so that a problem stops the command before
-  # it makes anything.
-  # A W0003 that jd is about to make holds nothing yet, so the note is
-  # read from jd's own template, which is what jd copies into it.
+  # The templates, read now, so that jd exits on a problem before it
+  # creates anything.
+  # A W0003 that jd is about to create contains nothing yet, so the note
+  # is read from jd's own template, which is what jd copies into it.
   folder_tpl=''
   [ -f "$w3/$_JD_NEW_WP_TPL.md" ] && _JD_NEW_TEMPLATE="$w3/$_JD_NEW_WP_TPL.md"
   [ -d "$w3/$_JD_NEW_WP_TPL" ] && folder_tpl="$w3/$_JD_NEW_WP_TPL"
@@ -1087,7 +1099,7 @@ _jd_new_wp() {
   _JD_NEW_TASKS_URL=''
 
   # The link to the ID's own note. jd writes it into the new note, and
-  # does not touch the ID's note: the note app shows the work package
+  # does not write to the ID's note: the note app shows the work package
   # there as a backlink.
   _jd_new_parent_note
   if [ -n "$_JD_NEW_PARENT_NOTE" ]; then
@@ -1097,8 +1109,9 @@ _jd_new_wp() {
   printf 'jd: %s\n' "$_JD_NEW_NAME" >&2
   [ -n "$_JD_NEW_TEMPLATE" ] || _jd_new_no_template 'work package'
 
-  # Only a note that would have had the link is short of it. With no
-  # notes adapter, the line is left out and nothing is wrong.
+  # The warning is only for a note whose template contains
+  # {{PARENT_LINK}}. With no notes adapter, the line is left out and
+  # nothing is wrong.
   if [ -z "$_JD_NEW_PARENT_NOTE" ] && [ "$notes_ad" != none ]; then
     case $_JD_NEW_TEXT in
       *'{{PARENT_LINK}}'*)
@@ -1118,27 +1131,27 @@ _jd_new_wp() {
     _jd_new_say "notes   $notes_ad, $_JD_NEW_NOTES_URL"
     [ -n "$_JD_NEW_PARENT_LINK" ] && _jd_new_say "parent  $_JD_NEW_PARENT_LINK"
     _jd_new_say "tasks   $tasks_ad"
-    _jd_new_say 'nothing was made'
+    _jd_new_say 'nothing was created'
     [ "$_JD_NEW_JSON" -eq 1 ] && _jd_new_emit_ok true "$note_path" "$dir"
     return 0
   fi
 
-  # The folders the system does not have yet. They go first, because
-  # the task app's template is a file in one of them.
+  # The folders the system does not have yet. jd creates them first,
+  # because the task app's template is a file in one of them.
   _jd_new_wp_make || return 1
 
-  # Then the task app. It is the only step that talks to another
-  # program, so it is the only one that fails in a way this cannot
-  # predict. No note and no work package folder is written until it is
+  # Then the task app. It is the only step that calls another program,
+  # so it is the only step that can fail after every check has passed.
+  # No note and no work package folder is written until the step is
   # done. jd_tasks_prepare may write the task app's own template file.
-  # The adapter prints its own message on failure, so this only records
-  # the code.
+  # The adapter prints its own message on failure, so this function only
+  # stores the code.
   if [ "$tasks_ad" != none ]; then
     jd_tasks_prepare || { _JD_NEW_CODE=tasks_prepare_failed; return 1; }
     _JD_NEW_TASKS_URL=$(jd_tasks_create "$_JD_NEW_NAME") || {
       _JD_NEW_CODE=tasks_failed
       _JD_NEW_PATH=''
-      _JD_NEW_MSG='the task app failed to make the work package'
+      _JD_NEW_MSG='the task app failed to create the work package'
       return 1
     }
     _jd_new_say "tasks   $_JD_NEW_TASKS_URL"
@@ -1148,7 +1161,7 @@ _jd_new_wp() {
   _jd_new_write_note "$note_path" || return 1
 
   # The folder, and the contents of the template folder.
-  mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not make $dir"; return 1; }
+  mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not create $dir"; return 1; }
   if [ -n "$folder_tpl" ]; then
     cp -R -- "$folder_tpl/." "$dir/" || {
       _jd_new_fail copy_failed "$folder_tpl" "could not copy $folder_tpl"
@@ -1159,17 +1172,17 @@ _jd_new_wp() {
   _jd_new_say "folder  $dir"
 
   # The task app's own note, now that both links exist. The task app
-  # holds the same '- Related:' block as the JDex note. This is a
+  # contains the same '- Related:' block as the JDex note. This is a
   # warning, not an error: the work package exists, so 'ok' stays true.
   if [ "$tasks_ad" != none ]; then
     jd_tasks_link "$_JD_NEW_TASKS_URL" || {
       _jd_new_warn tasks_link_failed
-      _jd_nav_err "the work package is made, but the task app did not take the links"
+      _jd_nav_err "the work package was created, but the task app did not accept the links"
     }
   fi
 
-  # As for an ID: --json answers with the object and stays put, and
-  # anything else arrives in the new folder.
+  # As for an ID: with --json, jd prints the object and does not change
+  # folder. Without it, jd changes to the new folder.
   if [ "$_JD_NEW_JSON" -eq 1 ]; then
     _jd_new_emit_ok false "$note_path" "$dir"
     return 0

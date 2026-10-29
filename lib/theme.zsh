@@ -16,9 +16,9 @@
 # and the chevrons you type after.
 #
 # It sets PROMPT, whatever PROMPT you had. Sourcing this file is the
-# request, so put the line last, after anything else that touches the
-# prompt. A prompt library usually sets one of its own, and the last one
-# to run wins.
+# request, so put the line last, after anything else that sets the
+# prompt. A prompt library usually sets a prompt of its own, and the
+# last file to set PROMPT takes precedence.
 #
 # To keep a prompt of your own, do not source this file. Put $(_jd_pwd)
 # in your own PROMPT instead, with setopt prompt_subst, and you have the
@@ -30,10 +30,10 @@
 #   JD_CHEVRON1=yellow
 #   JD_CHEVRON2=red
 #
-# Git status is not part of this. The prompt calls gitprompt, and there is
-# a do-nothing gitprompt here so it works without one. For the real thing,
-# load git-prompt.zsh (https://github.com/woefe/git-prompt.zsh) before
-# this file and the prompt picks it up.
+# Git status is not part of this. The prompt calls gitprompt, and there
+# is an empty gitprompt here so the prompt works without one. For git
+# status, load git-prompt.zsh (https://github.com/woefe/git-prompt.zsh)
+# before this file, and the prompt uses it.
 
 if [ -z "${ZSH_VERSION-}" ]; then
   printf 'jd: the prompt theme is zsh only, so it did not load\n' >&2
@@ -54,7 +54,7 @@ if ! typeset -f gitprompt >/dev/null 2>&1; then
   gitprompt() { :; }
 fi
 
-# $(_jd_pwd) and $(gitprompt) run at every prompt, which needs this.
+# $(_jd_pwd) and $(gitprompt) run at every prompt, which requires this.
 setopt prompt_subst
 : ${JD_CHEVRON1:=yellow}
 : ${JD_CHEVRON2:=red}

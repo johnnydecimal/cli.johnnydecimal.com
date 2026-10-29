@@ -2,31 +2,32 @@
 # move.sh - move a file or a folder into an ID, and undo a move
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, which sets
 # $_JD_CLI_VERSION, $_JD_CLI_HELP_URL and $_JD_CLI_DIR, and after
-# lib/paths.sh, which says where the journal is.
+# lib/paths.sh, which returns the path of the journal.
 #
 # It defines _jd_move and _jd_undo, which nav.sh calls for 'jd move' and
 # 'jd undo':
 #
 #   jd move <path> <id>        move the file or folder at <path> into
 #                              the folder for <id>, an ID or a W number
-#   jd move <path> <id>/<sub>  into a subfolder of it, made if need be
-#   jd move ... --as <name>    and give it a new name
+#   jd move <path> <id>/<sub>  into a subfolder of it. jd creates the
+#                              subfolder if it does not exist
+#   jd move ... --as <name>    and rename it
 #   jd undo move               undo the newest move not yet undone
-#   jd undo move <path>        undo the move that put <path> where it is
+#   jd undo move <path>        undo the move to <path>
 #
 # Every move is one line in the journal, journal.jsonl, and so is every
-# undo. The journal is append only. It is what answers 'where did that
-# file go', and it is what makes undo possible. A move that cannot be
-# journaled is not made.
+# undo. The journal is append only. It records where jd moved each
+# file, and 'jd undo move' reads it to undo a move. If jd cannot write
+# to the journal, jd moves nothing.
 #
 # The journal is state, in the XDG sense: it is what this machine did.
 # So it is in $XDG_STATE_HOME/johnnydecimal, and it does not sync.
 #
-# The CLI moves and journals. It decides nothing about where a file
+# The CLI moves and journals. It does not determine where a file
 # belongs, and it writes nothing into the JDex. An agent that files a
 # mess reads the JSON result and writes the note itself.
 #
-# Needs jq. Works in bash 3.2+ and zsh.
+# Requires jq. Works in bash 3.2+ and zsh.
 
 _jd_move_usage() {
   cat <<'EOF'
@@ -41,18 +42,18 @@ usage: <system> move <path> <id>[/<subfolder>] [--as <name>]
 
 It moves the file or folder at <path> into the folder for <id>, and
 prints the new path. <id> is an ID, like 21.34, or a W number, like
-W0189. An ID that is in the JDex but has no folder gets its folder made.
+W0189. If an ID is in the JDex but has no folder, jd creates its folder.
 
-<id>/<subfolder> puts it in a subfolder of the ID's folder, one level
-down. jd makes the subfolder when it does not exist. An undo leaves the
-subfolder in place.
+<id>/<subfolder> moves it into a subfolder of the ID's folder, one level
+down. jd creates the subfolder when it does not exist. An undo does not
+delete the subfolder.
 
---as <name> gives it a new name as it moves. The journal keeps both
-names, in 'from' and 'to', and 'jd undo move' gives the old name back.
+--as <name> renames it in the same move. The journal stores both names,
+in 'from' and 'to', and 'jd undo move' restores the old name.
 
-It refuses, and moves nothing, when:
+It exits with an error, and moves nothing, when:
 
-  - the target folder already holds something with that name. With
+  - the target folder already contains something with that name. With
     --as, the check is on the new name. Pick another name and try again
   - the file is an iCloud stub, a '.name.icloud' file that is not
     downloaded. Download it first. A Dropbox file that is online-only
@@ -65,12 +66,12 @@ It refuses, and moves nothing, when:
     out of it first
 
 Every move is one line in the journal: when, which system, the ID,
-from, to, and whether a person or a program asked. 'jd undo move' reads
-it. 'jd paths journal' prints where the journal is. Nothing is written
-into the JDex.
+from, to, and whether a person or a program ran the command. 'jd undo
+move' reads the journal. 'jd paths journal' prints where the journal
+is. Nothing is written into the JDex.
 
       --as <name>     the new name. --as=<name> works too
-      --dry-run       say what it would do, and move nothing
+      --dry-run       print what it would do, and move nothing
       --json          print one JSON object on stdout instead of the
                        usual lines. { "ok": true, ... } or, on error,
                        { "ok": false, "code": "...", ... }
@@ -84,20 +85,20 @@ usage: <system> undo move [<path>]
   jd undo move                 undo the newest move in this system
                                that is not yet undone
   jd undo move ~/D25/.../invoice.pdf
-                               undo the move that put that path where
-                               it is, whichever system it is in
+                               undo the move to that path, whichever
+                               system it is in
 
 It reads the journal, moves the file or folder back to where it came
 from, and prints that path. The undo is one more line in the journal.
 The journal is never edited. 'jd paths journal' prints where the
 journal is.
 
-It refuses, and moves nothing, when:
+It exits with an error, and moves nothing, when:
 
-  - the moved thing is no longer where jd put it
+  - the moved thing is no longer where jd moved it
   - something else is now where it came from
 
-      --dry-run       say what it would do, and move nothing
+      --dry-run       print what it would do, and move nothing
       --json          print one JSON object on stdout instead of the
                        usual lines
 EOF
@@ -105,12 +106,12 @@ EOF
 
 # ------------------------------------------------------------ small parts
 
-# Say what happened, on stderr, so that stdout stays the new path.
+# Print what happened, on stderr, so that stdout stays the new path.
 _jd_move_say() { printf '     %s\n' "$*" >&2; }
 
 # Record an error's code and path for --json, then print it the normal
 # way. $1 code, $2 path this error is about (may be empty), $3+ the
-# message. Always returns 1, so a caller still needs its own 'return 1'.
+# message. Always returns 1, so a caller must still run 'return 1'.
 _jd_move_fail() {
   _JD_MOVE_CODE=$1
   _JD_MOVE_PATH=$2
@@ -119,9 +120,8 @@ _jd_move_fail() {
   _jd_nav_err "$@"
 }
 
-# The absolute path of $1, with no trailing slash. The folder above it
-# has to exist, or there is nothing to make absolute. Prints nothing and
-# returns 1 if it does not.
+# The absolute path of $1, with no trailing slash. The folder above $1
+# must exist. If it does not, this prints nothing and returns 1.
 _jd_move_abs() {
   local p=$1 d b
   case $p in
@@ -136,8 +136,8 @@ _jd_move_abs() {
   esac
 }
 
-# Who asked. The shell hook sets JD_HOOK, and a person types into the
-# shell. Anything else is a program: a script, cron, an agent.
+# Who ran the command. The shell hook sets JD_HOOK, and a person types
+# into the shell. Anything else is a program: a script, cron, an agent.
 _jd_move_by() {
   if [ -n "${JD_HOOK-}" ]; then printf 'person'; else printf 'program'; fi
 }
@@ -146,12 +146,14 @@ _jd_move_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 _jd_move_host() { uname -n 2>/dev/null; }
 
-# The journal has to take a line before anything moves. Make its folder,
-# then check the write. $1 the journal path.
+# jd must be able to write a line to the journal before anything moves.
+# Create its folder, then check that the journal is writable. $1 the
+# journal path.
 #
-# The folder is made with mode 700, and so is every folder above it that
-# is missing. The XDG spec asks that of a program that makes one. The
-# umask is in a subshell, so it is gone when the folder is made.
+# The folder is created with mode 700, and so is every folder above it
+# that is missing. The XDG spec requires that of a program that creates
+# one. The umask is set in a subshell, so it has no effect after the
+# folder is created.
 _jd_move_journal_ready() {
   local j=$1 d
   d=$(dirname -- "$j")
@@ -181,11 +183,11 @@ _jd_move_journal_append() {
 }
 
 # The folder for an ID or a W number in the filesystem, in
-# $_JD_MOVE_FOLDER. $1 root, $2 jdex, $3 the ID. An ID in the JDex with
-# no folder gets its folder made, as 'jd 21.34' does. It sets a variable
-# and does not print, so that a caller need not run it in a subshell,
-# where the error code would be lost. Returns 1 when there is no one
-# folder.
+# $_JD_MOVE_FOLDER. $1 root, $2 jdex, $3 the ID. For an ID in the JDex
+# with no folder, it creates the folder, as 'jd 21.34' does. It sets a
+# variable and does not print, so that a caller need not run it in a
+# subshell, where the error code would be lost. Returns 1 when there is
+# no one folder.
 _jd_move_folder() {
   local root=$1 jdex=$2 id=$3 m n
   _JD_MOVE_FOLDER=''
@@ -306,8 +308,8 @@ _jd_move_reset() {
 # set $_JD_MOVE_AS. $@ the words.
 _jd_move_words() {
   local end=0 w
-  # --json first, so that a bad word still gets the JSON error it asked
-  # for. Only up to '--': after that every word is a path or an ID.
+  # --json first, so that jd prints a JSON error for a bad word too. Only
+  # up to '--': after that every word is a path or an ID.
   for w in "$@"; do
     case $w in
       --) break ;;
@@ -323,7 +325,7 @@ _jd_move_words() {
         --json) _JD_MOVE_JSON=1; shift; continue ;;
         --as=*) _JD_MOVE_AS=${1#--as=}; _JD_MOVE_AS_SET=1; shift; continue ;;
         --as)
-          [ $# -gt 1 ] || { _jd_move_fail no_value '' "'--as' needs a name: --as \"...\""; return 1; }
+          [ $# -gt 1 ] || { _jd_move_fail no_value '' "'--as' requires a name: --as \"...\""; return 1; }
           _JD_MOVE_AS=$2
           _JD_MOVE_AS_SET=1
           shift 2
@@ -342,12 +344,13 @@ _jd_move_words() {
   done
 }
 
-# The checks both commands make before anything else: jq and the
+# The checks that both commands run before anything else: jq and the
 # journal.
 #
-# This is also where a journal that is still in ~/.jd, the old place,
-# gets its one line. It is said here so that it comes once for a
-# command that will use the journal, and never with the help.
+# This is also where jd prints the one line about a journal that is
+# still in ~/.jd, the old place. The line is printed here, so that it is
+# printed once for a command that uses the journal, and never with the
+# help.
 _jd_move_gate() {
   command -v jq >/dev/null 2>&1 || { _jd_move_fail no_jq '' "jq is not installed"; return 1; }
   _jd_paths_note journal
@@ -358,9 +361,9 @@ _jd_move_gate() {
 }
 
 # Move $_JD_MOVE_FROM to $_JD_MOVE_TO, then journal it. The move comes
-# first, so that the journal never claims a move that did not happen.
-# If the journal then cannot take the line, the thing has moved and the
-# line is printed on stderr, so it is not lost.
+# first, so that the journal never records a move that did not happen.
+# If jd then cannot write the line to the journal, the thing has moved,
+# and jd prints the line on stderr, so that the line is not lost.
 _jd_move_do() {
   local line
   mv -- "$_JD_MOVE_FROM" "$_JD_MOVE_TO" || {
@@ -400,7 +403,7 @@ _jd_move_check_name() {
   case $2 in
     '') _jd_move_fail bad_name '' "the $1 is empty"; return 1 ;;
     . | ..) _jd_move_fail bad_name '' "'$2' cannot be a $1"; return 1 ;;
-    */*) _jd_move_fail bad_name '' "a $1 cannot hold '/': '$2'"; return 1 ;;
+    */*) _jd_move_fail bad_name '' "a $1 cannot contain '/': '$2'"; return 1 ;;
   esac
 }
 
@@ -431,8 +434,8 @@ _jd_move_inner() {
   [ -n "$src" ] || { _jd_move_usage >&2; _jd_move_fail no_path '' "say what to move, and where: jd move <path> <id>"; return 1; }
   [ -n "$id" ] || { _jd_move_fail no_id '' "say where to move it: jd move <path> <id>"; return 1; }
 
-  # '21.34/Bank statements' is the ID, then one subfolder. One level is
-  # all there is for now, so a second '/' is refused, not made.
+  # '21.34/Bank statements' is the ID, then one subfolder. Only one level
+  # is supported for now, so jd rejects a second '/'.
   sub=''
   case $id in
     */*)
@@ -446,7 +449,7 @@ _jd_move_inner() {
     _jd_move_check_name 'new name' "$_JD_MOVE_AS" || return 1
   fi
 
-  # The source. A stub is refused before anything is looked up.
+  # The source. jd rejects a stub before any search.
   name=$(basename -- "${src%/}")
   case $name in
     .*.icloud)
@@ -455,8 +458,8 @@ _jd_move_inner() {
       ;;
   esac
   # A path that ends in '/' means something in that folder, not the
-  # folder. "$dir/$name" with an empty $name ends in '/' this way. So it
-  # is refused, though the folder exists.
+  # folder. "$dir/$name" with an empty $name ends in '/' this way. So jd
+  # rejects it, though the folder exists.
   case $src in
     */)
       _jd_move_fail ends_in_slash "$src" "$src ends in '/' - check the path. To move the folder, leave the '/' off"
@@ -477,10 +480,11 @@ _jd_move_inner() {
     _JD_MOVE_KIND=file
   fi
 
-  # The folder we are in, or one that holds it, is refused. It moves
-  # the shell with it, and it is almost never what was meant: "$PWD/$f"
-  # with an empty $f names it. The check is on both the logical and the
-  # physical path, so a symlink on the way in does not hide it.
+  # jd rejects the current folder, or a folder that contains it. A move
+  # of that folder moves the shell's working folder too, and that is
+  # almost never what the user meant: "$PWD/$f" with an empty $f names
+  # it. The check is on both the logical and the physical path, so it
+  # also detects the folder through a symlink.
   if [ "$_JD_MOVE_KIND" = folder ] && _jd_move_holds_cwd "$_JD_MOVE_FROM"; then
     _jd_move_fail holds_cwd "$_JD_MOVE_FROM" "you are in $_JD_MOVE_FROM, or in a folder inside it - check the path. To move it, cd out of it first"
     return 1
@@ -504,8 +508,8 @@ _jd_move_inner() {
       ;;
   esac
 
-  # The subfolder. One that exists must be a folder. One that does not
-  # is made, after the checks and before the move.
+  # The subfolder. One that exists must be a folder. jd creates one that
+  # does not, after the checks and before the move.
   _JD_MOVE_MKDIR=''
   if [ -n "$sub" ]; then
     folder="$folder/$sub"
@@ -522,7 +526,7 @@ _jd_move_inner() {
   [ "$_JD_MOVE_AS_SET" -eq 1 ] && name=$_JD_MOVE_AS
   _JD_MOVE_TO="$folder/$name"
 
-  # A thing that is already there has nowhere to go.
+  # A thing that is already at the target cannot move there.
   if [ "$_JD_MOVE_FROM" = "$_JD_MOVE_TO" ]; then
     _jd_move_fail exists "$_JD_MOVE_TO" "$name is already in $folder"
     return 1
@@ -535,7 +539,7 @@ _jd_move_inner() {
   _JD_MOVE_BY=$(_jd_move_by)
   printf 'jd: move %s\n' "$(basename -- "$_JD_MOVE_FROM")" >&2
   _jd_move_say "from    $_JD_MOVE_FROM"
-  [ -n "$_JD_MOVE_MKDIR" ] && _jd_move_say "makes   $_JD_MOVE_MKDIR"
+  [ -n "$_JD_MOVE_MKDIR" ] && _jd_move_say "creates $_JD_MOVE_MKDIR"
   _jd_move_say "to      $_JD_MOVE_TO"
   [ "$_JD_MOVE_AS_SET" -eq 1 ] && _jd_move_say "as      $_JD_MOVE_AS"
 
@@ -547,7 +551,7 @@ _jd_move_inner() {
 
   if [ -n "$_JD_MOVE_MKDIR" ]; then
     mkdir -- "$_JD_MOVE_MKDIR" || {
-      _jd_move_fail mkdir_failed "$_JD_MOVE_MKDIR" "could not make $_JD_MOVE_MKDIR"
+      _jd_move_fail mkdir_failed "$_JD_MOVE_MKDIR" "could not create $_JD_MOVE_MKDIR"
       return 1
     }
   fi
@@ -581,10 +585,10 @@ _jd_undo() {
 # system.
 #
 # A move is undone when a later line has 'undoes' set to its 'at' and
-# comes from where it went to. Only a later line: 'at' is to the second,
-# so a move, its undo, and the same move again can share one 'at'. An
-# undo line is never a candidate: undo of an undo is a new move, not a
-# thing this does.
+# 'from' set to its 'to'. Only a later line: 'at' is to the second, so a
+# move, its undo, and the same move again can share one 'at'. An undo
+# line is never a candidate: undo of an undo is a new move, not a thing
+# this function does.
 _jd_undo_find() {
   jq -cs --arg sys "$2" --arg path "$3" '
     . as $all
@@ -610,7 +614,7 @@ _jd_undo_inner() {
     return 0
   fi
   if [ "$_JD_MOVE_AS_SET" -eq 1 ]; then
-    _jd_move_fail unknown_option '' "'--as' is for 'jd move' only - an undo gives the old name back"
+    _jd_move_fail unknown_option '' "'--as' is for 'jd move' only - an undo restores the old name"
     return 1
   fi
   case $noun in
@@ -665,7 +669,7 @@ _jd_undo_inner() {
     return 1
   fi
   if [ -e "$_JD_MOVE_TO" ] || [ -L "$_JD_MOVE_TO" ]; then
-    _jd_move_fail source_exists "$_JD_MOVE_TO" "something else is now at $_JD_MOVE_TO, so $name cannot go back"
+    _jd_move_fail source_exists "$_JD_MOVE_TO" "something else is now at $_JD_MOVE_TO, so jd cannot move $name back"
     return 1
   fi
   from_dir=$(dirname -- "$_JD_MOVE_TO")

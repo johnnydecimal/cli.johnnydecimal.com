@@ -3,13 +3,13 @@
 #
 # A conformance corpus is one set of input lines plus the parse every
 # implementation must produce for them. The point is that the same data
-# file drives more than one implementation of the same grammar - a bash
-# regex here, an awk program, a TypeScript parser in an Obsidian plugin -
-# so they cannot drift apart.
+# file is the input to more than one implementation of the same grammar
+# - a bash regex here, an awk program, a TypeScript parser in an Obsidian
+# plugin - so all of them must return the same parse.
 #
 # The check-in / check-out line grammar is the first user of this. Its
-# corpus is not written yet. This file is the seam it drops into: when
-# the data file arrives, no new shell code is needed.
+# corpus is not written yet. This file is the seam for that corpus: when
+# the data file is added, no new shell code is required.
 #
 # The data file
 # -------------
@@ -27,13 +27,13 @@
 # Path:   test/corpus/<name>.parse.sh
 # It must define one function:
 #           _jd_corpus_parse "<input line>"
-#         which prints the parse it got as tab separated fields, on one
+#         which prints the parse as tab separated fields, on one
 #         line, and returns 0. A line it rejects should print nothing and
 #         return non-zero; write that in the data file as a row with no
 #         expected fields.
 #
 # Every other implementation reads the same .tsv with its own runner.
-# Keep the data file the only place the cases live.
+# Keep the cases in the data file and nowhere else.
 
 # Read one corpus and check every row. $1 the .tsv, $2 a label for
 # messages. The parser must already be sourced.
