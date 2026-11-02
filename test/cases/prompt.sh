@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
-# prompt.sh - the zsh prompt path, _jd_pwd
+# prompt.sh - the prompt path, _jd_pwd
 #
-# _jd_pwd is zsh only, so under bash this file is skipped. jd.sh loads
-# lib/prompt.zsh under zsh only, which is the behaviour being relied on.
+# jd.sh loads lib/prompt.zsh under zsh and lib/prompt.bash under bash.
+# The two must print the same path, so every test here runs in both.
 #
 # _jd_pwd anchors at the deepest numbered folder. Everything above the
 # anchor is printed as an ellipsis. Outside every system it prints the
@@ -15,17 +15,6 @@
 
 . "$JD_T_REPO/test/lib/harness.sh"
 . "$JD_T_REPO/test/lib/fixtures.sh"
-
-if [ -z "${ZSH_VERSION-}" ]; then
-  _jd_t_skipped 'zsh prompt: _jd_pwd' 'zsh only, and this is bash'
-  if command -v _jd_pwd >/dev/null 2>&1; then
-    _jd_t_bad 'zsh prompt: bash does not define _jd_pwd' \
-      'no _jd_pwd in bash' '_jd_pwd is defined'
-  else
-    _jd_t_ok 'zsh prompt: bash does not define _jd_pwd'
-  fi
-  _jd_t_summary
-fi
 
 _jd_fx_build
 mkdir -p "$HOME/somewhere"
@@ -80,5 +69,13 @@ _jd_t_load "$JD_T_TMP/nothing-here.json"
 _jd_t_run_from "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" _jd_pwd
 _jd_t_eq 'prompt: with no config it prints the ordinary path' \
   "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" "$JD_T_OUT"
+
+# A folder name with characters that a pattern treats as special. The
+# root is compared as a string, not as a pattern.
+_jd_fx_config_two "$JD_T_TMP/two.json"
+_jd_t_load "$JD_T_TMP/two.json"
+mkdir -p "$HOME/a*b [c]"
+_jd_t_run_from "$HOME/a*b [c]" _jd_pwd
+_jd_t_eq 'prompt: a folder name with * and [ ] below home' '~/a*b [c]' "$JD_T_OUT"
 
 _jd_t_summary

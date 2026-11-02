@@ -48,8 +48,8 @@ The format is close to TAP.
 - `ok N - name` – it passed.
 - `not ok N - name` – it failed. The next lines name the file and the
   shell, the expected value, and the actual value.
-- `ok N - name # SKIP reason` – it did not apply here, for example a zsh
-  prompt test under bash.
+- `ok N - name # SKIP reason` – it did not apply here, for example a fish
+  test on a machine with no fish.
 - `ok N - name # TODO known bug: ...` – see [Known bugs](#known-bugs).
 
 The last block totals every case run and prints `PASS` or `FAIL`.
@@ -74,10 +74,11 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |
 | `cases/new.sh` | `jd new wp`, and what every `jd new` shares: the noun and help. |
 | `cases/new-id.sh` | `jd new id`: the next free ID, and the ID template search. |
-| `cases/prompt.sh` | `_jd_pwd`, the zsh prompt path. |
+| `cases/prompt.sh` | `_jd_pwd`, the prompt path, in zsh and in bash. |
 | `cases/setup.sh` | `jd agent-setup`, the prompt for your agent, and the `no config` error that names it. |
 | `cases/tree.sh` | The match list, when a search finds more than one thing. |
-| `cases/theme.sh` | The whole-prompt theme, `lib/theme.zsh`. |
+| `cases/theme.sh` | The whole-prompt theme for zsh, `lib/theme.zsh`. |
+| `cases/theme-bash.sh` | The whole-prompt theme for bash, `lib/theme.bash`. |
 | `cases/regressions.sh` | One test for every bug in the changelog. |
 | `cases/version-usage.sh` | `jd version` and `jd help`. |
 

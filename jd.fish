@@ -7,8 +7,8 @@
 # The tool itself is bin/jd, a program. Anything can run it: a script,
 # cron, an agent, another program. This file does only what a separate
 # process cannot do for you: change the directory of the shell you are
-# typing in. There is no fish port of the zsh prompt (lib/theme.zsh);
-# jd.sh does not load it outside zsh either.
+# typing in. There is no fish port of the prompt path (lib/prompt.zsh,
+# lib/prompt.bash) or of the theme (lib/theme.zsh, lib/theme.bash).
 #
 # It defines jd, jdex, and one command per system in your config, named
 # by its lowercase sys id: d25, p76. Each one runs bin/jd and changes to

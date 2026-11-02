@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # prompt.zsh - Johnny.Decimal prompt path for zsh
 # Part of the Johnny.Decimal command line. Loaded by jd.sh under zsh only.
+# The bash version is lib/prompt.bash, and the two print the same path.
 #
 # Use $(_jd_pwd) in your PROMPT in place of %~. Outside a Johnny.Decimal
 # system it prints the normal path. Inside one it anchors at the deepest

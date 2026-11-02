@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
-# theme.sh - the whole-prompt theme, lib/theme.zsh
+# theme.sh - the whole-prompt theme for zsh, lib/theme.zsh
 #
-# The theme is zsh only, and jd.sh does not load it. The user sources it.
-# So these tests source it by hand, the way a .zshrc does, and read
+# cases/theme-bash.sh tests lib/theme.bash. jd.sh does not load either.
+# The user sources it. So these tests source it by hand, the way a .zshrc does, and read
 # PROMPT afterwards.
 #
 # The requirement: sourcing it sets PROMPT, whatever PROMPT was there.
@@ -38,7 +38,7 @@ _jd_th_forget() {
 if [ -z "${ZSH_VERSION-}" ]; then
   PROMPT='%m%# '
   _jd_th_source
-  _jd_t_contains 'theme: in bash it prints that it is zsh only' 'zsh only' "$JD_T_ERR"
+  _jd_t_contains 'theme: in bash it names the bash theme' 'lib/theme.bash' "$JD_T_ERR"
   _jd_t_eq 'theme: in bash PROMPT does not change' '%m%# ' "$PROMPT"
   _jd_t_summary
 fi

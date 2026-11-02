@@ -7,15 +7,16 @@
 # The tool itself is bin/jd, a program. Anything can run it: a script,
 # cron, an agent, another program. This file does only the two things a
 # separate process cannot do for you: change the directory of the shell
-# you are typing in, and draw the zsh prompt.
+# you are typing in, and define the prompt path, _jd_pwd.
 #
 # It defines jd, jdex, and one command per system in your config, named
 # by its lowercase sys id: d25, p76. Each one runs bin/jd and changes to
 # the folder that the program prints. This file also adds bin to $PATH,
 # so that a script started from this shell finds jd too.
 #
-# It loads nothing else from lib, except lib/prompt.zsh under zsh. It
-# does not resolve where the config is: it runs 'jd paths config'.
+# It loads nothing else from lib, except lib/prompt.zsh under zsh and
+# lib/prompt.bash under bash. It does not resolve where the config is:
+# it runs 'jd paths config'.
 #
 # Requires jq. Works in bash 3.2+ and zsh.
 
@@ -120,6 +121,8 @@ _jd_hook_def jdex jdex
 # reads $_jd_hook_cfg as it loads, which is why the unset comes after.
 if [ -n "${ZSH_VERSION-}" ]; then
   . "$_jd_hook_dir/lib/prompt.zsh"
+elif [ -n "${BASH_VERSION-}" ]; then
+  . "$_jd_hook_dir/lib/prompt.bash"
 fi
 
 unset _jd_hook_self _jd_hook_dir _jd_hook_bin _jd_hook_cfg _jd_hook_n \

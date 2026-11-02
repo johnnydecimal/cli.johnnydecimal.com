@@ -24,7 +24,7 @@
 #   W0212~21.35 ...        the normal work package form. 2.0.4 fixed it.
 #   W0212+ Kettle child    another extend-the-end. 'jd W0212' must not
 #                          find it, and neither must the word search.
-#   notes                  a folder with no number, for the zsh prompt
+#   notes                  a folder with no number, for the prompt
 #   12.99 Made by jd.md    in the JDex only, so jd creates its folder
 #   19.99 No category.md   in the JDex only, and its category is missing
 #   W0300~21.35 ...        in the JDex only, so jd creates its folder

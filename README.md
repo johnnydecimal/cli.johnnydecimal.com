@@ -54,21 +54,31 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    source ~/.local/share/johnnydecimal/cli/jd.fish
    ```
 
-   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and changes to the folder that the program prints. In zsh it also loads the prompt.
+   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and changes to the folder that the program prints. In zsh and bash it also defines `_jd_pwd`, the prompt path.
 
-5. For the zsh prompt, add one of these two to `.zshrc`, after the `source` line.
+5. For the prompt, add one of these two to `.zshrc` or `.bashrc`, after the `source` line. There is no prompt for fish.
 
-   A prompt of your own, with the Johnny.Decimal path in it. `_jd_pwd` requires single quotes, or `prompt_subst`:
+   A prompt of your own, with the Johnny.Decimal path in it. In zsh, `_jd_pwd` requires single quotes, or `prompt_subst`:
 
    ```zsh
    setopt prompt_subst
    PROMPT='%B$(_jd_pwd)%b %# '
    ```
 
-   Or Johnny's prompt. It sets `PROMPT`, so put the line after all other lines that set `PROMPT`. Refer to [The prompt theme](#the-prompt-theme):
+   In bash, `_jd_pwd` requires single quotes:
+
+   ```bash
+   PS1='\[\e[1m\]$(_jd_pwd)\[\e[0m\] \$ '
+   ```
+
+   Or Johnny's prompt. It sets `PROMPT` in zsh and `PS1` in bash, so put the line after all other lines that set the prompt. Refer to [The prompt theme](#the-prompt-theme):
 
    ```zsh
    source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
+   ```
+
+   ```bash
+   source ~/.local/share/johnnydecimal/cli/lib/theme.bash
    ```
 
 6. Start a new shell.
@@ -109,7 +119,7 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
 
 ## The prompt theme
 
-`lib/theme.zsh` is Johnny's prompt. It is for zsh only. `jd.sh` does not load it.
+`lib/theme.zsh` is Johnny's prompt, and `lib/theme.bash` is the same prompt for bash. `jd.sh` does not load either.
 
 ```
 ┏╸D25:…/11.11 Structure & registrations
@@ -122,6 +132,12 @@ Add this line to `.zshrc`, after all other lines that set `PROMPT`:
 source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
 ```
 
+Or add this line to `.bashrc`, after all other lines that set `PS1`:
+
+```bash
+source ~/.local/share/johnnydecimal/cli/lib/theme.bash
+```
+
 - Chevron colours. The prompt reads these variables at each prompt, so put them before or after the source line:
 
   ```zsh
@@ -129,7 +145,10 @@ source ~/.local/share/johnnydecimal/cli/lib/theme.zsh
   JD_CHEVRON2=red
   ```
 
-- For git status, load [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme. If it is not loaded, the theme's own `gitprompt` function operates and prints nothing.
+  In bash, a colour is one of `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `default`, or a number from 0 to 255.
+
+- For git status in zsh, load [git-prompt.zsh](https://github.com/woefe/git-prompt.zsh) before the theme. In bash, load git's own [git-prompt.sh](https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh), before or after the theme. The theme calls its `__git_ps1`. If neither is loaded, the theme's own `gitprompt` function prints nothing.
+- In bash, the theme adds `_jd_theme_rc=$?` to the start of `PROMPT_COMMAND`. That is how the prompt reads the exit status of the last command.
 - The symbols require a font that contains box-drawing characters.
 
 ## Where jd stores its files
@@ -178,7 +197,7 @@ All the tools read one configuration file. Refer to [Where jd stores its files](
 
 The program reads the configuration each time it runs, so a system that has moved takes effect at once.
 
-Two things are read at shell start, and require a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the zsh prompt.
+Two things are read at shell start, and require a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the prompt path.
 
 Refer to [johnnydecimal.com/documentation/configuration](https://johnnydecimal.com/documentation/configuration) for the fields.
 

@@ -99,27 +99,24 @@ _jd_t_at '2.0.2: and by name too' "$JD_FX_ROOT"
 # ============================================================== 2.0.3
 # _jd_pwd read config rows with `IFS=$'\t' read a b`, which discards a
 # leading empty field, so a system with no sys had no root as well and
-# the prompt printed the whole path. zsh only: there is no bash prompt.
+# the prompt printed the whole path. lib/prompt.bash reads the rows the
+# same way, so this runs in both shells.
 
-if [ -n "${ZSH_VERSION-}" ]; then
-  _jd_t_load "$JD_T_TMP/single-nosys.json"
+_jd_t_load "$JD_T_TMP/single-nosys.json"
 
-  _jd_t_run_from "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" _jd_pwd
-  _jd_t_eq '2.0.3: _jd_pwd shortens for a system with no sys' \
-    '…/11.11 First ID' "$JD_T_OUT"
+_jd_t_run_from "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" _jd_pwd
+_jd_t_eq '2.0.3: _jd_pwd shortens for a system with no sys' \
+  '…/11.11 First ID' "$JD_T_OUT"
 
-  _jd_t_run_from "$JD_FX_ROOT" _jd_pwd
-  _jd_t_eq '2.0.3: and at the root of a system with no sys' '~' "$JD_T_OUT"
+_jd_t_run_from "$JD_FX_ROOT" _jd_pwd
+_jd_t_eq '2.0.3: and at the root of a system with no sys' '~' "$JD_T_OUT"
 
-  # With a sys, the same places have the label.
-  _jd_fx_config_single "$JD_T_TMP/single.json"
-  _jd_t_load "$JD_T_TMP/single.json"
+# With a sys, the same places have the label.
+_jd_fx_config_single "$JD_T_TMP/single.json"
+_jd_t_load "$JD_T_TMP/single.json"
 
-  _jd_t_run_from "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" _jd_pwd
-  _jd_t_eq '2.0.3: with a sys the label is printed' \
-    'D25:…/11.11 First ID' "$JD_T_OUT"
-else
-  _jd_t_skipped '2.0.3: _jd_pwd shortens for a system with no sys' 'zsh only'
-fi
+_jd_t_run_from "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11 First ID" _jd_pwd
+_jd_t_eq '2.0.3: with a sys the label is printed' \
+  'D25:…/11.11 First ID' "$JD_T_OUT"
 
 _jd_t_summary

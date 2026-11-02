@@ -661,31 +661,31 @@ else
 fi
 _jd_t_eq 'hook: no config, loading prints nothing' '' "$JD_T_LOADERR"
 
-# The zsh prompt reads the same config, through the hook.
-if [ -z "${ZSH_VERSION-}" ]; then
-  _jd_t_skipped 'zsh prompt: finds the config with no $JD_CONFIG' 'zsh only, and this is bash'
-else
-  _jd_t_wipe
-  _jd_t_put _jd_fx_config_two "$_jd_t_new"
-  _jd_t_hook
-  _jd_t_run_from "$JD_FX_ROOT" _jd_pwd
-  _jd_t_eq 'zsh prompt: a config in ~/.config' 'D25:~' "$JD_T_OUT"
+# The prompt reads the same config, through the hook, in both shells.
+_jd_t_wipe
+_jd_t_put _jd_fx_config_two "$_jd_t_new"
+_jd_t_hook
+_jd_t_run_from "$JD_FX_ROOT" _jd_pwd
+_jd_t_eq 'prompt: a config in ~/.config' 'D25:~' "$JD_T_OUT"
 
-  _jd_t_wipe
-  _jd_t_put _jd_fx_config_two "$_jd_t_old"
-  _jd_t_hook
-  _jd_t_run_from "$JD_FX_ROOT" _jd_pwd
-  _jd_t_eq 'zsh prompt: a config in ~/.jd, the old place' 'D25:~' "$JD_T_OUT"
+_jd_t_wipe
+_jd_t_put _jd_fx_config_two "$_jd_t_old"
+_jd_t_hook
+_jd_t_run_from "$JD_FX_ROOT" _jd_pwd
+_jd_t_eq 'prompt: a config in ~/.jd, the old place' 'D25:~' "$JD_T_OUT"
 
-  # Sourced on its own, with no jd.sh before it, the file calls the
-  # program itself.
-  _jd_t_wipe
-  _jd_t_put _jd_fx_config_second_only "$_jd_t_new"
-  unset -f _jd_pwd
+# Sourced on its own, with no jd.sh before it, the file calls the
+# program itself.
+_jd_t_wipe
+_jd_t_put _jd_fx_config_second_only "$_jd_t_new"
+unset -f _jd_pwd
+if [ -n "${ZSH_VERSION-}" ]; then
   . "$JD_T_REPO/lib/prompt.zsh"
-  _jd_t_run_from "$JD_FX_ROOT2" _jd_pwd
-  _jd_t_eq 'zsh prompt: sourced on its own, it still finds the config' 'P76:~' "$JD_T_OUT"
+else
+  . "$JD_T_REPO/lib/prompt.bash"
 fi
+_jd_t_run_from "$JD_FX_ROOT2" _jd_pwd
+_jd_t_eq 'prompt: sourced on its own, it still finds the config' 'P76:~' "$JD_T_OUT"
 
 _jd_t_wipe
 _jd_t_summary

@@ -11,7 +11,7 @@
 # rest do, and the 'no config' error names it.
 #
 # The prompt is the one source for setup: the systems, the config file,
-# the source line in the rc file, the optional zsh prompt, and the
+# the source line in the rc file, the optional prompt, and the
 # optional "workPackages" block that 'jd new wp' reads. The install_cli
 # tool of the johnnydecimal.com MCP server returns steps for the agent:
 # clone this repo, then run 'jd agent-setup'. Nothing else contains
@@ -146,7 +146,7 @@ $_JD_SETUP_MOVE
 
 7. Check your work. Run $_JD_CLI_DIR/bin/jd with no words. It should print the root folder of my default system. Then tell me to open a new shell, and to run 'jd' there.
 
-8. Ask me whether I want the Johnny.Decimal path in my zsh prompt. There are two ways: _jd_pwd in the prompt I have, or Johnny's whole theme in place of it. The README section "The prompt theme" contains the steps. The theme sets PROMPT, whatever PROMPT I had, with no check. So ask first, and say what the theme replaces: my own PROMPT, starship, powerlevel10k, or an oh-my-zsh theme. Do not add either unless I say yes. If I keep my own prompt, tell me that _jd_pwd is available and let me place it.
+8. If my shell is zsh or bash, ask me whether I want the Johnny.Decimal path in my prompt. There is no prompt for fish. There are two ways: _jd_pwd in the prompt I have, or Johnny's whole theme in place of it. The README section "The prompt theme" contains the steps. The theme sets PROMPT in zsh and PS1 in bash, whatever prompt I had, with no check. So ask first, and say what the theme replaces: my own prompt, starship, powerlevel10k, an oh-my-zsh theme, or an oh-my-bash theme. Do not add either unless I say yes. If I keep my own prompt, tell me that _jd_pwd is available and let me place it.
 
 9. Ask me whether I want jd to create work packages. A work package is one piece of work with a number, like W0001. The command 'jd new wp' creates a note for it in my JDex and a folder for it in my system. If I say no, skip this step. If I say yes, do this for each system that I name:
 

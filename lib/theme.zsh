@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # theme.zsh - the whole Johnny.Decimal prompt for zsh
 # Part of the Johnny.Decimal command line. jd.sh does NOT load this file.
+# The bash version is lib/theme.bash, and the two draw the same prompt.
 # You source it yourself, after jd.sh:
 #
 #   source ~/.local/share/johnnydecimal/cli/jd.sh
@@ -36,7 +37,7 @@
 # before this file, and the prompt uses it.
 
 if [ -z "${ZSH_VERSION-}" ]; then
-  printf 'jd: the prompt theme is zsh only, so it did not load\n' >&2
+  printf 'jd: lib/theme.zsh is for zsh. In bash, source lib/theme.bash\n' >&2
   return 0
 fi
 

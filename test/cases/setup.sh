@@ -46,8 +46,10 @@ _jd_t_contains 'no config: the prompt instructs never to add the source line twi
   'Never add the line twice' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt instructs to resolve a symlinked rc file' \
   'symlink' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt states that the theme replaces PROMPT' \
-  'whatever PROMPT' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt states that the theme replaces the prompt' \
+  'whatever prompt I had' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names PS1 for bash' \
+  'PS1 in bash' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt names config.fish for fish' \
   'config.fish' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt instructs never to overwrite a file' \
