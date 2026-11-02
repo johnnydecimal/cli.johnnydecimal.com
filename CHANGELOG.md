@@ -7,6 +7,29 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 4.4.0 – 2026-11-02
+
+> AI generated. Reviewed by Johnny.
+
+The Johnny.Decimal prompt path and Johnny's prompt theme now work in bash. To use them, add a line to `.bashrc`.
+
+### Features
+
+- In bash, `jd.sh` now defines `_jd_pwd`, the Johnny.Decimal path for your prompt. Before, only zsh had it. Put it in `PS1` in single quotes:
+
+      PS1='\[\e[1m\]$(_jd_pwd)\[\e[0m\] \$ '
+
+- `lib/theme.bash` is Johnny's two-line prompt for bash. Add this line to `.bashrc`, after all other lines that set `PS1`:
+
+      source ~/.local/share/johnnydecimal/cli/lib/theme.bash
+
+  It sets `PS1`. It adds `_jd_theme_rc=$?` to the start of `PROMPT_COMMAND`, so that the prompt can show the exit status of the last command. `JD_CHEVRON1` and `JD_CHEVRON2` set the chevron colours, as in zsh. For git status, load git's own `git-prompt.sh`: the theme calls its `__git_ps1`.
+- The prompt from `jd agent-setup` now offers the prompt to bash users too.
+
+### Fixes
+
+- In bash 5.2 and later, `jd new wp` with the `things` adapter fills in the Things template correctly. Before, a note link that contains `&`, or a title that contains `\`, made a template that was wrong or was not JSON. This affected macOS when Homebrew's bash 5.2 or later is first in `PATH`. The bash 3.2 that macOS includes was not affected.
+
 ## 4.3.1 – 2026-10-29
 
 > AI generated. Reviewed by Johnny.
