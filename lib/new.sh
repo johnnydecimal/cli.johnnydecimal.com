@@ -337,14 +337,19 @@ _jd_new_fill() {
     tu=$(_jd_new_jstr "$tu")
     pl=$(_jd_new_jstr "$pl")
   fi
-  t=${t//"{{NAME}}"/$nm}
-  t=${t//"{{TITLE}}"/$ti}
-  t=${t//"{{NOTES_URL}}"/$nu}
-  t=${t//"{{TASKS_URL}}"/$tu}
-  t=${t//"{{PARENT_LINK}}"/$pl}
-  t=${t//"{{ID}}"/$id}
-  t=${t//"{{W}}"/$up}
-  t=${t//"{{w}}"/$lo}
+  # Each replacement is in double quotes. In bash 5.2 and later, an
+  # unquoted & in the replacement is replaced with the matched text, and
+  # an unquoted \ escapes the next character, so \\ becomes \. A link
+  # contains &, and a JSON string can contain \\. Quoted, every bash and
+  # zsh insert the value as it is.
+  t=${t//"{{NAME}}"/"$nm"}
+  t=${t//"{{TITLE}}"/"$ti"}
+  t=${t//"{{NOTES_URL}}"/"$nu"}
+  t=${t//"{{TASKS_URL}}"/"$tu"}
+  t=${t//"{{PARENT_LINK}}"/"$pl"}
+  t=${t//"{{ID}}"/"$id"}
+  t=${t//"{{W}}"/"$up"}
+  t=${t//"{{w}}"/"$lo"}
   printf '%s' "$t"
 }
 

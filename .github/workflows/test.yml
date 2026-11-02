@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
-# The test suite runs on macOS, because that is where bash 3.2 is. The
-# runner image already has jq and zsh. fish is not, so test/cases/fish.sh
-# would only skip itself without this - it needs fish to run at all.
+# The test suite runs on macOS, because that is where bash 3.2 is, and on
+# Linux, where bash is a current version (5.2 on Ubuntu 24.04). Each
+# version has behaviour that the other does not. The macOS runner image
+# already has jq and zsh. fish is not, so test/cases/fish.sh would only
+# skip itself without this - it needs fish to run at all. The Ubuntu
+# image has jq, and neither zsh nor fish.
 name: test
 
 on:
@@ -15,6 +18,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install fish
         run: brew install fish
+      - name: Show the shells
+        run: |
+          /bin/bash --version | head -1
+          zsh --version
+          fish --version
+          jq --version
+      - name: Run the suite
+        run: test/run.sh
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zsh and fish
+        run: sudo apt-get update && sudo apt-get install -y zsh fish
       - name: Show the shells
         run: |
           /bin/bash --version | head -1
