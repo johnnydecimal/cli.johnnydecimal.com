@@ -133,9 +133,14 @@ $_JD_SETUP_MOVE
 
 3. If you find no system, stop. This tool navigates a system, so a system has to exist first. If I own a system from johnnydecimal.com that is not on this disk yet, and you have the Johnny.Decimal MCP server, call its install_system tool. That tool returns the steps to install the system and write this file. Otherwise tell me so, and give me the link to https://johnnydecimal.com to read how to build one, or https://johnnydecimal.com/products for a ready-made one.
 
-4. Ask me whether my JDex, the index of my system, is a folder on disk, for example an Obsidian vault. If it is, put its path in that system's "jdex" field. If it is not, leave "jdex" out.
+4. Ask me where my JDex, the index of my system, is. Write the answer as that system's "jdex" object:
 
-5. Write $cfg. jd calculated this path from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. Use this path, and do not calculate the path yourself. To see the path again, run $_JD_CLI_DIR/bin/jd paths. If the folder for this file is missing, make the folder with mode 700. Use "version": 1 and one entry in "systems" per system. Each entry requires "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry requires a "sys", and mark one "default": true. Leave out "beta". Leave out "workPackages" too, because you add it in step 9. If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
+   - An Obsidian vault: { "app": "obsidian", "path": "<the vault's folder>" }. Add "vault" only if the vault's name is not the name of its folder. The links that 'jd new wp' writes require the Advanced URI community plugin. Look for the folder .obsidian/plugins/obsidian-advanced-uri in the vault. If the folder is missing, tell me to install the plugin.
+   - Bear: { "app": "bear" }. jd runs Bear's command line tool, /Applications/Bear.app/Contents/MacOS/bearcli. Check that the file exists. In Bear, an area is a tag such as #10-19 Life admin, and a category is a tag nested below it, such as #10-19 Life admin/11 Me. If I have more than one system in one Bear library, the tags of each system are below a top-level tag that starts with its sys, such as #P76 Personal.
+   - Another folder of notes: { "path": "<the folder>" }.
+   - Anything else, such as Apple Notes: leave "jdex" out. jd cannot read it.
+
+5. Write $cfg. jd calculated this path from my environment: JD_CONFIG if it is set, then XDG_CONFIG_HOME, then the default. Use this path, and do not calculate the path yourself. To see the path again, run $_JD_CLI_DIR/bin/jd paths. If the folder for this file is missing, make the folder with mode 700. Use "version": 2 and one entry in "systems" per system. Each entry requires "title" and "root". "sys" is the system identifier, like D25. If I have one system and it has no identifier, leave "sys" out. If I have more than one system, every entry requires a "sys", and mark one "default": true. Leave out "beta". Leave out "workPackages" too, because you add it in step 9. If the file exists, add to its "systems" list and leave the other entries alone. Never overwrite it.
 
 6. Add this line to the rc file for my shell:
 
@@ -150,10 +155,8 @@ $_JD_SETUP_MOVE
 
 9. Ask me whether I want jd to create work packages. A work package is one piece of work with a number, like W0001. The command 'jd new wp' creates a note for it in my JDex and a folder for it in my system. If I say no, skip this step. If I say yes, do this for each system that I name:
 
-   - The system requires a "jdex" path in its entry. If the entry has none, tell me, and skip this system.
-   - Ask me whether I use Things 3 on this Mac. If I do, the block contains "tasks": { "adapter": "things" }. jd then creates a project in Things for each work package. Tell me to turn on Enable Things URLs in Things, in Settings > General.
-   - Ask me whether my JDex is an Obsidian vault. If it is, the block contains "notes": { "adapter": "obsidian" }. The link that jd creates requires the Advanced URI community plugin. Look for the folder .obsidian/plugins/obsidian-advanced-uri in the vault. If the folder is missing, tell me to install the plugin.
-   - If I said yes to Things or to Obsidian, add a "workPackages" block to the entry of the system, with the parts above. Show me the block before you write it. If I said no to both, write no block. jd creates work packages without one.
+   - The system requires a "jdex" in its entry. If the entry has none, tell me, and skip this system.
+   - Ask me whether I use Things 3 on this Mac. If I do, add "workPackages": { "tasks": { "app": "things" } } to the entry of the system. jd then creates a project in Things for each work package. Tell me to turn on Enable Things URLs in Things, in Settings > General. Show me the block before you write it. If I do not use Things, write no block. jd creates work packages without one.
    - Make no folders and no templates. The first 'jd new wp' creates the folders and the templates that are missing, and prints the name of each one.
    - Check your work. Run $_JD_CLI_DIR/bin/jd new wp --dry-run 11.11 A test. With --dry-run, jd creates nothing. It should print the note and the folder that jd would create. Then tell me to run 'jd new wp --help' for more.
 

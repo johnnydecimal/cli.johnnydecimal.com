@@ -200,7 +200,37 @@ The program reads the configuration each time it runs, so a system that has move
 
 Two things are read at shell start, and require a new shell: the list of per-system commands, because a shell cannot be given a new command name later, and the prompt path.
 
-Refer to [johnnydecimal.com/documentation/configuration](https://johnnydecimal.com/documentation/configuration) for the fields.
+Refer to [johnnydecimal.com/documentation/configuration](https://johnnydecimal.com/documentation/configuration) for the fields. [config.example.json](config.example.json) is an example.
+
+jd reads version 2 of the configuration file. The first command that reads a version 1 file changes the file to version 2, and keeps the old file next to it as `config.json.v1`. In version 2:
+
+- A system's `jdex` is an object. `app` is the app that contains the JDex, and `path` is its folder, if it is on disk.
+- `workPackages.notes` is gone. The note app is `jdex.app`.
+- `workPackages.tasks.adapter` is `workPackages.tasks.app`.
+
+```json
+"jdex": { "app": "obsidian", "path": "/Users/you/Documents/D25 JDex", "vault": "D25 JDex" }
+"jdex": { "app": "bear" }
+"jdex": { "path": "/Users/you/Documents/P76 JDex" }
+```
+
+## The JDex
+
+jd reads a JDex in one of three layouts.
+
+- **Nested**: a folder of area folders, which contain category folders, which contain the notes. `10-19 Life admin/11 Me/11.11 Birth certificate.md`.
+- **Flat**: a folder with no area folders. Every note is in its root. `11.11 Birth certificate.md`.
+- **Bear**: `"jdex": { "app": "bear" }`. An area is a tag, such as `#10-19 Life admin#`, and a category is a tag nested below it, such as `#10-19 Life admin/11 Me#`. An ID is a note with its category's tag, whose title starts with the ID. A work package is a note with the work package area's tag, `#W0000-9999 Work packages#`.
+
+In Bear:
+
+- jd matches each tag by the number at its start, the same way it matches a folder, so the rest of the name can be anything.
+- A tag nested below a category counts as the category.
+- A note in the trash is not in the JDex. An archived note is.
+- If one Bear library contains more than one system, put the tags of each system below a top-level tag that starts with its `sys`, such as `#P76 Personal#`. jd reads that system's tags there.
+- `jdex 11.11` opens the note in Bear, and `jdex 11` opens the tag. Neither changes the directory.
+- `jd new` writes the note with its title as the first line and its tag as the second.
+- jd runs Bear's command line tool, `/Applications/Bear.app/Contents/MacOS/bearcli`. If yours is somewhere else, set `JD_BEARCLI` to its path.
 
 ## `jd new`
 
@@ -221,7 +251,8 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 - It creates the JDex note and the folder.
 - The next free ID is one more than the highest ID in the category.
   - It counts the IDs in the JDex: the entries directly in the category, and directly in its archive, the .09 ID. For category 21, that is `21` and `21.09`.
-  - A JDex can be flat: it has no area folders, and the notes are in its root. Then jd counts the notes in the root that start with the category's number, and writes the new note to the root.
+  - In a flat JDex, jd counts the notes in the root that start with the category's number, and writes the new note to the root.
+  - In Bear, jd counts the notes with the category's tag, and the tags nested below it.
   - An ID in the JDex can be a folder that contains its own note, with exactly the folder's name: `21.41 Videos/21.41 Videos.md`. This matches how the Obsidian 'Folder notes' plugin works. jd reads an ID like this, and creates every new ID as a note.
   - A folder with no JDex entry is not an ID, so it is not counted. Nor is anything deeper inside an ID.
   - If the filesystem already has a folder with the new ID's number, jd exits with an error that names the folder.
@@ -234,8 +265,8 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 - The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd exits with an error that names the folder.
 - If the system has no `W0000-9999` folder, jd creates `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
 - If the area has no `W0003` folder, jd creates `W0003 Templates for area W0000-9999`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
-- If the JDex has no `W0000-9999` folder, jd creates `W0000-9999 Work packages` in the JDex. In a flat JDex, jd creates no folder: jd writes the note to the root.
-- The system's `workPackages` block in the config names the adapters. Refer to [lib/adapters/README.md](lib/adapters/README.md).
+- If the JDex has no `W0000-9999` folder, jd creates `W0000-9999 Work packages` in the JDex. In a flat JDex, jd creates no folder: jd writes the note to the root. In Bear, the note's tag creates the tag `#W0000-9999 Work packages#`.
+- The note app is the JDex's `app`, and the task app is `workPackages.tasks.app`. Refer to [lib/adapters/README.md](lib/adapters/README.md).
 
 ### Templates
 
@@ -255,8 +286,8 @@ Templates are in the filesystem. jd finds them by number, so the config does not
   - Anything else in double braces that jd does not recognize is left out of the note, and jd prints a warning.
 - A line that contains `{{NOTES_URL}}` or `{{TASKS_URL}}` is left out when there is no such link: no adapter is set, or you gave `--no-tasks`. This applies to the note and to the Things template.
 - A line with lines indented under it is left out when all of those lines are left out. So `- Related:` is left out when it has no link left under it.
-- `{{PARENT_LINK}}` is the note app's link to the ID's own JDex note. With the obsidian adapter it is a wiki-link, for example `[[21.41 Videos]]`, so Obsidian lists the work package in the backlinks of the ID's note. jd does not write to the ID's note.
-  - A line that contains `{{PARENT_LINK}}` is left out when no notes adapter is set.
+- `{{PARENT_LINK}}` is the note app's link to the ID's own JDex note. In Obsidian and in Bear it is a wiki-link, for example `[[21.41 Videos]]`, so the app lists the work package in the backlinks of the ID's note. jd does not write to the ID's note.
+  - A line that contains `{{PARENT_LINK}}` is left out when the JDex has no app.
   - The ID's note can be in a folder with the same name: `21.41 Videos/21.41 Videos.md`.
   - It is also left out when the JDex has no note for the ID, or more than one. jd prints a warning, with the code `no_parent_note`.
 - A template note can contain a token, for example `{{?SCOPE}}` or `{{?DELIVERABLE What we hand over}}`.

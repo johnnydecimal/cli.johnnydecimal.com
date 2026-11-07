@@ -62,13 +62,16 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `lib/harness.sh` | Counters, assertions, and the helpers that run `jd` and load a config. |
 | `lib/fixtures.sh` | The fake systems, and every config shape the tests require. |
 | `lib/corpus.sh` | Reads a conformance corpus. See [Conformance corpora](#conformance-corpora). |
+| `cases/bear.sh` | A JDex in Bear, through a stub `bearcli`. Runs no Bear. |
 | `cases/bin.sh` | `bin/jd`, the program, and the shape of the functions `jd.sh` defines. |
 | `cases/config.sh` | Reading the config, and every way it can be wrong. |
+| `cases/config-v2.sh` | The version of the config, and the change from version 1 to version 2. |
 | `cases/corpus.sh` | Runs each corpus in `test/corpus`. |
 | `cases/fish.sh` | `jd.fish`, the fish hook, run as a subprocess. Requires fish. |
 | `cases/known-bugs.sh` | Bugs the tests found, which nothing has fixed yet. |
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |
+| `cases/nav-jdex-flat.sh` | Navigation in a flat JDex. |
 | `cases/nav-make-id.sh` | Creating an ID folder from its JDex entry. |
 | `cases/paths.sh` | Where jd stores its files: the XDG paths, `~/.jd`, the old place, and `jd paths`. |
 | `cases/move.sh` | `jd move` and `jd undo move`, and the journal they write. |

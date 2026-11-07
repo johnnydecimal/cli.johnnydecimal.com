@@ -1,20 +1,20 @@
 {
-  "version": 1,
+  "version": 2,
   "beta": false,
   "systems": [
     {
       "sys": "D25",
       "title": "My business system",
       "root": "/Users/you/Documents/D25 My business system",
-      "jdex": "/Users/you/Documents/D25 JDex",
+      "jdex": {
+        "app": "obsidian",
+        "path": "/Users/you/Documents/D25 JDex",
+        "vault": "D25 JDex"
+      },
       "default": true,
       "workPackages": {
-        "notes": {
-          "adapter": "obsidian",
-          "vault": "D25 JDex"
-        },
         "tasks": {
-          "adapter": "things",
+          "app": "things",
           "source": "B3W2orf9oNBi3gmttjPT4Y"
         }
       }
@@ -22,7 +22,8 @@
     {
       "sys": "P76",
       "title": "My personal system",
-      "root": "/Users/you/Documents/P76 My personal system"
+      "root": "/Users/you/Documents/P76 My personal system",
+      "jdex": { "app": "bear" }
     }
   ]
 }

@@ -82,7 +82,9 @@ it is not counted. The ID is never lower than .11. A gap is not filled.
 
 A JDex can be flat: it has no area folders, and the notes are in its
 root. Then it counts the notes in the root that start with the
-category's number, and jd writes the new note to the root.
+category's number, and jd writes the new note to the root. In Bear, it
+counts the notes with the category's tag, and jd writes the new note
+with that tag.
 
 If the filesystem already has a folder with the new ID's number, jd
 exits with an error, names the folder, and creates nothing.
@@ -148,6 +150,8 @@ The templates are in the W0003 folder in the filesystem:
 If the system has no 'W0000-9999' folder, jd creates it, with a W0003
 folder and a W0009 folder in it. If the JDex has no 'W0000-9999'
 folder, jd creates it. In a flat JDex, jd writes the note to the root.
+In Bear, the note has the tag '#W0000-9999 Work packages#', or the tag
+the work package area already has.
 
 A line of a template that contains {{NOTES_URL}} or {{TASKS_URL}} is
 left out when there is no such link: no adapter is set, or --no-tasks.
@@ -155,9 +159,9 @@ A line with nothing left indented under it, such as '- Related:', is
 left out too.
 
 {{PARENT_LINK}} is the note app's link to the ID's own JDex note, for
-example [[21.41 Videos]]. A line that contains it is left out when no
-notes adapter is set. It is also left out when the JDex has no one note
-for the ID, and jd prints a warning.
+example [[21.41 Videos]]. A line that contains it is left out when the
+JDex has no app. It is also left out when the JDex has no one note for
+the ID, and jd prints a warning.
 
 The title requires no quotes. It is every word after the ID, up to the
 first word that starts with '--'. A '-' anywhere else is part of the
@@ -172,8 +176,8 @@ title. You can put flags before the noun, after it, or after the title.
                        usual lines. { "ok": true, ... } or, on error,
                        { "ok": false, "code": "...", ... }
 
-The system's 'workPackages' block in the config sets the adapters to
-use.
+The note app is the system's "jdex" app, and the task app is
+"workPackages.tasks.app" in the config.
 
 A template note can contain a token, such as '{{?SCOPE}}' or
 '{{?DELIVERABLE What we hand over}}'. Its flag is its name in lower
@@ -667,14 +671,26 @@ _jd_new_inner() {
   esac
 
   _JD_NEW_ROOT=$(_jd_new_cfg '.root')
-  _JD_NEW_JDEX=$(_jd_new_cfg '.jdex')
   [ -n "$_JD_NEW_ROOT" ] || { _jd_new_fail unknown_system '' "system '$_JD_NEW_SYS' is not in $_JD_NEW_CFG"; return 1; }
   [ -d "$_JD_NEW_ROOT" ] || { _jd_new_fail no_root "$_JD_NEW_ROOT" "folder does not exist: $_JD_NEW_ROOT"; return 1; }
-  [ -n "$_JD_NEW_JDEX" ] || {
-    _jd_new_fail no_jdex_path '' "'jd new' requires a jdex path for $_JD_NEW_SYS in $_JD_NEW_CFG"
-    return 1
-  }
-  [ -d "$_JD_NEW_JDEX" ] || { _jd_new_fail no_jdex "$_JD_NEW_JDEX" "folder does not exist: $_JD_NEW_JDEX"; return 1; }
+  _jd_jdex_load "$_JD_NEW_SYS"
+  _JD_NEW_JDEX=$_JD_JDEX_PATH
+  case $_JD_JDEX_KIND in
+    none)
+      _jd_new_fail no_jdex_path '' "'jd new' requires a jdex for $_JD_NEW_SYS in $_JD_NEW_CFG"
+      return 1
+      ;;
+    unsupported)
+      _jd_new_fail jdex_app_unsupported '' "jd cannot write to a JDex in the app '$_JD_JDEX_APP'"
+      return 1
+      ;;
+    bear)
+      _jd_bear_load || { _JD_NEW_CODE=bear_failed; return 1; }
+      ;;
+    *)
+      [ -d "$_JD_NEW_JDEX" ] || { _jd_new_fail no_jdex "$_JD_NEW_JDEX" "folder does not exist: $_JD_NEW_JDEX"; return 1; }
+      ;;
+  esac
 
   case $_JD_NEW_NOUN in
     id) _jd_new_id "$@" ;;
@@ -684,44 +700,52 @@ _jd_new_inner() {
 
 # -------------------------------------------------------------------- id
 
-# Is $1 an ID folder that contains its own note? This matches how the
-# Obsidian 'Folder notes' plugin works: '21.41 Videos/21.41 Videos.md'.
-# The note's name is exactly the folder's name.
-_jd_new_folder_note() { [ -f "$1/${1##*/}.md" ]; }
-
-# Is the JDex flat? A flat JDex has no area folders, and its notes are
-# in its root. An ID there can be a note, or a folder that contains its
-# own note.
-_jd_new_jdex_flat() {
-  local d
-  [ -z "$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9]-[0-9][0-9]' -o -name '[0-9][0-9]-[0-9][0-9] *')" ] ||
-    return 1
-  [ -n "$(_jd_nav_find "$_JD_NEW_JDEX" 1 a -name '[0-9][0-9].[0-9][0-9]*.md')" ] && return 0
-  _jd_nav_find "$_JD_NEW_JDEX" 1 d -name '[0-9][0-9].[0-9][0-9]' -o -name '[0-9][0-9].[0-9][0-9] *' |
-    while IFS= read -r d; do
-      _jd_new_folder_note "$d" && { printf 'y'; break; }
-    done | grep -q y
-}
-
 # The two-digit IDs used in category $1, one per line. $2 the JDex
-# category.
+# category: a folder, or a tag in Bear.
 #
 # Only the JDex counts. The JDex defines the IDs, so a folder in the
 # filesystem with no JDex entry is not an ID.
 #
-# It reads the entries directly in the category, and the entries
-# directly in its archive, the .09 ID. Nothing deeper counts: a folder
-# deep inside an ID can contain names from some other system.
+# In a folder, it reads the entries directly in the category, and the
+# entries directly in its archive, the .09 ID. Nothing deeper counts: a
+# folder deep inside an ID can contain names from some other system. In
+# Bear, it reads the title of every note in the category's tag, and in
+# the tags nested below it.
 _jd_new_used_ids() {
   local a
   {
-    _jd_nav_find "$2" 1 a -name "$1.[0-9][0-9]*"
-    _jd_nav_find "$2" 1 d -name "$1.09" -o -name "$1.09 *" |
-    while IFS= read -r a; do
-      _jd_nav_find "$a" 1 a -name "$1.[0-9][0-9]*"
-    done
+    if [ "$_JD_JDEX_KIND" = bear ]; then
+      _jd_bear_titles "$2"
+    else
+      _jd_nav_find "$2" 1 a -name "$1.[0-9][0-9]*"
+      _jd_nav_find "$2" 1 d -name "$1.09" -o -name "$1.09 *" |
+      while IFS= read -r a; do
+        _jd_nav_find "$a" 1 a -name "$1.[0-9][0-9]*"
+      done
+    fi
   } | sed 's|.*/||' | sed -n "s/^$1\.\([0-9][0-9]\)\([^0-9].*\)\{0,1\}\$/\1/p" \
     | sort -u
+}
+
+# Write the note to Bear. $1 the title, $2 the tag. Sets
+# $_JD_NEW_NOTE_URL to the note's link.
+_jd_new_write_bear() {
+  local id
+  id=$(
+    if [ -n "$_JD_NEW_TEXT" ]; then
+      printf '\n'
+      _jd_new_render
+      printf '\n'
+    fi | _jd_bear_create "$1" "$2"
+  )
+  if [ -z "$id" ]; then
+    _jd_new_fail write_failed '' "bearcli could not create the note $1 in Bear"
+    return 1
+  fi
+  _JD_NEW_NOTE_URL="bear://x-callback-url/open-note?id=$id"
+  _jd_new_say "note    Bear: $1, #$2#"
+  [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
+  return 0
 }
 
 # The ID template for category $1: the first 'ID template.md' in the
@@ -764,7 +788,15 @@ _jd_new_id() {
 
   # The category, in both trees, found by the start of its name.
   fcat=$(_jd_nav_find "$_JD_NEW_ROOT" 2 d -name "$c" -o -name "$c *")
-  if _jd_new_jdex_flat; then
+  if [ "$_JD_JDEX_KIND" = bear ]; then
+    # Bear: the category is a tag.
+    jcat=$(_jd_jdex_find category "$c" | cut -f1)
+    if [ "$(printf '%s' "$jcat" | grep -c '^')" -ne 1 ]; then
+      _jd_new_fail no_category_jdex '' "the JDex in Bear has no one tag for category $c"
+      return 1
+    fi
+    jcat=${jcat#bear:tag:}
+  elif [ "$_JD_JDEX_KIND" = flat ]; then
     # A flat JDex: no area folders, the notes are in the root. The root
     # is the category. Only the notes named c.NN count, so the other
     # categories in the root do not. No folder below the root is read
@@ -818,8 +850,9 @@ _jd_new_id() {
   _jd_new_title || return 1
   _JD_NEW_NAME="$_JD_NEW_ID $_JD_NEW_TITLE"
   note_path="$jcat/$_JD_NEW_NAME.md"
+  [ "$_JD_JDEX_KIND" = bear ] && note_path=''
   dir="$fcat/$_JD_NEW_NAME"
-  if [ -e "$note_path" ] || [ -e "$dir" ]; then
+  if { [ -n "$note_path" ] && [ -e "$note_path" ]; } || [ -e "$dir" ]; then
     _jd_new_fail exists "$dir" "$_JD_NEW_NAME already exists"
     return 1
   fi
@@ -831,7 +864,11 @@ _jd_new_id() {
   [ -n "$_JD_NEW_TEMPLATE" ] || _jd_new_no_template ID
 
   if [ "$_JD_NEW_DRY" -eq 1 ]; then
-    _jd_new_say "note    $note_path"
+    if [ "$_JD_JDEX_KIND" = bear ]; then
+      _jd_new_say "note    Bear: $_JD_NEW_NAME, #$jcat#"
+    else
+      _jd_new_say "note    $note_path"
+    fi
     [ -n "$_JD_NEW_TEMPLATE" ] && _jd_new_say "from    $_JD_NEW_TEMPLATE"
     [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
     _jd_new_say "folder  $dir"
@@ -840,7 +877,12 @@ _jd_new_id() {
     return 0
   fi
 
-  _jd_new_write_note "$note_path" || return 1
+  if [ "$_JD_JDEX_KIND" = bear ]; then
+    _jd_new_write_bear "$_JD_NEW_NAME" "$jcat" || return 1
+    note_path=$_JD_NEW_NOTE_URL
+  else
+    _jd_new_write_note "$note_path" || return 1
+  fi
   mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not create $dir"; return 1; }
   _jd_new_say "folder  $dir"
 
@@ -858,7 +900,7 @@ _jd_new_id() {
 # -------------------------------------------------------------------- wp
 
 # The highest W number in the JDex, plus one. $1 the JDex work package
-# area.
+# area: a folder, or a tag in Bear.
 #
 # Only the JDex counts, the same as for an ID. It reads the entries
 # directly in the area, and the entries directly in its archive, W0009.
@@ -868,11 +910,15 @@ _jd_new_next_number() {
   local max n a
   max=$(
     {
-      _jd_nav_find "$1" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
-      _jd_nav_find "$1" 1 d -iname 'W0009' -o -iname 'W0009 *' |
-      while IFS= read -r a; do
-        _jd_nav_find "$a" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
-      done
+      if [ "$_JD_JDEX_KIND" = bear ]; then
+        _jd_bear_titles "$1" wp
+      else
+        _jd_nav_find "$1" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
+        _jd_nav_find "$1" 1 d -iname 'W0009' -o -iname 'W0009 *' |
+        while IFS= read -r a; do
+          _jd_nav_find "$a" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
+        done
+      fi
     } | sed 's|.*/||' | sed -n 's/^[Ww]\([0-9][0-9][0-9][0-9]\)\([^0-9].*\)\{0,1\}$/\1/p' \
       | sort -n | tail -1
   )
@@ -946,18 +992,24 @@ EOF
 # name, and never writes to the note.
 #
 # The ID can be a folder that contains its own note. Refer to
-# _jd_new_folder_note. A folder with no such note has no note for the
+# _jd_jdex_folder_note. A folder with no such note has no note for the
 # ID.
 _jd_new_parent_note() {
   local depth=3 m n
   _JD_NEW_PARENT_NOTE=''
-  _jd_new_jdex_flat && depth=1
+  if [ "$_JD_JDEX_KIND" = bear ]; then
+    m=$(_jd_jdex_find id "$_JD_NEW_ID")
+    [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 0
+    _JD_NEW_PARENT_NOTE=${m##*"$(printf '\t')"}
+    return 0
+  fi
+  [ "$_JD_JDEX_KIND" = flat ] && depth=1
   m=$(_jd_nav_find "$_JD_NEW_JDEX" "$depth" a -name "$_JD_NEW_ID.md" -o -name "$_JD_NEW_ID *.md" \
     -o \( -type d \( -name "$_JD_NEW_ID" -o -name "$_JD_NEW_ID *" \) \))
   [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 0
   n=$(basename -- "$m")
   if [ -d "$m" ]; then
-    _jd_new_folder_note "$m" || return 0
+    _jd_jdex_folder_note "$m" || return 0
   else
     n=${n%.md}
   fi
@@ -973,7 +1025,17 @@ _jd_new_wp() {
   _JD_NEW_WP_MAKE=''
   _JD_NEW_WP_NOTE_TO=''
   _JD_NEW_WP_NOTE_FROM="$_JD_CLI_DIR/templates/$_JD_NEW_WP_TPL.md"
-  jw=$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -iname 'W0000*')
+  if [ "$_JD_JDEX_KIND" = bear ]; then
+    jw=$(_jd_bear_wp_areas)
+    if [ "$(printf '%s' "$jw" | grep -c '^')" -gt 1 ]; then
+      _jd_new_fail no_wp_area_jdex '' "the JDex in Bear has more than one tag named W0000..."
+      return 1
+    fi
+    # No tag yet: the note's tag creates it.
+    [ -n "$jw" ] || jw="$_JD_BEAR_BASE$_JD_NEW_WP_AREA"
+  else
+    jw=$(_jd_nav_find "$_JD_NEW_JDEX" 1 d -iname 'W0000*')
+  fi
   fw=$(_jd_nav_find "$_JD_NEW_ROOT" 1 d -iname 'W0000*')
   if [ "$(printf '%s' "$jw" | grep -c '^')" -gt 1 ]; then
     _jd_new_fail no_wp_area_jdex "$_JD_NEW_JDEX" "the JDex has more than one folder named W0000... at the top: $_JD_NEW_JDEX"
@@ -984,7 +1046,7 @@ _jd_new_wp() {
     return 1
   fi
   if [ -z "$jw" ]; then
-    if _jd_new_jdex_flat; then
+    if [ "$_JD_JDEX_KIND" = flat ]; then
       jw=$_JD_NEW_JDEX
     else
       jw="$_JD_NEW_JDEX/$_JD_NEW_WP_AREA"
@@ -1002,8 +1064,9 @@ _jd_new_wp() {
 
   _jd_new_old_keys
 
-  notes_ad=$(_jd_new_cfg '.workPackages.notes.adapter')
-  tasks_ad=$(_jd_new_cfg '.workPackages.tasks.adapter')
+  # The note app is the JDex's app. A folder of notes has none.
+  notes_ad=$_JD_JDEX_APP
+  tasks_ad=$(_jd_new_cfg '.workPackages.tasks.app')
   [ -n "$notes_ad" ] || notes_ad=none
   [ -n "$tasks_ad" ] || tasks_ad=none
   [ "$_JD_NEW_USE_TASKS" -eq 1 ] || tasks_ad=none
@@ -1039,7 +1102,7 @@ _jd_new_wp() {
     _JD_NEW_TASKS_DEFAULT="$_JD_CLI_DIR/templates/$_JD_NEW_WP_TPL.$tasks_ad.json"
   fi
   _JD_NEW_TASKS_SOURCE=$(_jd_new_cfg '.workPackages.tasks.source')
-  _JD_NEW_NOTES_VAULT=$(_jd_new_cfg '.workPackages.notes.vault')
+  _JD_NEW_NOTES_VAULT=$_JD_JDEX_VAULT
 
   # --refresh reads the template project out of the task app. It
   # creates no work package, so it runs before the ID and title are
@@ -1077,8 +1140,9 @@ _jd_new_wp() {
 
   _JD_NEW_NAME="$_JD_NEW_NUM~$_JD_NEW_ID $_JD_NEW_TITLE"
   note_path="$jw/$_JD_NEW_NAME.md"
+  [ "$_JD_JDEX_KIND" = bear ] && note_path=''
   dir="$fw/$_JD_NEW_NAME"
-  if [ -e "$note_path" ] || [ -e "$dir" ]; then
+  if { [ -n "$note_path" ] && [ -e "$note_path" ]; } || [ -e "$dir" ]; then
     ep=$dir
     [ -e "$dir" ] || ep=$note_path
     _jd_new_fail exists "$ep" "$_JD_NEW_NAME already exists"
@@ -1128,7 +1192,11 @@ _jd_new_wp() {
 
   if [ "$_JD_NEW_DRY" -eq 1 ]; then
     _jd_new_wp_make dry
-    _jd_new_say "note    $note_path"
+    if [ "$_JD_JDEX_KIND" = bear ]; then
+      _jd_new_say "note    Bear: $_JD_NEW_NAME, #$jw#"
+    else
+      _jd_new_say "note    $note_path"
+    fi
     [ -n "$_JD_NEW_TEMPLATE" ] && _jd_new_say "from    $_JD_NEW_TEMPLATE"
     [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
     _jd_new_say "folder  $dir"
@@ -1163,7 +1231,12 @@ _jd_new_wp() {
   fi
 
   # The JDex note, with both links in it.
-  _jd_new_write_note "$note_path" || return 1
+  if [ "$_JD_JDEX_KIND" = bear ]; then
+    _jd_new_write_bear "$_JD_NEW_NAME" "$jw" || return 1
+    note_path=$_JD_NEW_NOTE_URL
+  else
+    _jd_new_write_note "$note_path" || return 1
+  fi
 
   # The folder, and the contents of the template folder.
   mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not create $dir"; return 1; }

@@ -3,7 +3,7 @@
 - Permalink:
 	- ^{{w}}
 - Related:
-	- [Obsidian]({{NOTES_URL}})
+	- [JDex]({{NOTES_URL}})
 	- [Things]({{TASKS_URL}})
 
 ---

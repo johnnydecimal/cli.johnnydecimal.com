@@ -56,10 +56,14 @@ _jd_t_contains 'no config: the prompt instructs never to overwrite a file' \
   'Never overwrite' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt instructs the agent to ask about work packages' \
   'Ask me whether I want jd to create work packages' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt names the things adapter' \
-  '"tasks": { "adapter": "things" }' "$JD_T_OUT"
-_jd_t_contains 'no config: the prompt names the obsidian adapter' \
-  '"notes": { "adapter": "obsidian" }' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names the Things app' \
+  '"tasks": { "app": "things" }' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names the Obsidian app' \
+  '{ "app": "obsidian", "path": ' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt names the Bear app' \
+  '{ "app": "bear" }' "$JD_T_OUT"
+_jd_t_contains 'no config: the prompt writes version 2' \
+  '"version": 2' "$JD_T_OUT"
 _jd_t_contains 'no config: the prompt instructs a dry run to check work packages' \
   "$JD_T_REPO/bin/jd new wp --dry-run" "$JD_T_OUT"
 _jd_t_lacks 'no config: the prompt does not instruct the agent to turn beta on' \

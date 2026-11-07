@@ -59,7 +59,7 @@ _jd_t_lacks 'off: prints no warning' 'UNSTABLE' "$JD_T_ERR"
 
 # A config already in the requested state is not rewritten, so its own
 # layout does not change.
-printf '{\n    "version": 1, "systems": %s\n}\n' \
+printf '{\n    "version": 2, "systems": %s\n}\n' \
   "$(jq -c '.systems' "$_jd_t_cfg")" >"$JD_T_TMP/layout.json"
 cp "$JD_T_TMP/layout.json" "$JD_T_TMP/layout.before"
 _jd_t_load "$JD_T_TMP/layout.json"
@@ -88,13 +88,14 @@ unset JD_BETA
 
 # ----------------------------------------------------- what it preserves
 
-# jd writes no "version": null to a config with no version.
+# A config with no version is version 1, so jd changes it to version 2
+# first. jd writes no "version": null.
 jq 'del(.version)' "$_jd_t_cfg" >"$JD_T_TMP/nover.json"
 _jd_t_load "$JD_T_TMP/nover.json"
 _jd_t_run jd beta on
 _jd_t_eq 'no version: still writes true' 'true' "$(_jd_t_beta "$JD_T_TMP/nover.json")"
-_jd_t_eq 'no version: adds no version key' 'false' \
-  "$(jq 'has("version")' "$JD_T_TMP/nover.json")"
+_jd_t_eq 'no version: writes version 2, not null' '2' \
+  "$(jq '.version' "$JD_T_TMP/nover.json")"
 
 # A config that is a symlink stays a symlink, and its target changes.
 cp "$_jd_t_cfg" "$JD_T_TMP/real.json"

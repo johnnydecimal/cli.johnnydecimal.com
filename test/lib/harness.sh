@@ -190,6 +190,9 @@ _jd_t_libs() {
   _JD_CLI_HELP_URL=$(sed -n 's/^_JD_CLI_HELP_URL="\([^"]*\)".*/\1/p' "$JD_T_BIN")
   . "$JD_T_REPO/lib/paths.sh"
   . "$JD_T_REPO/lib/nav.sh"
+  . "$JD_T_REPO/lib/config.sh"
+  . "$JD_T_REPO/lib/bear.sh"
+  . "$JD_T_REPO/lib/jdex.sh"
   . "$JD_T_REPO/lib/setup.sh"
   . "$JD_T_REPO/lib/beta.sh"
   . "$JD_T_REPO/lib/new.sh"

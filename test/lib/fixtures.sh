@@ -206,13 +206,13 @@ _jd_fx_reset() {
 _jd_fx_config_two() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX",
+      "jdex": { "path": "$JD_FX_JDEX" },
       "default": true
     },
     {
@@ -230,12 +230,12 @@ EOF
 _jd_fx_config_single_nosys() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX"
+      "jdex": { "path": "$JD_FX_JDEX" }
     }
   ]
 }
@@ -246,13 +246,13 @@ EOF
 _jd_fx_config_single() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX"
+      "jdex": { "path": "$JD_FX_JDEX" }
     }
   ]
 }
@@ -264,7 +264,7 @@ EOF
 _jd_fx_config_second_only() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "P76",
@@ -282,17 +282,14 @@ EOF
 _jd_fx_config_new() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX",
-      "default": true,
-      "workPackages": {
-        "notes": { "adapter": "obsidian", "vault": "D25 JDex" }
-      }
+      "jdex": { "app": "obsidian", "path": "$JD_FX_JDEX", "vault": "D25 JDex" },
+      "default": true
     },
     {
       "sys": "P76",
@@ -309,18 +306,17 @@ EOF
 _jd_fx_config_new_oldkeys() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX",
+      "jdex": { "app": "obsidian", "path": "$JD_FX_JDEX", "vault": "D25 JDex" },
       "default": true,
       "workPackages": {
         "noteTemplate": "W0003 Template.md",
         "folderTemplate": "W0003 Templates/Copy me",
-        "notes": { "adapter": "obsidian", "vault": "D25 JDex" },
         "tasks": { "template": "W0003 Templates/Template project.json" }
       }
     }
@@ -333,17 +329,14 @@ EOF
 _jd_fx_config_new_badadapter() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX",
-      "default": true,
-      "workPackages": {
-        "notes": { "adapter": "nosuchapp" }
-      }
+      "jdex": { "app": "nosuchapp", "path": "$JD_FX_JDEX" },
+      "default": true
     }
   ]
 }
@@ -354,13 +347,13 @@ EOF
 _jd_fx_config_multi_nosys() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX"
+      "jdex": { "path": "$JD_FX_JDEX" }
     },
     {
       "title": "Second system",
@@ -375,7 +368,7 @@ EOF
 _jd_fx_config_default_second() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "P76",
@@ -386,7 +379,7 @@ _jd_fx_config_default_second() {
       "sys": "D25",
       "title": "Test system",
       "root": "$JD_FX_ROOT",
-      "jdex": "$JD_FX_JDEX",
+      "jdex": { "path": "$JD_FX_JDEX" },
       "default": true
     }
   ]
@@ -398,7 +391,7 @@ EOF
 _jd_fx_config_empty() {
   cat >"$1" <<'EOF'
 {
-  "version": 1,
+  "version": 2,
   "systems": []
 }
 EOF
@@ -408,7 +401,7 @@ EOF
 _jd_fx_config_malformed() {
   cat >"$1" <<'EOF'
 {
-  "version": 1,
+  "version": 2,
   "systems": [
 EOF
 }
@@ -417,7 +410,7 @@ EOF
 _jd_fx_config_missing_root() {
   cat >"$1" <<EOF
 {
-  "version": 1,
+  "version": 2,
   "systems": [
     {
       "sys": "D25",

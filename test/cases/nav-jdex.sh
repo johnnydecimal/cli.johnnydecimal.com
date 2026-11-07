@@ -71,12 +71,12 @@ _jd_t_status 'jdex: no match is an error' 1
 _jd_t_contains 'jdex: prints what it searched for' \
   "no match for 'zzznotathing'" "$JD_T_ERR"
 
-# P76 has no jdex path in the config.
+# P76 has no jdex in the config.
 _jd_t_run p76 jdex
-_jd_t_status 'jdex: a system with no jdex path is an error' 1
-_jd_t_contains 'jdex: prints which system has no jdex path' \
-  'no jdex path for P76' "$JD_T_ERR"
-_jd_t_at 'jdex: a system with no jdex path does not change the directory' "$JD_T_TMP"
+_jd_t_status 'jdex: a system with no jdex is an error' 1
+_jd_t_contains 'jdex: prints which system has no jdex' \
+  'no jdex for P76' "$JD_T_ERR"
+_jd_t_at 'jdex: a system with no jdex does not change the directory' "$JD_T_TMP"
 
 # ---------------------------------------------------- the jdex command
 #
@@ -138,12 +138,12 @@ _jd_t_run jdex 11.11
 _jd_t_at 'jdex command: one system with no sys' \
   "$JD_FX_JDEX/10-19 Area one/11 Category eleven"
 
-# P76 is the only system here, and it has no jdex path.
+# P76 is the only system here, and it has no jdex.
 _jd_t_load "$JD_T_TMP/second-only.json"
 _jd_t_run jdex
-_jd_t_status 'jdex command: no jdex path is an error' 1
-_jd_t_contains 'jdex command: prints which system has no jdex path' \
-  'no jdex path for P76' "$JD_T_ERR"
-_jd_t_at 'jdex command: no jdex path does not change the directory' "$JD_T_TMP"
+_jd_t_status 'jdex command: no jdex is an error' 1
+_jd_t_contains 'jdex command: prints which system has no jdex' \
+  'no jdex for P76' "$JD_T_ERR"
+_jd_t_at 'jdex command: no jdex does not change the directory' "$JD_T_TMP"
 
 _jd_t_summary

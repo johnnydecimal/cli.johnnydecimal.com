@@ -246,8 +246,9 @@ _jd_nav_go() {
 }
 
 # An ID is in the JDex but has no folder: create the folder from the JDex
-# entry's name. $1 root, $2 jdex, $3 ID. Prints the new path on stdout.
-# Returns 1 if it does not apply, 2 if it applies but failed.
+# entry's name. $1 root, $2 unused, $3 ID. $_JD_JDEX_* are set. Prints
+# the new path on stdout. Returns 1 if it does not apply, 2 if it
+# applies but failed.
 #
 # A normal ID is created in its category, which the ID's own number
 # names. A work package is always created in the W0000-9999 area. The
@@ -255,18 +256,18 @@ _jd_nav_go() {
 # found by the area's number, and only the start of that number is
 # matched: a system that has renamed the rest of the folder still works.
 _jd_nav_make_id() {
-  local root=$1 jdex=$2 id=$3 jm name num what cm
-  [ -n "$jdex" ] && [ -d "$jdex" ] || return 1
+  local root=$1 id=$3 jm name num what cm
+  case $_JD_JDEX_KIND in
+    nested | flat) [ -d "$_JD_JDEX_PATH" ] || return 1 ;;
+    bear) ;;
+    *) return 1 ;;
+  esac
   case $id in
-    [Ww][0-9][0-9][0-9][0-9])
-      jm=$(_jd_nav_find "$jdex" 2 a -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
-      ;;
-    *)
-      jm=$(_jd_nav_find "$jdex" 3 a -name "$id" -o -name "$id *" -o -name "$id.md")
-      ;;
+    [Ww][0-9][0-9][0-9][0-9]) jm=$(_jd_jdex_find wp "$id" 2>/dev/null) ;;
+    *) jm=$(_jd_jdex_find id "$id" 2>/dev/null) ;;
   esac
   [ "$(printf '%s' "$jm" | grep -c '^')" -eq 1 ] || return 1
-  name=$(basename -- "$jm")
+  name=${jm##*"$(printf '\t')"}
   case $name in
     *.md) name=${name%.md} ;;
     *.txt) name=${name%.txt} ;;
@@ -308,7 +309,7 @@ _jd_nav_search_in() {
 }
 
 _jd_nav() {
-  local sys=$1 cfg row tab root jdex tree mode type a c id m wm t
+  local sys=$1 cfg root jdex tree mode type a c id m wm t
   shift
   # 'jdex' as the first word is the JDex, whether the user typed it or
   # the jdex command passed it. It is read here so that 'jdex version'
@@ -354,8 +355,10 @@ _jd_nav() {
     return 1
   fi
   # Everything from here reads the config. If the config is still in
-  # ~/.jd, the old place, this prints a message, once, in one line.
+  # ~/.jd, the old place, this prints a message, once, in one line. A
+  # version 1 config is changed to version 2.
   _jd_paths_note config
+  _jd_config_ready || return 1
   # 'beta' reads and writes one flag in the config, and no system, so it
   # is handled before the system is looked up. 'jd beta off' works when
   # the root folder is not mounted.
@@ -379,27 +382,36 @@ _jd_nav() {
   fi
   case $sys in
     '#'*)
-      row=$(jq -r --argjson i "${sys#'#'}" \
-        '.systems[$i] | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
+      root=$(jq -r --argjson i "${sys#'#'}" '.systems[$i].root // empty' "$cfg" 2>/dev/null)
       ;;
     *)
-      row=$(jq -r --arg s "$sys" \
-        '.systems[] | select(.sys == $s) | [.root, (.jdex // "")] | @tsv' "$cfg" 2>/dev/null)
+      root=$(jq -r --arg s "$sys" 'first(.systems[] | select(.sys == $s)) | .root // empty' "$cfg" 2>/dev/null)
       ;;
   esac
-  [ -n "$row" ] || { _jd_nav_err "system '$sys' is not in $cfg"; return 1; }
-  tab=$(printf '\t')
-  root=${row%%"$tab"*}
-  jdex=${row#*"$tab"}
+  [ -n "$root" ] || { _jd_nav_err "system '$sys' is not in $cfg"; return 1; }
+  _jd_jdex_load "$sys"
+  jdex=$_JD_JDEX_PATH
 
   tree=$root
   if [ "$mode" = jdex ]; then
-    [ -n "$jdex" ] || { _jd_nav_err "no jdex path for $sys in $cfg"; return 1; }
-    tree=$jdex
+    case $_JD_JDEX_KIND in
+      none) _jd_nav_err "no jdex for $sys in $cfg"; return 1 ;;
+      unsupported) _jd_nav_err "jd cannot read a JDex in the app '$_JD_JDEX_APP'"; return 1 ;;
+      bear) tree='' ;;
+      *) tree=$jdex ;;
+    esac
   fi
-  [ -d "$tree" ] || { _jd_nav_err "folder does not exist: $tree"; return 1; }
+  if [ -n "$tree" ] && [ ! -d "$tree" ]; then
+    _jd_nav_err "folder does not exist: $tree"
+    return 1
+  fi
 
   if [ $# -eq 0 ]; then
+    if [ "$mode" = jdex ] && [ "$_JD_JDEX_KIND" = bear ]; then
+      _jd_bear_load || return 1
+      _jd_bear_open_app
+      return
+    fi
     _jd_nav_arrive "$tree"
     return
   fi
@@ -431,9 +443,11 @@ _jd_nav() {
       ;;
   esac
 
-  # In the JDex an ID can be a note file, not a folder.
+  if [ "$mode" = jdex ]; then
+    _jd_nav_jdex "$@"
+    return
+  fi
   type=d
-  [ "$mode" = jdex ] && type=a
 
   # 'NN.NN' or 'NN.NN *' only: '11.11+ Extension' must not match '11.11'.
   case $1 in
@@ -463,7 +477,7 @@ _jd_nav() {
       [ $# -eq 0 ] || { _jd_nav_err "unexpected words after '$id'"; return 1; }
       # Depth 3 = area/category/ID. Deeper folders named '11.11' cannot match.
       m=$(_jd_nav_find "$tree" 3 "$type" -name "$id" -o -name "$id *" -o -name "$id.md")
-      if [ -z "$m" ] && [ "$mode" = fs ]; then
+      if [ -z "$m" ]; then
         m=$(_jd_nav_make_id "$root" "$jdex" "$id")
         case $? in 2) return 1 ;; esac
       fi
@@ -474,7 +488,7 @@ _jd_nav() {
       shift
       [ $# -eq 0 ] || { _jd_nav_err "unexpected words after '$id'"; return 1; }
       m=$(_jd_nav_find "$tree" 2 "$type" -iname "$id" -o -iname "$id *" -o -iname "$id~*" -o -iname "$id.md")
-      if [ -z "$m" ] && [ "$mode" = fs ]; then
+      if [ -z "$m" ]; then
         m=$(_jd_nav_make_id "$root" "$jdex" "$id")
         case $? in 2) return 1 ;; esac
       fi

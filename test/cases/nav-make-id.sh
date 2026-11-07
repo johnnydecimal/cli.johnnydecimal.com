@@ -28,9 +28,9 @@ _jd_t_contains 'create id: prints that the category is missing' \
   'the JDex has 19.99 but there is no folder for category 19' "$JD_T_ERR"
 _jd_t_at 'create id: no category folder, so the directory does not change' "$JD_T_TMP"
 
-# P76 has no jdex path, so there is nothing to read a name from.
+# P76 has no jdex, so there is nothing to read a name from.
 _jd_t_run p76 39.99
-_jd_t_status 'create id: no jdex path, so no match' 1
+_jd_t_status 'create id: no jdex, so no match' 1
 _jd_t_contains 'create id: falls back to the normal no-match error' \
   'no match for 39.99' "$JD_T_ERR"
 
@@ -73,9 +73,9 @@ _jd_t_contains 'create wp: prints that the area is missing' \
 _jd_t_at 'create wp: no work package area, so the directory does not change' "$JD_T_TMP"
 _jd_fx_reset
 
-# P76 has no jdex path, so there is nothing to read a name from.
+# P76 has no jdex, so there is nothing to read a name from.
 _jd_t_run p76 W0300
-_jd_t_status 'create wp: no jdex path, so no match' 1
+_jd_t_status 'create wp: no jdex, so no match' 1
 _jd_t_contains 'create wp: falls back to the normal no-match error' \
   'no match for W0300' "$JD_T_ERR"
 

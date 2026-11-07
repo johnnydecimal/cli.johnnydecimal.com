@@ -242,7 +242,7 @@ _jd_t_contains 'reject: names the option' "unknown option '--nonsense'" "$JD_T_E
 
 _jd_t_run p76 new wp 31.11 No JDex here
 _jd_t_status 'reject: a system with no JDex' 1
-_jd_t_contains 'reject: prints that it requires a JDex' 'requires a jdex path' "$JD_T_ERR"
+_jd_t_contains 'reject: prints that it requires a JDex' 'requires a jdex for P76' "$JD_T_ERR"
 
 # The same title twice is not rejected. Nothing about a work package is
 # unique but its number, and the second one is assigned the next free
@@ -286,7 +286,7 @@ _jd_t_eq 'no W0003: no warning' '' \
 _jd_t_note=$(cat "$_jd_t_jw/W0301~21.35 No templates for this.md" 2>/dev/null)
 _jd_t_contains 'no W0003: the note has the permalink' '^w0301' "$_jd_t_note"
 _jd_t_contains 'no W0003: the note has the scope' '- What we do' "$_jd_t_note"
-_jd_t_lacks 'no W0003: the note has no empty note link' '[Obsidian]' "$_jd_t_note"
+_jd_t_lacks 'no W0003: the note has no empty note link' '[JDex]' "$_jd_t_note"
 _jd_t_lacks 'no W0003: the note has no empty task link' '[Things]' "$_jd_t_note"
 _jd_t_lacks 'no W0003: the note has no link to the ID' '[[' "$_jd_t_note"
 # No link is left under either heading, so the headings are left out
@@ -587,7 +587,7 @@ _jd_t_eq 'shipped template: filled in, the title is the name' "$_JD_NEW_NAME" \
 # The task link is empty until Things has created the project, so the
 # line that contains it is left out. The note link is there.
 _jd_t_eq 'shipped template: an empty link, the line is left out' \
-  "$(printf -- '- Related:\n\t- [Obsidian](%s)' "$_JD_NEW_NOTES_URL")" \
+  "$(printf -- '- Related:\n\t- [JDex](%s)' "$_JD_NEW_NOTES_URL")" \
   "$(_jd_things_payload 2>/dev/null | jq -r '.[0].attributes.notes')"
 _JD_NEW_TASKS_URL='things:///show?id=abc'
 _jd_t_contains 'shipped template: with both links, both lines are there' \

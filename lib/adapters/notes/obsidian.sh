@@ -18,14 +18,13 @@
 # plugin, jd prints a warning, and still returns the link.
 #
 # Config:
-#   workPackages.notes.vault   the vault name. Defaults to the name of
-#                              the JDex folder, which is the vault name
-#                              in most systems.
+#   jdex.vault   the vault name. Defaults to the name of the JDex
+#                folder, which is the vault name in most systems.
 
 jd_notes_check() {
   [ -n "$_JD_NEW_NOTES_VAULT" ] || _JD_NEW_NOTES_VAULT=$(basename -- "$_JD_NEW_JDEX")
   [ -n "$_JD_NEW_NOTES_VAULT" ] || {
-    _jd_nav_err "the obsidian adapter requires workPackages.notes.vault in the config"
+    _jd_nav_err "the obsidian adapter requires jdex.vault in the config"
     return 1
   }
   if [ -d "$_JD_NEW_JDEX/.obsidian" ] &&

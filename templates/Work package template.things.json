@@ -3,7 +3,7 @@
     "type": "project",
     "attributes": {
       "title": "{{NAME}}",
-      "notes": "- Related:\n\t- [Obsidian]({{NOTES_URL}})\n\t- [Things]({{TASKS_URL}})",
+      "notes": "- Related:\n\t- [JDex]({{NOTES_URL}})\n\t- [Things]({{TASKS_URL}})",
       "items": [
         {
           "type": "heading",

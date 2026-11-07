@@ -11,20 +11,20 @@ adapter implements them for its own app.
 There are two kinds.
 
 - `tasks/` – the task app, which stores the project.
-- `notes/` – the note app, which the link in the task app points back
-  to.
+- `notes/` – the note app that contains the JDex, which the link in the
+  task app points back to.
 
 Each kind has a `none.sh`, which does nothing and is the default.
 
 ## Choosing one
 
-The system's entry in the config file names the adapter, and contains
-the settings that the adapter requires:
+The system's entry in the config file names each app, and contains the
+settings that the adapter requires. The note app is the JDex's app:
 
 ```json
+"jdex": { "app": "obsidian", "path": "/Users/you/D25 JDex", "vault": "D25 JDex" },
 "workPackages": {
-  "notes": { "adapter": "obsidian", "vault": "D25 JDex" },
-  "tasks": { "adapter": "things", "source": "B3W2orf9oNBi3gmttjPT4Y" }
+  "tasks": { "app": "things", "source": "B3W2orf9oNBi3gmttjPT4Y" }
 }
 ```
 
@@ -36,7 +36,7 @@ jd has its own copy of a template file, in the `templates` folder of
 this repo, with the same name. An adapter copies it into `W0003` when
 the user has no template file.
 
-`"adapter": "things"` loads `tasks/things.sh`. A name with no file is an
+`"app": "things"` loads `tasks/things.sh`. A name with no file is an
 error that names the folder.
 
 ## What a tasks adapter defines
@@ -72,11 +72,11 @@ them. It does not set them, except for a default of its own.
 | `_JD_NEW_TASKS_URL` | the task app's link. Empty until `jd_tasks_create` has run |
 | `_JD_NEW_PARENT_NOTE` | `21.41 Videos`, the name of the ID's JDex note, with no `.md`. Empty when the JDex has no note for the ID, or more than one |
 | `_JD_NEW_PARENT_LINK` | the note app's link to the ID's note. Empty until `jd_notes_parent_link` has run |
-| `_JD_NEW_JDEX` | the JDex folder |
+| `_JD_NEW_JDEX` | the JDex folder. Empty for a JDex in Bear |
 | `_JD_NEW_TASKS_TPL` | the template file, `W0003/Work package template.<adapter>.json`, as a full path. The file may not exist. The `W0003` folder exists by the time `jd_tasks_prepare` or `jd_tasks_refresh` runs, because jd creates it if it is missing. It may not exist when `jd_tasks_check` runs |
 | `_JD_NEW_TASKS_DEFAULT` | jd's own template file, `templates/Work package template.<adapter>.json` in this repo, as a full path. The file may not exist |
 | `_JD_NEW_TASKS_SOURCE` | the template project's ID in the app, from the config |
-| `_JD_NEW_NOTES_VAULT` | the vault name, from the config |
+| `_JD_NEW_NOTES_VAULT` | the vault name, `jdex.vault` in the config |
 
 These helpers are there too.
 
