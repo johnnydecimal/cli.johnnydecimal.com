@@ -681,6 +681,25 @@ else
   _jd_t_ok 'adapter: creates nothing when the adapter does not load'
 fi
 
+# An adapter name that is a path out of lib/adapters. jd must refuse it,
+# and must not source the file it names.
+_jd_t_evil="$JD_T_TMP/evil"
+mkdir -p "$_jd_t_evil"
+printf 'printf ran >"%s/ran"\n' "$_jd_t_evil" >"$_jd_t_evil/x.sh"
+jq --arg a "../../../../../../../../../../../../../..$_jd_t_evil/x" \
+  '.systems[0].jdex.app = $a' "$JD_T_TMP/bad.json" >"$JD_T_TMP/traverse.json"
+_jd_t_load "$JD_T_TMP/traverse.json"
+_jd_t_run jd new wp 21.35 Traverse
+_jd_t_status 'adapter: a name that is a path, exit status' 1
+_jd_t_contains 'adapter: a name that is a path is refused' \
+  'no notes adapter named' "$JD_T_ERR"
+if [ -e "$_jd_t_evil/ran" ]; then
+  _jd_t_bad 'adapter: the file the path names is not sourced' 'not sourced' 'sourced'
+else
+  _jd_t_ok 'adapter: the file the path names is not sourced'
+fi
+rm -rf "$_jd_t_evil"
+
 # ------------------------------------------------------------- --json
 
 _jd_fx_reset

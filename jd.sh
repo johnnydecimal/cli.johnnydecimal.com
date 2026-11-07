@@ -53,10 +53,15 @@ esac
 # to cd to. Any other status is the program's own, and its stdout, if
 # there is any, is the answer. stderr is never captured, so match lists
 # and errors stream while the command runs.
+#
+# The program's path is quoted with printf %q, which bash and zsh both
+# read back as the same path, so a path that contains a quote or a space
+# still works.
+_jd_hook_qbin=$(printf '%q' "$_jd_hook_bin")
 _jd_hook_def() {
   eval "$1() {
   local jd_out jd_status
-  jd_out=\$(JD_HOOK=1 '$_jd_hook_bin' $2 \"\$@\")
+  jd_out=\$(JD_HOOK=1 $_jd_hook_qbin $2 \"\$@\")
   jd_status=\$?
   if [ \"\$jd_status\" -eq 3 ]; then
     cd -- \"\$jd_out\" && pwd
@@ -101,7 +106,26 @@ if [ "$_jd_hook_n" -gt 1 ]; then
         printf "jd: cannot define a function for sys id '%s'\n" "$_jd_hook_sys" >&2
         continue
         ;;
+      # Defined after this loop, as the root commands.
+      jd | jdex) continue ;;
     esac
+    # A function named like a command would replace that command: a sys
+    # id 'cd' would break cd. A function that this file defined before,
+    # when the shell sourced it the first time, contains JD_HOOK=1, and
+    # is replaced.
+    if declare -f "$_jd_hook_fn" >/dev/null 2>&1; then
+      case $(declare -f "$_jd_hook_fn") in
+        *JD_HOOK=1*) ;;
+        *) _jd_hook_fn='' ;;
+      esac
+    elif command -v "$_jd_hook_fn" >/dev/null 2>&1; then
+      _jd_hook_fn=''
+    fi
+    if [ -z "$_jd_hook_fn" ]; then
+      printf "jd: cannot define a function for sys id '%s': '%s' is already a command\n" \
+        "$_jd_hook_sys" "$(printf '%s' "$_jd_hook_sys" | tr 'A-Z' 'a-z')" >&2
+      continue
+    fi
     _jd_hook_def "$_jd_hook_fn" "--system '$_jd_hook_sys'"
   done <<EOF
 $(jq -r '.systems[].sys' "$_jd_hook_cfg")
@@ -125,6 +149,6 @@ elif [ -n "${BASH_VERSION-}" ]; then
   . "$_jd_hook_dir/lib/prompt.bash"
 fi
 
-unset _jd_hook_self _jd_hook_dir _jd_hook_bin _jd_hook_cfg _jd_hook_n \
-  _jd_hook_sys _jd_hook_fn
+unset _jd_hook_self _jd_hook_dir _jd_hook_bin _jd_hook_qbin _jd_hook_cfg \
+  _jd_hook_n _jd_hook_sys _jd_hook_fn
 unset -f _jd_hook_def

@@ -188,4 +188,34 @@ _jd_t_contains 'a config in ~/.jd: the command prints that it is in the old plac
   'the config is in ~/.jd, the old place' "$JD_T_ERR"
 rm -rf "$HOME/.jd"
 
+# ------------------------------------------ a sys id that is a command
+#
+# cd is a function in fish. A sys id 'CD' must not replace it.
+
+jq '.systems[1].sys = "CD"' "$JD_T_TMP/two.json" >"$JD_T_TMP/cd.json"
+_jd_t_config "$JD_T_TMP/cd.json"
+_jd_t_fish 'cd /; and pwd'
+_jd_t_eq 'sys id cd: cd still changes directory' / "$JD_T_OUT"
+_jd_t_contains 'sys id cd: prints that it is already a command' \
+  "cannot define a function for sys id 'CD': 'cd' is already a command" "$JD_T_ERR"
+_jd_t_config "$JD_T_TMP/two.json"
+
+# A second source in the same fish finds d25 already defined. It is
+# jd's own, so it is defined again, and nothing is printed.
+_jd_t_fish "source '$JD_T_REPO/jd.fish'; and d25 11.11"
+_jd_t_eq 'source twice: d25 still works' "$_jd_t_id" "$JD_T_OUT"
+_jd_t_eq 'source twice: prints nothing' '' "$JD_T_ERR"
+
+# ---------------------------------------- a quote in the install path
+
+_jd_t_q="$JD_T_TMP/it's here"
+mkdir -p "$_jd_t_q"
+cp -R "$JD_T_REPO/jd.fish" "$JD_T_REPO/bin" "$JD_T_REPO/lib" \
+  "$JD_T_REPO/templates" "$_jd_t_q/"
+_jd_t_run fish -c "source $(printf '%s' "$_jd_t_q/jd.fish" | sed "s/'/\\\\'/g; s/^/'/; s/\$/'/"); and d25 11.11"
+_jd_t_status 'quote in the path: d25 exit status' 0
+_jd_t_eq 'quote in the path: d25 changes directory' "$_jd_t_id" "$JD_T_OUT"
+_jd_t_eq 'quote in the path: sourcing prints nothing' '' "$JD_T_ERR"
+rm -rf "$_jd_t_q"
+
 _jd_t_summary

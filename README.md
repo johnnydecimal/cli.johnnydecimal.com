@@ -54,7 +54,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
    source ~/.local/share/johnnydecimal/cli/jd.fish
    ```
 
-   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and changes to the folder that the program prints. In zsh and bash it also defines `_jd_pwd`, the prompt path.
+   It defines `jd`, `jdex`, and one command per system in your configuration. Each one runs the program and changes to the folder that the program prints. It defines no command for a system whose `sys` is already a command name, such as `cd`, and prints an error. In zsh and bash it also defines `_jd_pwd`, the prompt path.
 
 5. For the prompt, add one of these two to `.zshrc` or `.bashrc`, after the `source` line. There is no prompt for fish.
 

@@ -51,8 +51,11 @@ function _jd_hook_def
     for e in $argv[2..-1]
         set -a extra (string escape -- $e)
     end
+    # Quoted by string escape, like the words above, so a path that
+    # contains a quote or a space still works.
+    set -l qbin (string escape -- $_jd_hook_bin)
     eval "function $name
-        set -l jd_out (env JD_HOOK=1 '$_jd_hook_bin' $extra \$argv)
+        set -l jd_out (env JD_HOOK=1 $qbin $extra \$argv)
         set -l jd_status \$status
         if test \"\$jd_status\" = 3
             cd -- \$jd_out
@@ -92,6 +95,24 @@ if test "$_jd_hook_n" -gt 1
         set -l _jd_hook_fn (string lower -- $_jd_hook_sys)
         if string match -qr '[^a-z0-9_]' -- $_jd_hook_fn; or string match -qr '^[0-9]' -- $_jd_hook_fn
             printf "jd: cannot define a function for sys id '%s'\n" "$_jd_hook_sys" >&2
+            continue
+        end
+        # Defined after this loop, as the root commands.
+        contains -- $_jd_hook_fn jd jdex; and continue
+        # A function named like a command would replace that command: a
+        # sys id 'cd' would break cd. A function that this file defined
+        # before, when fish sourced it the first time, contains
+        # JD_HOOK=1, and is replaced.
+        set -l _jd_hook_taken 0
+        if functions -q -- $_jd_hook_fn
+            string join \n -- (functions -- $_jd_hook_fn) | string match -q -- '*JD_HOOK=1*'
+            or set _jd_hook_taken 1
+        else if type -q -- $_jd_hook_fn
+            set _jd_hook_taken 1
+        end
+        if test $_jd_hook_taken = 1
+            printf "jd: cannot define a function for sys id '%s': '%s' is already a command\n" \
+                "$_jd_hook_sys" "$_jd_hook_fn" >&2
             continue
         end
         _jd_hook_def $_jd_hook_fn --system $_jd_hook_sys

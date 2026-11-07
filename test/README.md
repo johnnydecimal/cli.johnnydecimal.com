@@ -68,6 +68,7 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/config-v2.sh` | The version of the config, and the change from version 1 to version 2. |
 | `cases/corpus.sh` | Runs each corpus in `test/corpus`. |
 | `cases/fish.sh` | `jd.fish`, the fish hook, run as a subprocess. Requires fish. |
+| `cases/hook.sh` | `jd.sh` with a `sys` that is already a command, a second source, and a quote in the install path. |
 | `cases/known-bugs.sh` | Bugs the tests found, which nothing has fixed yet. |
 | `cases/nav-fs.sh` | Navigation in the filesystem. |
 | `cases/nav-jdex.sh` | Navigation in the JDex. |

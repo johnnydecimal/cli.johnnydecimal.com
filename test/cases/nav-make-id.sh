@@ -130,4 +130,57 @@ fi
 
 _jd_fx_reset
 
+# ------------------------------------------------------------- symlinks
+#
+# An ID or a category folder can be a symlink to a folder elsewhere.
+# jd must find it, and must not create a second folder beside it from
+# the JDex.
+
+_jd_t_cat12="$JD_FX_ROOT/10-19 Area one/12 Category twelve"
+_jd_t_away="$JD_T_TMP/elsewhere"
+mkdir -p "$_jd_t_away/12.99 Somewhere else" "$_jd_t_away/19 Category nineteen"
+
+# The symlink has the JDex entry's name.
+ln -s "$_jd_t_away/12.99 Somewhere else" "$_jd_t_cat12/12.99 Made by jd"
+_jd_t_run jd 12.99
+_jd_t_status 'symlink: an ID folder that is a symlink, exit status' 0
+_jd_t_at 'symlink: cds to the symlink' "$_jd_t_cat12/12.99 Made by jd"
+_jd_t_lacks 'symlink: creates nothing' 'created' "$JD_T_ERR"
+rm -- "$_jd_t_cat12/12.99 Made by jd"
+
+# The symlink has another name.
+ln -s "$_jd_t_away/12.99 Somewhere else" "$_jd_t_cat12/12.99 Linked folder"
+_jd_t_run jd 12.99
+_jd_t_at 'symlink: another name, cds to the symlink' "$_jd_t_cat12/12.99 Linked folder"
+_jd_t_lacks 'symlink: another name, creates nothing' 'created' "$JD_T_ERR"
+if [ -e "$_jd_t_cat12/12.99 Made by jd" ]; then
+  _jd_t_bad 'symlink: no second folder from the JDex' 'nothing' 'a folder'
+else
+  _jd_t_ok 'symlink: no second folder from the JDex'
+fi
+
+# jd move puts the file in the folder the symlink points to.
+printf 'x\n' >"$JD_T_TMP/moved.txt"
+_jd_t_run jd move "$JD_T_TMP/moved.txt" 12.99
+_jd_t_status 'symlink: jd move into a symlinked ID, exit status' 0
+if [ -f "$_jd_t_away/12.99 Somewhere else/moved.txt" ]; then
+  _jd_t_ok 'symlink: jd move puts the file in the folder the symlink points to'
+else
+  _jd_t_bad 'symlink: jd move puts the file in the folder the symlink points to' \
+    'moved.txt there' "$(ls "$_jd_t_away/12.99 Somewhere else")"
+fi
+
+# A category that is a symlink: jd creates the ID inside it.
+ln -s "$_jd_t_away/19 Category nineteen" "$JD_FX_ROOT/10-19 Area one/19 Category nineteen"
+_jd_t_run jd 19.99
+_jd_t_status 'symlink: a category that is a symlink, exit status' 0
+if [ -d "$_jd_t_away/19 Category nineteen/19.99 No category" ]; then
+  _jd_t_ok 'symlink: creates the ID in the symlinked category'
+else
+  _jd_t_bad 'symlink: creates the ID in the symlinked category' 'a directory' 'nothing'
+fi
+
+rm -rf "$_jd_t_away" "$JD_T_TMP/moved.txt"
+_jd_fx_reset
+
 _jd_t_summary

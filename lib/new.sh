@@ -209,10 +209,18 @@ _jd_new_cfg() {
 }
 
 # Load an adapter. $1 kind: tasks or notes. $2 name.
+#
+# The name is from the config, and it is part of a path that this
+# function sources. A name with any character outside a-z, 0-9, '_' and
+# '-' is refused, so that a value such as '../../x' cannot source a file
+# outside lib/adapters.
 _jd_new_adapter() {
   local f
   f="$_JD_CLI_DIR/lib/adapters/$1/$2.sh"
-  [ -f "$f" ] || {
+  case $2 in
+    '' | *[!a-z0-9_-]*) f='' ;;
+  esac
+  [ -n "$f" ] && [ -f "$f" ] || {
     _jd_new_fail no_adapter "$f" "no $1 adapter named '$2' - see $_JD_CLI_DIR/lib/adapters"
     return 1
   }

@@ -37,7 +37,8 @@ this repo, with the same name. An adapter copies it into `W0003` when
 the user has no template file.
 
 `"app": "things"` loads `tasks/things.sh`. A name with no file is an
-error that names the folder.
+error that names the folder. So is a name that contains a character
+other than `a-z`, `0-9`, `_` and `-`.
 
 ## What a tasks adapter defines
 

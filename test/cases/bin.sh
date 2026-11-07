@@ -199,7 +199,7 @@ for _jd_t_fn in jd jdex d25 p76; do
 done
 
 _jd_t_eq 'jdex: passes the word jdex' 'jdex' \
-  "$(_jd_t_body jdex | sed -n 's/.*bin\/jd. \([a-z]*\) .*/\1/p' | head -1)"
+  "$(_jd_t_body jdex | sed -n "s/.*bin\/jd'\{0,1\} \([a-z]*\) .*/\1/p" | head -1)"
 _jd_t_contains 'd25: passes its own system' '--system' "$(_jd_t_body d25)"
 _jd_t_lacks 'jd: names no system, so the program selects the default' \
   '--system' "$(_jd_t_body jd)"

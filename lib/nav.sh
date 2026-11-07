@@ -145,13 +145,19 @@ EOF
 
 # Print sorted matches at one depth. $1 tree, $2 depth, $3 type (d = dirs
 # only, a = any), then find tests.
+#
+# find -L follows symlinks, so an area, a category or an ID that is a
+# symlink to a folder is found, and so is everything inside it. Without
+# -L, -type d does not match the symlink, and jd created a second
+# folder beside it from the JDex. -maxdepth limits the descent, so a
+# symlink loop cannot make find run for ever.
 _jd_nav_find() {
   local tree=$1 depth=$2 type=$3
   shift 3
   if [ "$type" = d ]; then
-    find "$tree" -mindepth "$depth" -maxdepth "$depth" -type d \( "$@" \) 2>/dev/null | sort
+    find -L "$tree" -mindepth "$depth" -maxdepth "$depth" -type d \( "$@" \) 2>/dev/null | sort
   else
-    find "$tree" -mindepth "$depth" -maxdepth "$depth" \( "$@" \) 2>/dev/null | sort
+    find -L "$tree" -mindepth "$depth" -maxdepth "$depth" \( "$@" \) 2>/dev/null | sort
   fi
 }
 
