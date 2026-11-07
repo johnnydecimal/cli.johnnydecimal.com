@@ -80,14 +80,16 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/theme.sh` | The whole-prompt theme for zsh, `lib/theme.zsh`. |
 | `cases/theme-bash.sh` | The whole-prompt theme for bash, `lib/theme.bash`. |
 | `cases/regressions.sh` | One test for every bug in the changelog. |
+| `cases/update.sh` | The update check, and `jd update`. Uses no network. |
 | `cases/version-usage.sh` | `jd version` and `jd help`. |
 
 ## How the fixtures work
 
 - `test/run.sh` creates a temp folder for each case file, in each shell.
   It sets `$JD_T_TMP` to it, and `$HOME` to `$JD_T_TMP/home`. It unsets
-  `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` and `$XDG_DATA_HOME`, so that
-  your values do not affect a test.
+  `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME`, `$XDG_DATA_HOME` and
+  `$XDG_CACHE_HOME`, and the two variables that turn the update check
+  off, so that your values do not affect a test.
 - A case file calls `_jd_fx_build`. That function creates three trees
   under `$JD_T_TMP/fixtures`:
   - `$JD_FX_ROOT` – the D25 test system.

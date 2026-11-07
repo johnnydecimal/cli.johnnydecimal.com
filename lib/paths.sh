@@ -13,6 +13,10 @@
 #                 The default is ~/.local/state/johnnydecimal/journal.jsonl
 #   jd itself     $XDG_DATA_HOME/johnnydecimal/cli
 #                 The default is ~/.local/share/johnnydecimal/cli
+#   the cache     $XDG_CACHE_HOME/johnnydecimal/update-check
+#                 The default is ~/.cache/johnnydecimal/update-check
+#                 It contains the result of the update check. 'jd
+#                 paths' does not print it
 #
 # $JD_CONFIG names the config file itself, and overrides all of that.
 #
@@ -172,6 +176,13 @@ _jd_paths_config() {
 _jd_paths_journal() {
   _jd_paths_resolve
   printf '%s' "$_JD_PATHS_JOURNAL"
+}
+
+# The cache file of the update check, which lib/update.sh reads and
+# writes. It was never in ~/.jd, so it has no old place.
+_jd_paths_cache() {
+  _jd_paths_base "${XDG_CACHE_HOME-}" .cache
+  printf '%s' "$_JD_PATHS_BASE/$_JD_PATHS_NAME/update-check"
 }
 
 # -------------------------------------------------------- the old place

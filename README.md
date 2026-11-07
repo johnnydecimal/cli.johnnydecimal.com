@@ -160,6 +160,7 @@ jd follows the [XDG Base Directory Specification](https://specifications.freedes
 | The configuration file | `~/.config/johnnydecimal/config.json` | `$XDG_CONFIG_HOME/johnnydecimal/config.json` |
 | [The journal](#the-journal) | `~/.local/state/johnnydecimal/journal.jsonl` | `$XDG_STATE_HOME/johnnydecimal/journal.jsonl` |
 | This repository | `~/.local/share/johnnydecimal/cli` | `$XDG_DATA_HOME/johnnydecimal/cli` |
+| [The update check](#the-update-check) | `~/.cache/johnnydecimal/update-check` | `$XDG_CACHE_HOME/johnnydecimal/update-check` |
 
 - `$JD_CONFIG` is the path of the configuration file. If you set `$JD_CONFIG`, jd reads only that file.
 - A path in an XDG variable must start with `/`. If the path does not start with `/`, jd uses the default path.
@@ -340,8 +341,26 @@ The flag is `"beta": true` at the top level of the configuration file. `JD_BETA=
 ## Update
 
 ```sh
+jd update
+```
+
+`jd update` pulls the latest version, and prints the changelog entries since the version you had. The folder that contains jd must be on the branch `main`, with no uncommitted changes.
+
+If your version of jd has no `jd update`, run:
+
+```sh
 git -C ~/.local/share/johnnydecimal/cli pull
 ```
+
+### The update check
+
+Once a day, jd checks GitHub for a newer version. If there is one, jd prints one line after each command. The check reads the list of tags from GitHub. No telemetry is sent.
+
+jd checks only when it prints to a terminal, so a script, cron, or an agent never starts a check. To turn the check off, do one of these:
+
+- Add `"updateCheck": false` at the top level of the configuration file.
+- Set `JD_NO_UPDATE_CHECK=1`.
+- Set `DO_NOT_TRACK=1`.
 
 ### Move from `~/.jd`
 
@@ -418,7 +437,7 @@ Refer to [test/README.md](test/README.md) to add a test.
 - Versions follow [semantic versioning](https://semver.org).
 - One version applies to all the tools in the repository.
 - Each release has a git tag, for example `v2.0.0`.
-- `jd version` prints the installed version.
+- `jd version` prints the installed version, and the newer version if [the update check](#the-update-check) found one.
 - [CHANGELOG.md](CHANGELOG.md) lists the changes in each release.
 
 ## Licence

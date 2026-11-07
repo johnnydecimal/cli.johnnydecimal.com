@@ -9,6 +9,7 @@
 #   jd --system P76 22    act on a system other than the default
 #   jd version            print the version
 #   jd paths              print where jd stores its files
+#   jd update             pull the latest version of jd
 #   jd --help             the rest of it
 #
 # A move prints one absolute path on stdout and nothing else, and exits
@@ -48,6 +49,7 @@ _JD_CLI_DIR=$(cd -- "$(dirname -- "$_jd_self")/.." && pwd)
 . "$_JD_CLI_DIR/lib/beta.sh"
 . "$_JD_CLI_DIR/lib/new.sh"
 . "$_JD_CLI_DIR/lib/move.sh"
+. "$_JD_CLI_DIR/lib/update.sh"
 
 # --system SYS, first and nowhere else, so that it can never be read as
 # a title or as a flag of 'jd new'. Without it the program acts on the
@@ -64,4 +66,6 @@ if [ "${1-}" = --system ]; then
 fi
 
 _jd_nav "$_jd_sys" "$@"
-exit $?
+_jd_status=$?
+_jd_update_after "$@"
+exit $_jd_status

@@ -114,6 +114,8 @@ usage: <system> [jdex] [target]
   <system> paths        print where jd stores its config and its journal,
                         and where jd itself is. 'jd paths --help' prints
                         more
+  <system> update       pull the latest version of jd. 'jd update
+                        --help' prints more
 
 jd is the default system, or the only one. jdex is its JDex, so 'jdex
 11.11' and 'jd jdex 11.11' are the same command.
@@ -339,6 +341,17 @@ _jd_nav() {
     shift
     _jd_paths "$@"
     return
+  fi
+  # 'update' reads no config either. It updates jd, which a person with
+  # a broken config may need.
+  if [ "${1-}" = update ]; then
+    shift
+    if command -v _jd_update >/dev/null 2>&1; then
+      _jd_update "$@"
+      return
+    fi
+    _jd_nav_err "lib/update.sh is not loaded - run bin/jd, not lib/nav.sh"
+    return 1
   fi
   # Everything from here reads the config. If the config is still in
   # ~/.jd, the old place, this prints a message, once, in one line.

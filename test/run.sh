@@ -32,7 +32,11 @@ _jd_r_match=${1-}
 # inherits them from the shell that started it. Left set, a test would
 # write its journal into the real $XDG_STATE_HOME. A case that tests one
 # sets it again, to a folder under its own temp directory.
-unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME
+unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME XDG_CACHE_HOME
+
+# Either one turns the update check off, and the update tests set them
+# themselves.
+unset JD_NO_UPDATE_CHECK DO_NOT_TRACK
 
 # ------------------------------------------------------------ the shells
 

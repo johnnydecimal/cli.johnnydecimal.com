@@ -194,6 +194,7 @@ _jd_t_libs() {
   . "$JD_T_REPO/lib/beta.sh"
   . "$JD_T_REPO/lib/new.sh"
   . "$JD_T_REPO/lib/move.sh"
+  . "$JD_T_REPO/lib/update.sh"
 }
 
 # Unset the commands a previous _jd_t_load defined. jd.sh redefines jd
