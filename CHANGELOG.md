@@ -7,6 +7,19 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.0.1 – 2026-11-07
+
+> AI generated. Reviewed by Johnny.
+
+This release fixes four bugs.
+
+### Fixes
+
+- jd finds an area, a category or an ID folder that is a symlink. Before, `jd 11.12` did not find a symlinked ID folder. It created a second folder beside the symlink from the JDex, and `jd move` put files in that second folder.
+- `jd new` refuses an adapter name in the configuration file that contains a character other than `a-z`, `0-9`, `_` and `-`. Before, a name such as `../../x` could run a file outside jd's adapters folder.
+- The shell functions work when the path to jd contains a single quote. Before, the shell printed an error when it started, and `jd` did not change directory.
+- jd defines no command for a system whose `sys` is already a command name, such as `cd`, and prints an error when the shell starts. Before, the command for that system replaced `cd`. If you see this error, change the system's `sys`.
+
 ## 5.0.0 – 2026-11-07
 
 > AI generated. Reviewed by Johnny.
