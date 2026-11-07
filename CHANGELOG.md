@@ -7,6 +7,27 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.0.0 – 2026-11-07
+
+> AI generated. Reviewed by Johnny.
+
+This release changes the configuration file to version 2, reads a JDex in Bear or in a flat folder, and tells you when a newer version of jd is available. After you update, run `jd` one time: it changes your configuration file to version 2. If you use the agent skills, update them too: `npx skills update jdex`.
+
+### Features
+
+- jd reads a JDex in Bear. Set `"jdex": { "app": "bear" }` for the system. `jdex 11.11` opens the note in Bear, and `jdex 11` opens the category's tag. `jd new id` and `jd new wp` write their note to Bear. The README section "The JDex" describes the tags that jd reads.
+- `jdex` and `jd 11.11` read a flat JDex: a folder with no area folders, with every note in its root. Before, only `jd new id` read one.
+- Once a day, jd checks GitHub for a newer version. If there is one, jd prints one line after each command. The check reads the list of tags from GitHub. No telemetry is sent. To turn the check off, set `"updateCheck": false` in the configuration file, `JD_NO_UPDATE_CHECK=1`, or `DO_NOT_TRACK=1`.
+- `jd update` pulls the latest version, and prints the changelog entries since the version you had.
+
+### Changes
+
+- The configuration file is version 2. A system's `jdex` is an object: `app` is the app that contains the JDex, `path` is its folder, and `vault` is the Obsidian vault's name. `workPackages.notes` is gone, because the note app is `jdex.app`. `workPackages.tasks.adapter` is `workPackages.tasks.app`.
+- The first command that reads a version 1 configuration file changes it to version 2, and keeps the old file as `config.json.v1`. If the JDex folder contains `.obsidian`, the new `jdex` has `"app": "obsidian"`, and `jd new wp` then writes the Obsidian link into the note.
+- If the configuration file has a version greater than 2, jd exits with an error that tells you to run `jd update`.
+- `jd agent-setup` writes version 2, and asks which app contains your JDex.
+- jd's own work package template labels the note link `[JDex]`. Before, it was `[Obsidian]`.
+
 ## 4.4.0 – 2026-11-02
 
 > AI generated. Reviewed by Johnny.
