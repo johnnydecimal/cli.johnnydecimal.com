@@ -262,7 +262,7 @@ _jd_nav_go() {
 # found by the area's number, and only the start of that number is
 # matched: a system that has renamed the rest of the folder still works.
 _jd_nav_make_id() {
-  local root=$1 id=$3 jm name num what cm
+  local root=$1 id=$3 jm name num what cm dl
   case $_JD_JDEX_KIND in
     nested | flat) [ -d "$_JD_JDEX_PATH" ] || return 1 ;;
     bear) ;;
@@ -291,6 +291,16 @@ _jd_nav_make_id() {
   esac
   if [ "$(printf '%s' "$cm" | grep -c '^')" -ne 1 ]; then
     _jd_nav_err "the JDex has $id but there is no folder for $what"
+    return 2
+  fi
+  # A symlink whose target does not exist, such as a folder on a volume
+  # that is not mounted, is not a directory, so the search did not find
+  # it. Report it, and do not create a second folder beside it. With
+  # -L, -type l matches only a broken symlink.
+  dl=$(find -L "$cm" -mindepth 1 -maxdepth 1 -type l \
+    \( -iname "$id" -o -iname "$id *" -o -iname "$id~*" \) 2>/dev/null | sort | head -n 1)
+  if [ -n "$dl" ]; then
+    _jd_nav_err "${dl##*/} is a symlink to $(readlink "$dl"), which does not exist"
     return 2
   fi
   mkdir -- "$cm/$name" || return 2

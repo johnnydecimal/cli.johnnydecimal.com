@@ -180,6 +180,28 @@ else
   _jd_t_bad 'symlink: creates the ID in the symlinked category' 'a directory' 'nothing'
 fi
 
+rm -rf "$JD_FX_ROOT/10-19 Area one/19 Category nineteen"
+
+# A symlink whose target does not exist, such as a folder on a volume
+# that is not mounted. jd must print that, and create nothing.
+rm -f -- "$_jd_t_cat12/12.99 Linked folder"
+ln -s "$JD_T_TMP/not-mounted/12.99 Gone" "$_jd_t_cat12/12.99 Linked folder"
+_jd_t_run jd 12.99
+_jd_t_status 'broken symlink: exit status' 1
+_jd_t_contains 'broken symlink: prints that the target does not exist' \
+  "12.99 Linked folder is a symlink to $JD_T_TMP/not-mounted/12.99 Gone, which does not exist" \
+  "$JD_T_ERR"
+_jd_t_lacks 'broken symlink: creates nothing' 'created' "$JD_T_ERR"
+if [ -e "$_jd_t_cat12/12.99 Made by jd" ]; then
+  _jd_t_bad 'broken symlink: no second folder from the JDex' 'nothing' 'a folder'
+else
+  _jd_t_ok 'broken symlink: no second folder from the JDex'
+fi
+printf 'x\n' >"$JD_T_TMP/moved.txt"
+_jd_t_run jd move "$JD_T_TMP/moved.txt" 12.99
+_jd_t_status 'broken symlink: jd move exit status' 1
+rm -- "$_jd_t_cat12/12.99 Linked folder"
+
 rm -rf "$_jd_t_away" "$JD_T_TMP/moved.txt"
 _jd_fx_reset
 
