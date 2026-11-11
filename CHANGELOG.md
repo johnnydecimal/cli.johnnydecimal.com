@@ -7,6 +7,16 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.0.2 – 2026-11-11
+
+> AI generated. Reviewed by Johnny.
+
+This release fixes one bug.
+
+### Fixes
+
+- jd reports an ID folder that is a symlink to a folder that does not exist, such as a folder on a disk that is not mounted. Before, `jd 11.12` tried to create the folder from the JDex, and printed `mkdir: … File exists`.
+
 ## 5.0.1 – 2026-11-07
 
 > AI generated. Reviewed by Johnny.
