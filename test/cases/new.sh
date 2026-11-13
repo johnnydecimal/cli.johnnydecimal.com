@@ -29,7 +29,9 @@ _jd_t_jw="$JD_FX_JDEX/W0000-9999 Work packages"
 _jd_t_fw="$JD_FX_ROOT/W0000-9999 Work packages"
 _jd_t_w3="$_jd_t_fw/W0003 Templates"
 # The name of the W0003 that jd creates, when the system has none.
-_jd_t_w3_made='W0003 Templates for area W0000-9999'
+_jd_t_w3_made='W0003~00.03 Template'
+# The name of the W0009 that jd creates.
+_jd_t_w9_made='W0009~00.09 Archive'
 
 # ------------------------------------------------------------------ help
 
@@ -89,7 +91,7 @@ _jd_t_contains 'dry run: names the next free number' \
 _jd_t_contains 'dry run: names the note template' \
   "$_jd_t_w3/Work package template.md" "$JD_T_ERR"
 _jd_t_contains 'dry run: names the folder template' \
-  "$_jd_t_w3/Work package template" "$JD_T_ERR"
+  "from    $_jd_t_w3/Work package template" "$JD_T_ERR"
 _jd_t_contains 'dry run: prints that it created nothing' 'nothing was created' "$JD_T_ERR"
 _jd_t_contains 'dry run: names the link to the ID' \
   'parent  [[21.35 Some title]]' "$JD_T_ERR"
@@ -297,7 +299,7 @@ _jd_t_eq 'no W0003: the note starts with the permalink' '- Permalink:' \
   "$(printf '%s\n' "$_jd_t_note" | head -1)"
 _jd_t_lacks 'no W0003: the note contains no double brace' '{{' "$_jd_t_note"
 _jd_t_eq 'no W0003: no W0009 is created in an area that exists' 'no' \
-  "$([ -e "$_jd_t_fw/W0009 Archive" ] && printf yes || printf no)"
+  "$([ -e "$_jd_t_fw/$_jd_t_w9_made" ] && printf yes || printf no)"
 _jd_t_eq 'no W0003: the folder is empty' '' \
   "$(find "$_jd_t_fw/W0301~21.35 No templates for this" -mindepth 1 2>/dev/null)"
 
@@ -350,7 +352,7 @@ fi
 # The system has no W0000-9999 folder, and nor does the JDex. jd
 # creates both, and W0003 and W0009 in the filesystem one. The names
 # have no emoji. The JDex has no work package, so the first number is
-# W0001.
+# W0011: W0000 to W0010 are reserved.
 
 _jd_fx_reset
 rm -rf "$_jd_t_fw" "$_jd_t_jw"
@@ -363,7 +365,7 @@ _jd_t_contains 'no area: dry run names the area' "folder  $_jd_t_fw" "$JD_T_ERR"
 _jd_t_contains 'no area: dry run names W0003' \
   "folder  $_jd_t_fw/$_jd_t_w3_made" "$JD_T_ERR"
 _jd_t_contains 'no area: dry run names W0009' \
-  "folder  $_jd_t_fw/W0009 Archive" "$JD_T_ERR"
+  "folder  $_jd_t_fw/$_jd_t_w9_made" "$JD_T_ERR"
 _jd_t_contains 'no area: dry run names the JDex area' "folder  $_jd_t_jw" "$JD_T_ERR"
 if [ -e "$_jd_t_fw" ] || [ -e "$_jd_t_jw" ]; then
   _jd_t_bad 'no area: dry run creates nothing' 'no folder' 'a folder'
@@ -373,26 +375,70 @@ fi
 
 _jd_t_run jd new wp --json 21.35 No area
 _jd_t_status 'no area: exit status' 0
-_jd_t_eq 'no area: the first number is W0001' 'W0001' \
+_jd_t_eq 'no area: the first number is W0011' 'W0011' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
-if [ -f "$_jd_t_fw/$_jd_t_w3_made/Work package template.md" ] && [ -d "$_jd_t_fw/W0009 Archive" ]; then
+if [ -f "$_jd_t_fw/$_jd_t_w3_made/Work package template.md" ] && [ -d "$_jd_t_fw/$_jd_t_w9_made" ]; then
   _jd_t_ok 'no area: W0003 and W0009 are created'
 else
   _jd_t_bad 'no area: W0003 and W0009 are created' 'two folders' "$(ls "$_jd_t_fw" 2>&1)"
 fi
-if [ -f "$_jd_t_jw/W0001~21.35 No area.md" ] && [ -d "$_jd_t_fw/W0001~21.35 No area" ]; then
+if [ -f "$_jd_t_jw/W0011~21.35 No area.md" ] && [ -d "$_jd_t_fw/W0011~21.35 No area" ]; then
   _jd_t_ok 'no area: the note and the folder are created'
 else
   _jd_t_bad 'no area: the note and the folder are created' 'a note and a folder' 'not both'
 fi
 _jd_t_eq 'no area: the JDex area contains the note and nothing else' \
-  'W0001~21.35 No area.md' "$(ls "$_jd_t_jw" 2>/dev/null)"
+  'W0011~21.35 No area.md' "$(ls "$_jd_t_jw" 2>/dev/null)"
 
 # The second one finds the folders, and creates none.
 _jd_t_run jd new wp 21.35 No area again
 _jd_t_status 'no area: the second one, exit status' 0
 _jd_t_lacks 'no area: the second one creates no area' "folder  $_jd_t_fw/W0003" "$JD_T_ERR"
-_jd_t_at 'no area: the second one is W0002' "$_jd_t_fw/W0002~21.35 No area again"
+_jd_t_at 'no area: the second one is W0012' "$_jd_t_fw/W0012~21.35 No area again"
+
+# --------------------------------------- the Small Business System
+#
+# The SBS has the tilde form, W0003~00.03 and W0009~00.09, and an entry
+# for each in the JDex. The template folders are directly in W0003.
+# Nothing in the JDex is above W0010, so the first number is W0011.
+
+_jd_fx_reset
+rm -rf "$_jd_t_fw" "$_jd_t_jw"
+_jd_t_sbs3="$_jd_t_fw/W0003~00.03 Template"
+mkdir -p "$_jd_t_sbs3/05 Planning" "$_jd_t_sbs3/95 Finals as published" \
+  "$_jd_t_sbs3/.hidden" "$_jd_t_fw/W0009~00.09 Archive" \
+  "$_jd_t_jw/W0009~00.09 Archive"
+printf 'fixture\n' >"$_jd_t_sbs3/05 Planning/a file.txt"
+printf -- '- ^{{w}}\n' >"$_jd_t_sbs3/Work package template.md"
+printf '[]\n' >"$_jd_t_sbs3/Work package template.things.json"
+printf 'junk\n' >"$_jd_t_sbs3/05 Planning/.DS_Store"
+_jd_fx_note "$_jd_t_jw/W0003~00.03 Template.md"
+
+_jd_t_run jd new wp --dry-run --json 21.35 Small business
+_jd_t_status 'sbs: dry run, exit status' 0
+_jd_t_eq 'sbs: the first number is W0011' 'W0011' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
+_jd_t_eq 'sbs: the note template is in W0003~00.03' \
+  "$_jd_t_sbs3/Work package template.md" \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.template')"
+_jd_t_lacks 'sbs: dry run creates no second W0003' "folder  $_jd_t_fw/W0003" "$JD_T_ERR"
+_jd_t_contains 'sbs: dry run names W0003 as the folder template' \
+  "from    $_jd_t_sbs3" "$JD_T_ERR"
+
+_jd_t_run jd new wp 21.35 Small business
+_jd_t_status 'sbs: exit status' 0
+_jd_t_sbs_wp="$_jd_t_fw/W0011~21.35 Small business"
+_jd_t_eq 'sbs: the folders in W0003 are copied in, and nothing else' \
+  "$(printf '05 Planning\n05 Planning/a file.txt\n95 Finals as published')" \
+  "$(cd "$_jd_t_sbs_wp" 2>/dev/null && find . -mindepth 1 | sed 's|^\./||' | sort)"
+_jd_t_eq 'sbs: the area has one W0003' 'W0003~00.03 Template' \
+  "$(ls "$_jd_t_fw" | grep '^W0003')"
+
+# A number in the archive, W0009~00.09, is counted.
+printf 'note\n' >"$_jd_t_jw/W0009~00.09 Archive/W0400~21.35 Archived.md"
+_jd_t_run jd new wp --dry-run --json 21.35 After the archive
+_jd_t_eq 'sbs: a number in W0009~00.09 is counted' 'W0401' \
+  "$(printf '%s' "$JD_T_OUT" | jq -r '.num')"
 
 # Two W0000 folders: jd cannot determine which one is the area, so it
 # exits with an error.
@@ -518,7 +564,7 @@ mkdir -p "$_jd_t_flat/21.35 Some title"
 _jd_fx_note "$_jd_t_flat/21.35 Some title/21.35 Some title.md"
 _jd_t_run jd new wp --dry-run --json 21.35 Flat folder note
 _jd_t_eq 'parent: a flat JDex of folder notes, the note is in the root' \
-  "$_jd_t_flat/W0001~21.35 Flat folder note.md" \
+  "$_jd_t_flat/W0011~21.35 Flat folder note.md" \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.note')"
 _jd_t_eq 'parent: a flat JDex of folder notes, the link' '[[21.35 Some title]]' \
   "$(printf '%s' "$JD_T_OUT" | jq -r '.parentLink')"

@@ -153,7 +153,7 @@ $_JD_SETUP_MOVE
 
 8. If my shell is zsh or bash, ask me whether I want the Johnny.Decimal path in my prompt. There is no prompt for fish. There are two ways: _jd_pwd in the prompt I have, or Johnny's whole theme in place of it. The README section "The prompt theme" contains the steps. The theme sets PROMPT in zsh and PS1 in bash, whatever prompt I had, with no check. So ask first, and say what the theme replaces: my own prompt, starship, powerlevel10k, an oh-my-zsh theme, or an oh-my-bash theme. Do not add either unless I say yes. If I keep my own prompt, tell me that _jd_pwd is available and let me place it.
 
-9. Ask me whether I want jd to create work packages. A work package is one piece of work with a number, like W0001. The command 'jd new wp' creates a note for it in my JDex and a folder for it in my system. If I say no, skip this step. If I say yes, do this for each system that I name:
+9. Ask me whether I want jd to create work packages. A work package is one piece of work with a number, like W0011. The command 'jd new wp' creates a note for it in my JDex and a folder for it in my system. If I say no, skip this step. If I say yes, do this for each system that I name:
 
    - The system requires a "jdex" in its entry. If the entry has none, tell me, and skip this system.
    - Ask me whether I use Things 3 on this Mac. If I do, add "workPackages": { "tasks": { "app": "things" } } to the entry of the system. jd then creates a project in Things for each work package. Tell me to turn on Enable Things URLs in Things, in Settings > General. Show me the block before you write it. If I do not use Things, write no block. jd creates work packages without one.

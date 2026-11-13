@@ -19,12 +19,12 @@
 #
 #   ID template.md                  21.03, then 20.03, then 00.03
 #   Work package template.md        W0003
-#   Work package template/          W0003. Its contents are copied in
+#   the folders in W0003            copied into the new folder
 #   Work package template.<adapter>.json
 #                                   W0003. The task app's project
 #
 # With no template note, the note is blank, and jd prints a message.
-# With no template folder, the folder is empty. With no task app
+# With no folder in W0003, the new folder is empty. With no task app
 # template, the adapter copies jd's own into W0003, from the templates
 # folder of this repo. With no W0003 at all, jd creates it, and copies
 # its own template note into it.
@@ -48,8 +48,8 @@ _JD_NEW_WP_TPL='Work package template'
 # The names of the folders that 'jd new wp' creates when they are
 # missing.
 _JD_NEW_WP_AREA='W0000-9999 Work packages'
-_JD_NEW_WP_W3='W0003 Templates for area W0000-9999'
-_JD_NEW_WP_W9='W0009 Archive'
+_JD_NEW_WP_W3='W0003~00.03 Template'
+_JD_NEW_WP_W9='W0009~00.09 Archive'
 
 _jd_new_usage() {
   cat <<'EOF'
@@ -133,15 +133,21 @@ In this order, it:
   - assigns the next free W number, from the JDex and the filesystem
   - creates the project in your task app, from the template project
   - creates the JDex note, from the template note
-  - creates the folder, from the template folder
+  - creates the folder, from the template folders
+
+The next free W number is one more than the highest in the JDex, and
+never lower than W0011. W0000 to W0010 are reserved.
 
 The templates are in the W0003 folder in the filesystem:
 
   Work package template.md        the note. None: the note is blank.
                                    No W0003: jd creates W0003, and
                                    copies its own note into it
-  Work package template/          copied into the new folder. None:
-                                   the folder is empty
+  the folders in W0003            copied into the new folder. None:
+                                   the folder is empty. If W0003 has
+                                   a folder 'Work package template',
+                                   jd copies its contents, and no
+                                   other folder
   Work package template.things.json
                                    the task app's project, for the
                                    things adapter. None: jd copies
@@ -907,8 +913,9 @@ _jd_new_id() {
 
 # -------------------------------------------------------------------- wp
 
-# The highest W number in the JDex, plus one. $1 the JDex work package
-# area: a folder, or a tag in Bear.
+# The highest W number in the JDex, plus one, and never lower than
+# W0011: W0000 to W0010 are reserved. $1 the JDex work package area: a
+# folder, or a tag in Bear.
 #
 # Only the JDex counts, the same as for an ID. It reads the entries
 # directly in the area, and the entries directly in its archive, W0009.
@@ -922,7 +929,7 @@ _jd_new_next_number() {
         _jd_bear_titles "$1" wp
       else
         _jd_nav_find "$1" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
-        _jd_nav_find "$1" 1 d -iname 'W0009' -o -iname 'W0009 *' |
+        _jd_nav_find "$1" 1 d -iname 'W0009' -o -iname 'W0009 *' -o -iname 'W0009~*' |
         while IFS= read -r a; do
           _jd_nav_find "$a" 1 a -iname 'w[0-9][0-9][0-9][0-9]*'
         done
@@ -933,6 +940,7 @@ _jd_new_next_number() {
   n=$(printf '%s' "$max" | sed 's/^0*//')
   [ -n "$n" ] || n=0
   n=$((n + 1))
+  [ "$n" -ge 11 ] || n=11
   if [ "$n" -gt 9999 ]; then
     _jd_new_fail numbers_exhausted '' "the last work package number is W9999"
     return 1
@@ -950,6 +958,29 @@ _jd_new_old_keys() {
     _jd_nav_err "the config sets workPackages.$k, which jd no longer reads - delete it. The templates are in W0003"
     _jd_new_warn config_key_ignored
   done
+}
+
+# What jd copies into a new work package from W0003, $1. Sets
+# $_JD_NEW_FOLDER_TPL, one full path per line, and $_JD_NEW_FOLDER_FROM,
+# the folder that a dry run names.
+#
+#   W0003 has 'Work package template/'   everything in that folder.
+#                                        This is the layout before 5.1
+#   it does not                          every folder directly in
+#                                        W0003. A file there is a
+#                                        template, and a folder whose
+#                                        name starts with '.' is hidden,
+#                                        so neither is copied
+_jd_new_folder_tpl() {
+  _JD_NEW_FOLDER_TPL=''
+  _JD_NEW_FOLDER_FROM=$1
+  [ -d "$1" ] || return 0
+  if [ -d "$1/$_JD_NEW_WP_TPL" ]; then
+    _JD_NEW_FOLDER_FROM="$1/$_JD_NEW_WP_TPL"
+    _JD_NEW_FOLDER_TPL=$(_jd_nav_find "$_JD_NEW_FOLDER_FROM" 1 a -name '*')
+  else
+    _JD_NEW_FOLDER_TPL=$(_jd_nav_find "$1" 1 d ! -name '.*')
+  fi
 }
 
 # Add $1 to the folders that _jd_new_wp_make creates.
@@ -1025,7 +1056,7 @@ _jd_new_parent_note() {
 }
 
 _jd_new_wp() {
-  local jw fw w3 new_w3 folder_tpl notes_ad tasks_ad note_path dir ep
+  local jw fw w3 new_w3 notes_ad tasks_ad note_path dir ep d
 
   # Both work package areas, found by the start of the number, the same
   # way nav.sh finds them. A missing one is created later, with the
@@ -1091,7 +1122,7 @@ _jd_new_wp() {
     _jd_new_wp_missing "$w3"
     _jd_new_wp_missing "$fw/$_JD_NEW_WP_W9"
   else
-    _jd_new_one "$(_jd_nav_find "$fw" 1 d -iname 'W0003' -o -iname 'W0003 *')" W0003 || return 1
+    _jd_new_one "$(_jd_nav_find "$fw" 1 d -iname 'W0003' -o -iname 'W0003 *' -o -iname 'W0003~*')" W0003 || return 1
     w3=$_JD_NEW_ONE
     if [ -z "$w3" ]; then
       w3="$fw/$_JD_NEW_WP_W3"
@@ -1161,9 +1192,8 @@ _jd_new_wp() {
   # creates anything.
   # A W0003 that jd is about to create contains nothing yet, so the note
   # is read from jd's own template, which is what jd copies into it.
-  folder_tpl=''
   [ -f "$w3/$_JD_NEW_WP_TPL.md" ] && _JD_NEW_TEMPLATE="$w3/$_JD_NEW_WP_TPL.md"
-  [ -d "$w3/$_JD_NEW_WP_TPL" ] && folder_tpl="$w3/$_JD_NEW_WP_TPL"
+  _jd_new_folder_tpl "$w3"
   [ -n "$_JD_NEW_WP_NOTE_TO" ] && _JD_NEW_TEMPLATE=$_JD_NEW_WP_NOTE_FROM
   _jd_new_read_template "$_JD_NEW_TEMPLATE" || return 1
 
@@ -1208,7 +1238,7 @@ _jd_new_wp() {
     [ -n "$_JD_NEW_TEMPLATE" ] && _jd_new_say "from    $_JD_NEW_TEMPLATE"
     [ -n "$_JD_NEW_TOFILL_NAMES" ] && _jd_new_say "not set $_JD_NEW_TOFILL_NAMES, so the note has the brief"
     _jd_new_say "folder  $dir"
-    [ -n "$folder_tpl" ] && _jd_new_say "from    $folder_tpl"
+    [ -n "$_JD_NEW_FOLDER_TPL" ] && _jd_new_say "from    $_JD_NEW_FOLDER_FROM"
     _jd_new_say "notes   $notes_ad, $_JD_NEW_NOTES_URL"
     [ -n "$_JD_NEW_PARENT_LINK" ] && _jd_new_say "parent  $_JD_NEW_PARENT_LINK"
     _jd_new_say "tasks   $tasks_ad"
@@ -1246,13 +1276,18 @@ _jd_new_wp() {
     _jd_new_write_note "$note_path" || return 1
   fi
 
-  # The folder, and the contents of the template folder.
+  # The folder, and the template folders in it. -H copies the folder
+  # that a symbolic link points to, not the link.
   mkdir -- "$dir" || { _jd_new_fail mkdir_failed "$dir" "could not create $dir"; return 1; }
-  if [ -n "$folder_tpl" ]; then
-    cp -R -- "$folder_tpl/." "$dir/" || {
-      _jd_new_fail copy_failed "$folder_tpl" "could not copy $folder_tpl"
-      return 1
-    }
+  if [ -n "$_JD_NEW_FOLDER_TPL" ]; then
+    while IFS= read -r d; do
+      cp -R -H -- "$d" "$dir/" || {
+        _jd_new_fail copy_failed "$d" "could not copy $d"
+        return 1
+      }
+    done <<EOF
+$_JD_NEW_FOLDER_TPL
+EOF
     find "$dir" -name '.DS_Store' -exec rm -f -- {} + 2>/dev/null
   fi
   _jd_new_say "folder  $dir"

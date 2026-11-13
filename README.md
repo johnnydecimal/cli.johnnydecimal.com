@@ -263,8 +263,10 @@ jd new wp 21.34 A title     # a work package for ID 21.34
 
 - It assigns the next free W number, and creates the project in your task app, the JDex note, and the folder.
 - The next free W number is one more than the highest in the JDex: the entries directly in the work package area, and directly in its archive, `W0009`. If the filesystem already has a folder with that number, jd exits with an error that names the folder.
-- If the system has no `W0000-9999` folder, jd creates `W0000-9999 Work packages`, with `W0003 Templates for area W0000-9999` and `W0009 Archive` in it.
-- If the area has no `W0003` folder, jd creates `W0003 Templates for area W0000-9999`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
+  - It is never lower than `W0011`. `W0000` to `W0010` are reserved.
+- jd recognizes `W0003` and `W0009` with a title or without one, in either form: `W0003 Templates` or `W0003~00.03 Template`.
+- If the system has no `W0000-9999` folder, jd creates `W0000-9999 Work packages`, with `W0003~00.03 Template` and `W0009~00.09 Archive` in it.
+- If the area has no `W0003` folder, jd creates `W0003~00.03 Template`, and copies its own template note into it: [templates/Work package template.md](templates/Work%20package%20template.md).
 - If the JDex has no `W0000-9999` folder, jd creates `W0000-9999 Work packages` in the JDex. In a flat JDex, jd creates no folder: jd writes the note to the root. In Bear, the note's tag creates the tag `#W0000-9999 Work packages#`.
 - The note app is the JDex's `app`, and the task app is `workPackages.tasks.app`. Refer to [lib/adapters/README.md](lib/adapters/README.md).
 
@@ -276,7 +278,7 @@ Templates are in the filesystem. jd finds them by number, so the config does not
 | --- | --- | --- |
 | `ID template.md` | The category's .03, then the area's .03, then `00.03`. For category 21: `21.03`, `20.03`, `00.03`. | The note is blank, and jd prints a warning. |
 | `Work package template.md` | `W0003` | The note is blank, and jd prints a warning. If there is no `W0003`, jd creates it, and copies its own template note into it. |
-| `Work package template/` | `W0003`. jd copies its contents into the new folder. | The folder is empty. |
+| The folders in `W0003` | `W0003`. jd copies each one into the new folder. If `W0003` has a folder `Work package template/`, jd copies its contents, and no other folder. | The folder is empty. |
 | `Work package template.things.json` | `W0003` | jd creates it from Things, if the config has `workPackages.tasks.source`. Otherwise jd copies its own, [templates/Work package template.things.json](templates/Work%20package%20template.things.json), into `W0003`. |
 
 - The first `ID template.md` that jd finds is the one it uses. To give one category its own template, put a copy in that category's .03.
