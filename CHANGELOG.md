@@ -7,6 +7,22 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.1.0 – 2026-11-14
+
+> AI generated. Reviewed by Johnny.
+
+This release makes `jd new wp` work with the work package area of the Small Business System.
+
+### Changes
+
+- `jd new wp` copies each folder in `W0003` into the new work package. This is the layout of the Small Business System. If `W0003` has a folder `Work package template/`, jd copies its contents, and no other folder, as before.
+- The next free W number is never lower than `W0011`. `W0000` to `W0010` are reserved. If your highest W number is lower than `W0011`, your next work package is `W0011`.
+- In a new work package area, jd creates `W0003~00.03 Template` and `W0009~00.09 Archive`. Before, it created `W0003 Templates for area W0000-9999` and `W0009 Archive`.
+
+### Fixes
+
+- jd finds `W0003` and `W0009` in the form that the Small Business System uses: `W0003~00.03 Template` and `W0009~00.09 Archive`. Before, jd created a second `W0003` folder, and did not count the work packages in the archive.
+
 ## 5.0.2 – 2026-11-11
 
 > AI generated. Reviewed by Johnny.
