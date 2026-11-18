@@ -7,6 +7,17 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.2.0 – 2026-11-18
+
+> AI generated. Reviewed by Johnny.
+
+This release lets jd change to a `+ name` folder in an ID or a work package.
+
+### Features
+
+- `jd 14.32+ discord` changes to the folder `+ Discord` in 14.32. `jd 14.32+discord` is the same command. The name must match exactly, except for case. A work package works too: `jd W0189+ notes`.
+- If 14.32 does not contain `+ discord`, jd runs a word search, as before. The search finds an extend-the-end folder such as `14.32+ Discord` beside 14.32. If the search finds nothing, jd prints `jd: 14.32 contains no folder '+ discord'`.
+
 ## 5.1.0 – 2026-11-14
 
 > AI generated. Reviewed by Johnny.
