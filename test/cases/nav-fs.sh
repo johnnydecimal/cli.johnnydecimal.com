@@ -101,6 +101,12 @@ _jd_t_at 'plus: in a work package, lower case, no space' "$_jd_t_wp189/+ Notes"
 _jd_t_run jd 11.11+ disc
 _jd_t_status 'plus: part of a name is not a match' 1
 _jd_t_at 'plus: part of a name does not cd' "$JD_T_TMP"
+_jd_t_eq 'plus: the error names the folder that is not there' \
+  "jd: 11.11 contains no folder '+ disc'" "$JD_T_ERR"
+
+_jd_t_run jd 99.99+ discord
+_jd_t_contains 'plus: no folder for the ID is the word search error' \
+  "no match for '99.99+ discord'" "$JD_T_ERR"
 
 # No '+ extension' in 11.11, so the words are a word search, which
 # finds the extend-the-end beside it, as before.

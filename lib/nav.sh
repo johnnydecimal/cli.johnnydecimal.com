@@ -315,10 +315,11 @@ _jd_nav_make_id() {
 # the rest of the name. 'jd 14.32+ amazon ses' is '+ amazon ses'.
 #
 # The name must be exact, except for case. Returns 1, and prints
-# nothing, if there is no name, if the ID or work package does not have
-# exactly one folder, or if that folder does not contain exactly one
-# '+ name'. This does not create the ID's folder from the JDex: a new
-# folder contains no '+ name'.
+# nothing, if there is no name or if the ID or work package does not
+# have exactly one folder. Returns 2 if that folder does not contain
+# exactly one '+ name', and prints the error message that _jd_nav prints
+# if the word search finds nothing too. This does not create the ID's
+# folder from the JDex: a new folder contains no '+ name'.
 _jd_nav_plus() {
   local tree=$1 id name m
   id=${2%%+*}
@@ -334,7 +335,10 @@ _jd_nav_plus() {
   esac
   [ -n "$m" ] && [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 1
   m=$(_jd_nav_find "$m" 1 d -iname "+ $name")
-  [ -n "$m" ] && [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 1
+  if [ -z "$m" ] || [ "$(printf '%s' "$m" | grep -c '^')" -ne 1 ]; then
+    printf "%s contains no folder '+ %s'" "$id" "$name"
+    return 2
+  fi
   printf '%s' "$m"
 }
 
@@ -355,7 +359,7 @@ _jd_nav_search_in() {
 }
 
 _jd_nav() {
-  local sys=$1 cfg root jdex tree mode type a c id m wm t
+  local sys=$1 cfg root jdex tree mode type a c id m wm t plus
   shift
   # 'jdex' as the first word is the JDex, whether the user typed it or
   # the jdex command passed it. It is read here so that 'jdex version'
@@ -498,13 +502,16 @@ _jd_nav() {
   # '14.32+ discord' or '14.32+discord': the folder '+ discord' inside
   # the folder for 14.32, if there is one. If there is not, the words
   # are a word search, which finds an extend-the-end such as
-  # '14.32+ Discord' beside the ID.
+  # '14.32+ Discord' beside the ID. If the word search finds nothing
+  # too, the error names the folder that 14.32 does not contain.
+  plus=''
   case $1 in
     [0-9][0-9].[0-9][0-9]+* | [Ww][0-9][0-9][0-9][0-9]+*)
-      if m=$(_jd_nav_plus "$tree" "$@"); then
-        _jd_nav_arrive "$m"
-        return
-      fi
+      m=$(_jd_nav_plus "$tree" "$@")
+      case $? in
+        0) _jd_nav_arrive "$m"; return ;;
+        2) plus=$m ;;
+      esac
       ;;
   esac
 
@@ -569,6 +576,10 @@ $wm"
         else
           m=$wm
         fi
+      fi
+      if [ -z "$m" ] && [ -n "$plus" ]; then
+        _jd_nav_err "$plus"
+        return 1
       fi
       _jd_nav_go "$tree" "$mode" "'$*'" "$m"
       ;;
