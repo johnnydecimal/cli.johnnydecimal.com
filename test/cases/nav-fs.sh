@@ -72,6 +72,48 @@ _jd_t_at 'work package: lower case w0189' \
 _jd_t_run jd W0189 extra
 _jd_t_status 'work package: words after one are an error' 1
 
+# ------------------------------------------- a '+ name' folder in an ID
+
+_jd_t_id11=$JD_FX_ROOT/'10-19 Area one/11 Category eleven/11.11 First ID'
+_jd_t_wp189=$JD_FX_ROOT/'10-19 Area one/W0189 Work package one'
+mkdir -p "$_jd_t_id11/+ Discord" "$_jd_t_id11/+ Amazon SES" "$_jd_t_wp189/+ Notes"
+
+_jd_t_run jd 11.11+ discord
+_jd_t_status 'plus: exit status' 0
+_jd_t_at 'plus: 11.11+ discord' "$_jd_t_id11/+ Discord"
+
+_jd_t_run jd 11.11+discord
+_jd_t_at 'plus: 11.11+discord, no space' "$_jd_t_id11/+ Discord"
+
+_jd_t_run jd 11.11+ amazon ses
+_jd_t_at 'plus: a name of two words' "$_jd_t_id11/+ Amazon SES"
+
+_jd_t_run jd 11.11+amazon ses
+_jd_t_at 'plus: a name of two words, no space' "$_jd_t_id11/+ Amazon SES"
+
+_jd_t_run jd W0189+ notes
+_jd_t_at 'plus: in a work package' "$_jd_t_wp189/+ Notes"
+
+_jd_t_run jd w0189+notes
+_jd_t_at 'plus: in a work package, lower case, no space' "$_jd_t_wp189/+ Notes"
+
+# The name must be exact. 'disc' is not 'Discord'.
+_jd_t_run jd 11.11+ disc
+_jd_t_status 'plus: part of a name is not a match' 1
+_jd_t_at 'plus: part of a name does not cd' "$JD_T_TMP"
+
+# No '+ extension' in 11.11, so the words are a word search, which
+# finds the extend-the-end beside it, as before.
+_jd_t_run jd 11.11+ extension
+_jd_t_at 'plus: no such folder in 11.11 is a word search' \
+  "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11+ Extension"
+
+_jd_t_run jd 11.11+
+_jd_t_at 'plus: no name is a word search' \
+  "$JD_FX_ROOT/10-19 Area one/11 Category eleven/11.11+ Extension"
+
+rm -rf "$_jd_t_id11/+ Discord" "$_jd_t_id11/+ Amazon SES" "$_jd_t_wp189/+ Notes"
+
 # ----------------------------------------------------------- word search
 
 _jd_t_run jd travel

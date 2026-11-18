@@ -90,6 +90,8 @@ usage: <system> [jdex] [target]
   <system> 22           cd to a category
   <system> 11.11        cd to an ID
   <system> W0189        cd to a work package
+  <system> 11.11+ name  cd to the folder '+ name' in 11.11, or in a
+                        work package. '11.11+name' also works
   <system> tripsy       search all IDs for a word, cd if one match
   <system> 21. tripsy   search inside category 21 (bare '21' also works)
   <system> 20-29 word   search inside area 20-29
@@ -308,6 +310,34 @@ _jd_nav_make_id() {
   printf '%s' "$cm/$name"
 }
 
+# Print the folder '+ name' inside the folder for an ID or a work
+# package. $1 tree, $2 the first word, '14.32+' or '14.32+discord', $3+
+# the rest of the name. 'jd 14.32+ amazon ses' is '+ amazon ses'.
+#
+# The name must be exact, except for case. Returns 1, and prints
+# nothing, if there is no name, if the ID or work package does not have
+# exactly one folder, or if that folder does not contain exactly one
+# '+ name'. This does not create the ID's folder from the JDex: a new
+# folder contains no '+ name'.
+_jd_nav_plus() {
+  local tree=$1 id name m
+  id=${2%%+*}
+  name=${2#*+}
+  shift 2
+  if [ $# -gt 0 ]; then
+    if [ -n "$name" ]; then name="$name $*"; else name="$*"; fi
+  fi
+  [ -n "$name" ] || return 1
+  case $id in
+    [Ww]*) m=$(_jd_nav_find "$tree" 2 d -iname "$id" -o -iname "$id *" -o -iname "$id~*") ;;
+    *) m=$(_jd_nav_find "$tree" 3 d -name "$id" -o -name "$id *") ;;
+  esac
+  [ -n "$m" ] && [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 1
+  m=$(_jd_nav_find "$m" 1 d -iname "+ $name")
+  [ -n "$m" ] && [ "$(printf '%s' "$m" | grep -c '^')" -eq 1 ] || return 1
+  printf '%s' "$m"
+}
+
 # Word search for IDs inside one area or category. $1 tree, $2 mode,
 # $3 type, $4 container matches, $5 ID depth in container, $6 label, $7+ words
 _jd_nav_search_in() {
@@ -464,6 +494,19 @@ _jd_nav() {
     return
   fi
   type=d
+
+  # '14.32+ discord' or '14.32+discord': the folder '+ discord' inside
+  # the folder for 14.32, if there is one. If there is not, the words
+  # are a word search, which finds an extend-the-end such as
+  # '14.32+ Discord' beside the ID.
+  case $1 in
+    [0-9][0-9].[0-9][0-9]+* | [Ww][0-9][0-9][0-9][0-9]+*)
+      if m=$(_jd_nav_plus "$tree" "$@"); then
+        _jd_nav_arrive "$m"
+        return
+      fi
+      ;;
+  esac
 
   # 'NN.NN' or 'NN.NN *' only: '11.11+ Extension' must not match '11.11'.
   case $1 in
