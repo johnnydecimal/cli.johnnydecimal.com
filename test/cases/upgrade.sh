@@ -44,7 +44,6 @@ _jd_t_u_config() {
   cat >"$_jd_t_ucfg" <<EOF
 {
   "version": 2,
-  "beta": true,
   "systems": [
     { "sys": "U25", "title": "Test system", "root": "$_jd_t_uroot", $_jd_t_j "default": true }
   ]
@@ -105,13 +104,10 @@ _jd_t_u_build
 
 # ---------------------------------------------------------------- gates
 
-JD_BETA=0
 _jd_t_cfg_beta_off=$(jq '.beta = false' "$_jd_t_ucfg")
 printf '%s\n' "$_jd_t_cfg_beta_off" >"$_jd_t_ucfg"
 _jd_t_run "$JD_T_BIN" upgrade --dry-run
-_jd_t_status 'beta off: exit status' 1
-_jd_t_contains 'beta off: says it is a beta feature' 'beta feature' "$JD_T_ERR"
-unset JD_BETA
+_jd_t_status 'beta off: jd upgrade --dry-run is not a beta feature' 0
 _jd_t_u_config obsidian
 
 _jd_t_run "$JD_T_BIN" upgrade

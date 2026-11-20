@@ -3,7 +3,7 @@
 # Admin System or the Small Business System needs to reach the current
 # release, and 'jd login', which stores the API key that it uses
 # Part of the Johnny.Decimal command line. Sourced by bin/jd, after
-# paths.sh, nav.sh, jdex.sh, bear.sh and beta.sh.
+# paths.sh, nav.sh, jdex.sh and bear.sh.
 #
 # The names follow apt and Homebrew: 'jd update' updates jd, and 'jd
 # upgrade' updates the system.
@@ -20,7 +20,7 @@
 # to read, which template folders to list), and the second run sets the
 # state of each item from what this file read.
 #
-# This version lists. It changes nothing.
+# This version lists only. It is read-only.
 #
 # Requires jq, and curl for the API. Works in bash 3.2+ and zsh.
 
@@ -50,7 +50,8 @@ Each item is a change from a release after yours. Its state is one of:
 jd matches each folder and JDex note on its number, never on its full
 name.
 
-This version lists only. Without --dry-run, jd changes nothing.
+This version lists only, and is read-only. Without --dry-run, jd exits
+with an error.
 
       --dry-run         print the list
       --json            print one JSON object on stdout.
@@ -388,10 +389,6 @@ _jd_upgrade() {
     esac
     shift
   done
-  if ! _jd_beta_on; then
-    _jd_upgrade_fail "$json" beta_off "'jd upgrade' is a beta feature. 'jd beta on' turns beta on"
-    return 1
-  fi
   if [ "$dry" -eq 0 ]; then
     _jd_upgrade_fail "$json" not_yet "jd upgrade cannot apply changes yet: run jd upgrade --dry-run"
     return 1

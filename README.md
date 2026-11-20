@@ -364,7 +364,7 @@ Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jso
 
 ## `jd upgrade`
 
-`jd upgrade --dry-run` lists what an install of the Life Admin System or the Small Business System needs to reach the current release. It changes nothing.
+`jd upgrade --dry-run` lists the changes that an install of the Life Admin System or the Small Business System needs to reach the current release. It is read-only.
 
 ```sh
 jd login                  # store your API key
@@ -376,11 +376,11 @@ jd upgrade --dry-run --json
 - jd reads the installed release from `00.00/VERSION.json`. For an older install, it reads an older version file, or compares the folder names with each release. `--from <release>` names the release.
 - Each item is `todo`, `ask` or `done`. `ask` means that you decide: for example, the folder contains files, or you renamed it.
 - jd matches each folder and JDex note on its number, never on its full name.
-- Without `--dry-run`, jd changes nothing. A later version applies the list.
+- Without `--dry-run`, jd exits with an error. A later version applies the list.
 
 ## Beta
 
-Some features are in beta. They may change, or be removed, without notice. One flag turns all of them on. In this version, [`jd upgrade`](#jd-upgrade) is in beta.
+Some features are in beta. They may change, or be removed, without notice. One flag turns all of them on. No feature is in beta in this version.
 
 ```sh
 jd beta          # print whether beta is on
