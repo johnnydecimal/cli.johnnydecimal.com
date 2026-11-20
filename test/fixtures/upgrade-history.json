@@ -1,0 +1,746 @@
+{
+ "schema": 1,
+ "system": "las",
+ "releases": [
+  {
+   "release": "2024-01-01",
+   "dateSource": "pack",
+   "markers": [
+    "1.0.4"
+   ],
+   "changes": [],
+   "outline": [
+    {
+     "kind": "area",
+     "id": "00-09",
+     "title": "System area"
+    },
+    {
+     "kind": "category",
+     "id": "00",
+     "title": "System category",
+     "emoji": "⚙️"
+    },
+    {
+     "kind": "id",
+     "id": "00.00",
+     "title": "Index of the system"
+    },
+    {
+     "kind": "area",
+     "id": "10-19",
+     "title": "Life admin"
+    },
+    {
+     "kind": "category",
+     "id": "11",
+     "title": "Alpha",
+     "emoji": "🅰️"
+    },
+    {
+     "kind": "id",
+     "id": "11.00",
+     "title": "Index for 11"
+    },
+    {
+     "kind": "id",
+     "id": "11.01",
+     "title": "Inbox for 11",
+     "emoji": "📥"
+    },
+    {
+     "kind": "id",
+     "id": "11.10",
+     "title": "Fruit",
+     "header": true
+    },
+    {
+     "kind": "id",
+     "id": "11.11",
+     "title": "Apples",
+     "description": "Red and green."
+    },
+    {
+     "kind": "id",
+     "id": "11.12",
+     "title": "Bananas"
+    },
+    {
+     "kind": "id",
+     "id": "11.13",
+     "title": "Cherries"
+    },
+    {
+     "kind": "id",
+     "id": "11.21",
+     "title": "One"
+    },
+    {
+     "kind": "id",
+     "id": "11.22",
+     "title": "Two"
+    },
+    {
+     "kind": "id",
+     "id": "11.31",
+     "title": "Red"
+    },
+    {
+     "kind": "id",
+     "id": "11.32",
+     "title": "Green"
+    },
+    {
+     "kind": "id",
+     "id": "11.33",
+     "title": "Blue"
+    },
+    {
+     "kind": "id",
+     "id": "11.41",
+     "title": "Old thing"
+    },
+    {
+     "kind": "id",
+     "id": "11.42",
+     "title": "Empty thing"
+    },
+    {
+     "kind": "id",
+     "id": "11.51",
+     "title": "Renamed by the release"
+    },
+    {
+     "kind": "id",
+     "id": "11.61",
+     "title": "Described",
+     "description": "Old words."
+    },
+    {
+     "kind": "id",
+     "id": "11.62",
+     "title": "Edited",
+     "description": "Original words."
+    },
+    {
+     "kind": "category",
+     "id": "12",
+     "title": "Beta"
+    },
+    {
+     "kind": "id",
+     "id": "12.11",
+     "title": "Moves away"
+    },
+    {
+     "kind": "category",
+     "id": "13",
+     "title": "Gamma"
+    },
+    {
+     "kind": "id",
+     "id": "13.12",
+     "title": "Stays"
+    }
+   ],
+   "templates": [
+    {
+     "id": "11.11",
+     "path": "Apple template",
+     "type": "folder"
+    },
+    {
+     "id": "11.11",
+     "path": "Apple template/10 Seeds",
+     "type": "folder"
+    }
+   ],
+   "notes": [
+    {
+     "id": "11.11+OPS1",
+     "title": "Ops for apples"
+    }
+   ]
+  },
+  {
+   "release": "2024-06-01",
+   "dateSource": "guess",
+   "markers": [
+    "2.0.3"
+   ],
+   "changes": [
+    {
+     "op": "remove",
+     "id": "11.41",
+     "title": "Old thing"
+    },
+    {
+     "op": "remove",
+     "id": "11.42",
+     "title": "Empty thing"
+    },
+    {
+     "op": "move",
+     "from": "11.21",
+     "to": "11.22",
+     "fromTitle": "One",
+     "title": "One"
+    },
+    {
+     "op": "move",
+     "from": "11.22",
+     "to": "11.21",
+     "fromTitle": "Two",
+     "title": "Two"
+    },
+    {
+     "op": "move",
+     "from": "11.31",
+     "to": "11.33",
+     "fromTitle": "Red",
+     "title": "Red"
+    },
+    {
+     "op": "move",
+     "from": "11.32",
+     "to": "11.31",
+     "fromTitle": "Green",
+     "title": "Green"
+    },
+    {
+     "op": "move",
+     "from": "11.33",
+     "to": "11.32",
+     "fromTitle": "Blue",
+     "title": "Blue"
+    },
+    {
+     "op": "move",
+     "from": "12.11",
+     "to": "13.11",
+     "fromTitle": "Moves away",
+     "title": "Moved here"
+    },
+    {
+     "op": "rename",
+     "id": "11.51",
+     "from": "Renamed by the release",
+     "to": "New name"
+    },
+    {
+     "op": "rename",
+     "id": "11.13",
+     "from": "Cherries",
+     "to": "Cherry trees"
+    },
+    {
+     "op": "repurpose",
+     "id": "11.12",
+     "from": "Bananas",
+     "to": "Plantains",
+     "contents": {
+      "moveTo": "13.12"
+     }
+    },
+    {
+     "op": "description",
+     "id": "11.61",
+     "from": "Old words.",
+     "to": "New words."
+    },
+    {
+     "op": "description",
+     "id": "11.62",
+     "from": "Original words.",
+     "to": "Replaced words."
+    },
+    {
+     "op": "add",
+     "kind": "id",
+     "id": "11.71",
+     "title": "Fresh"
+    },
+    {
+     "op": "emoji",
+     "id": "11.11",
+     "from": null,
+     "to": "🍎"
+    },
+    {
+     "op": "removeTemplate",
+     "id": "11.11",
+     "path": "Apple template",
+     "type": "folder"
+    },
+    {
+     "op": "removeTemplate",
+     "id": "11.11",
+     "path": "Apple template/10 Seeds",
+     "type": "folder"
+    },
+    {
+     "op": "addTemplate",
+     "id": "11.11",
+     "path": "Orchard template",
+     "type": "folder"
+    },
+    {
+     "op": "removeNote",
+     "id": "11.11+OPS1",
+     "title": "Ops for apples"
+    }
+   ],
+   "outline": [
+    {
+     "kind": "category",
+     "id": "00",
+     "title": "System category",
+     "emoji": "⚙️"
+    },
+    {
+     "kind": "area",
+     "id": "00-09",
+     "title": "System area"
+    },
+    {
+     "kind": "id",
+     "id": "00.00",
+     "title": "Index of the system"
+    },
+    {
+     "kind": "area",
+     "id": "10-19",
+     "title": "Life admin"
+    },
+    {
+     "kind": "category",
+     "id": "11",
+     "title": "Alpha",
+     "emoji": "🅰️"
+    },
+    {
+     "kind": "id",
+     "id": "11.00",
+     "title": "Index for 11"
+    },
+    {
+     "kind": "id",
+     "id": "11.01",
+     "title": "Inbox for 11",
+     "emoji": "📥"
+    },
+    {
+     "kind": "id",
+     "id": "11.10",
+     "title": "Fruit",
+     "header": true
+    },
+    {
+     "kind": "id",
+     "id": "11.11",
+     "title": "Apples",
+     "description": "Red and green.",
+     "emoji": "🍎"
+    },
+    {
+     "kind": "id",
+     "id": "11.12",
+     "title": "Plantains"
+    },
+    {
+     "kind": "id",
+     "id": "11.13",
+     "title": "Cherry trees"
+    },
+    {
+     "kind": "id",
+     "id": "11.21",
+     "title": "Two"
+    },
+    {
+     "kind": "id",
+     "id": "11.22",
+     "title": "One"
+    },
+    {
+     "kind": "id",
+     "id": "11.31",
+     "title": "Green"
+    },
+    {
+     "kind": "id",
+     "id": "11.32",
+     "title": "Blue"
+    },
+    {
+     "kind": "id",
+     "id": "11.33",
+     "title": "Red"
+    },
+    {
+     "kind": "id",
+     "id": "11.51",
+     "title": "New name"
+    },
+    {
+     "kind": "id",
+     "id": "11.61",
+     "title": "Described",
+     "description": "New words."
+    },
+    {
+     "kind": "id",
+     "id": "11.62",
+     "title": "Edited",
+     "description": "Replaced words."
+    },
+    {
+     "kind": "id",
+     "id": "11.71",
+     "title": "Fresh"
+    },
+    {
+     "kind": "category",
+     "id": "12",
+     "title": "Beta"
+    },
+    {
+     "kind": "category",
+     "id": "13",
+     "title": "Gamma"
+    },
+    {
+     "kind": "id",
+     "id": "13.11",
+     "title": "Moved here"
+    },
+    {
+     "kind": "id",
+     "id": "13.12",
+     "title": "Stays"
+    }
+   ],
+   "templates": [
+    {
+     "id": "11.11",
+     "path": "Orchard template",
+     "type": "folder"
+    }
+   ],
+   "notes": []
+  },
+  {
+   "release": "2026-06-01",
+   "dateSource": "netlify",
+   "markers": [],
+   "changes": [
+    {
+     "op": "add",
+     "kind": "id",
+     "id": "11.72",
+     "title": "Fresher"
+    }
+   ],
+   "outline": [
+    {
+     "kind": "category",
+     "id": "00",
+     "title": "System category",
+     "emoji": "⚙️"
+    },
+    {
+     "kind": "area",
+     "id": "00-09",
+     "title": "System area"
+    },
+    {
+     "kind": "id",
+     "id": "00.00",
+     "title": "Index of the system"
+    },
+    {
+     "kind": "area",
+     "id": "10-19",
+     "title": "Life admin"
+    },
+    {
+     "kind": "category",
+     "id": "11",
+     "title": "Alpha",
+     "emoji": "🅰️"
+    },
+    {
+     "kind": "id",
+     "id": "11.00",
+     "title": "Index for 11"
+    },
+    {
+     "kind": "id",
+     "id": "11.01",
+     "title": "Inbox for 11",
+     "emoji": "📥"
+    },
+    {
+     "kind": "id",
+     "id": "11.10",
+     "title": "Fruit",
+     "header": true
+    },
+    {
+     "kind": "id",
+     "id": "11.11",
+     "title": "Apples",
+     "description": "Red and green.",
+     "emoji": "🍎"
+    },
+    {
+     "kind": "id",
+     "id": "11.12",
+     "title": "Plantains"
+    },
+    {
+     "kind": "id",
+     "id": "11.13",
+     "title": "Cherry trees"
+    },
+    {
+     "kind": "id",
+     "id": "11.21",
+     "title": "Two"
+    },
+    {
+     "kind": "id",
+     "id": "11.22",
+     "title": "One"
+    },
+    {
+     "kind": "id",
+     "id": "11.31",
+     "title": "Green"
+    },
+    {
+     "kind": "id",
+     "id": "11.32",
+     "title": "Blue"
+    },
+    {
+     "kind": "id",
+     "id": "11.33",
+     "title": "Red"
+    },
+    {
+     "kind": "id",
+     "id": "11.51",
+     "title": "New name"
+    },
+    {
+     "kind": "id",
+     "id": "11.61",
+     "title": "Described",
+     "description": "New words."
+    },
+    {
+     "kind": "id",
+     "id": "11.62",
+     "title": "Edited",
+     "description": "Replaced words."
+    },
+    {
+     "kind": "id",
+     "id": "11.71",
+     "title": "Fresh"
+    },
+    {
+     "kind": "id",
+     "id": "11.72",
+     "title": "Fresher"
+    },
+    {
+     "kind": "category",
+     "id": "12",
+     "title": "Beta"
+    },
+    {
+     "kind": "category",
+     "id": "13",
+     "title": "Gamma"
+    },
+    {
+     "kind": "id",
+     "id": "13.11",
+     "title": "Moved here"
+    },
+    {
+     "kind": "id",
+     "id": "13.12",
+     "title": "Stays"
+    }
+   ],
+   "templates": [
+    {
+     "id": "11.11",
+     "path": "Orchard template",
+     "type": "folder"
+    }
+   ],
+   "notes": []
+  },
+  {
+   "release": "2026-10-01",
+   "dateSource": "netlify",
+   "markers": [],
+   "changes": [
+    {
+     "op": "emoji",
+     "id": "11.00",
+     "from": null,
+     "to": "📇"
+    }
+   ],
+   "outline": [
+    {
+     "kind": "category",
+     "id": "00",
+     "title": "System category",
+     "emoji": "⚙️"
+    },
+    {
+     "kind": "area",
+     "id": "00-09",
+     "title": "System area"
+    },
+    {
+     "kind": "id",
+     "id": "00.00",
+     "title": "Index of the system"
+    },
+    {
+     "kind": "area",
+     "id": "10-19",
+     "title": "Life admin"
+    },
+    {
+     "kind": "category",
+     "id": "11",
+     "title": "Alpha",
+     "emoji": "🅰️"
+    },
+    {
+     "kind": "id",
+     "id": "11.00",
+     "title": "Index for 11",
+     "emoji": "📇"
+    },
+    {
+     "kind": "id",
+     "id": "11.01",
+     "title": "Inbox for 11",
+     "emoji": "📥"
+    },
+    {
+     "kind": "id",
+     "id": "11.10",
+     "title": "Fruit",
+     "header": true
+    },
+    {
+     "kind": "id",
+     "id": "11.11",
+     "title": "Apples",
+     "description": "Red and green.",
+     "emoji": "🍎"
+    },
+    {
+     "kind": "id",
+     "id": "11.12",
+     "title": "Plantains"
+    },
+    {
+     "kind": "id",
+     "id": "11.13",
+     "title": "Cherry trees"
+    },
+    {
+     "kind": "id",
+     "id": "11.21",
+     "title": "Two"
+    },
+    {
+     "kind": "id",
+     "id": "11.22",
+     "title": "One"
+    },
+    {
+     "kind": "id",
+     "id": "11.31",
+     "title": "Green"
+    },
+    {
+     "kind": "id",
+     "id": "11.32",
+     "title": "Blue"
+    },
+    {
+     "kind": "id",
+     "id": "11.33",
+     "title": "Red"
+    },
+    {
+     "kind": "id",
+     "id": "11.51",
+     "title": "New name"
+    },
+    {
+     "kind": "id",
+     "id": "11.61",
+     "title": "Described",
+     "description": "New words."
+    },
+    {
+     "kind": "id",
+     "id": "11.62",
+     "title": "Edited",
+     "description": "Replaced words."
+    },
+    {
+     "kind": "id",
+     "id": "11.71",
+     "title": "Fresh"
+    },
+    {
+     "kind": "id",
+     "id": "11.72",
+     "title": "Fresher"
+    },
+    {
+     "kind": "category",
+     "id": "12",
+     "title": "Beta"
+    },
+    {
+     "kind": "category",
+     "id": "13",
+     "title": "Gamma"
+    },
+    {
+     "kind": "id",
+     "id": "13.11",
+     "title": "Moved here"
+    },
+    {
+     "kind": "id",
+     "id": "13.12",
+     "title": "Stays"
+    }
+   ],
+   "templates": [
+    {
+     "id": "11.11",
+     "path": "Orchard template",
+     "type": "folder"
+    }
+   ],
+   "notes": []
+  }
+ ]
+}

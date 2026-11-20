@@ -42,7 +42,7 @@ _JD_PATHS_NAME=johnnydecimal
 
 _jd_paths_usage() {
   cat <<'EOF'
-usage: <system> paths [config|journal|install] [--json]
+usage: <system> paths [config|journal|install|key] [--json]
 
   jd paths            print the paths that jd uses, one on each line:
                       the config, the journal, and the folder that
@@ -50,6 +50,8 @@ usage: <system> paths [config|journal|install] [--json]
   jd paths config     print only the path of the config
   jd paths journal    print only the path of the journal
   jd paths install    print only the folder that contains jd
+  jd paths key        print only the path of the API key that 'jd
+                      login' writes. It is beside the config
   jd paths --json     print the three paths as one JSON object
 
 jd follows the XDG Base Directory Specification. In each base
@@ -176,6 +178,13 @@ _jd_paths_config() {
 _jd_paths_journal() {
   _jd_paths_resolve
   printf '%s' "$_JD_PATHS_JOURNAL"
+}
+
+# The API key that 'jd login' writes and 'jd upgrade' reads: the file
+# api-key, in the folder that contains the config.
+_jd_paths_key() {
+  _jd_paths_resolve
+  printf '%s' "$(dirname -- "$_JD_PATHS_CONFIG")/api-key"
 }
 
 # The cache file of the update check, which lib/update.sh reads and
@@ -375,7 +384,7 @@ _jd_paths() {
         _jd_paths_fail "$json" unknown_option "unknown option '$w'"
         return 1
         ;;
-      config | journal | install)
+      config | journal | install | key)
         if [ -n "$name" ]; then
           _jd_paths_fail "$json" unexpected_word "unexpected word '$w'"
           return 1
@@ -400,6 +409,7 @@ _jd_paths() {
     config) printf '%s\n' "$_JD_PATHS_CONFIG"; return 0 ;;
     journal) printf '%s\n' "$_JD_PATHS_JOURNAL"; return 0 ;;
     install) printf '%s\n' "$_JD_PATHS_INSTALL"; return 0 ;;
+    key) printf '%s\n' "$(_jd_paths_key)"; return 0 ;;
   esac
 
   if [ "$json" -eq 1 ]; then

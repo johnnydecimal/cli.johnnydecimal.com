@@ -14,10 +14,11 @@
 # Nothing here cd's. A move ends at _jd_nav_arrive, which prints the
 # folder. The reason is in the comment at the top of bin/jd.
 #
-# 'jd new', 'jd move', 'jd undo' and 'jd paths' are words this file does
-# not act on. It passes the rest of the line to _jd_new, in lib/new.sh,
-# to _jd_move and _jd_undo, in lib/move.sh, or to _jd_paths, in
-# lib/paths.sh.
+# 'jd new', 'jd move', 'jd undo', 'jd upgrade', 'jd login' and 'jd
+# paths' are words this file does not act on. It passes the rest of the
+# line to _jd_new, in lib/new.sh, to _jd_move and _jd_undo, in
+# lib/move.sh, to _jd_upgrade and _jd_login, in lib/upgrade.sh, or to
+# _jd_paths, in lib/paths.sh.
 #
 # Requires jq. Works in bash 3.2+ and zsh.
 
@@ -113,6 +114,11 @@ usage: <system> [jdex] [target]
   <system> undo move    move it back. 'jd undo move --help' prints more
   <system> beta on|off  turn beta features on or off. 'jd beta' prints
                         which
+  <system> upgrade --dry-run
+                        list what this install of the LAS or the SBS
+                        needs to reach the current release. 'jd upgrade
+                        --help' prints more
+  <system> login        store the API key that 'jd upgrade' uses
   <system> paths        print where jd stores its config and its journal,
                         and where jd itself is. 'jd paths --help' prints
                         more
@@ -393,6 +399,17 @@ _jd_nav() {
     _jd_paths "$@"
     return
   fi
+  # 'login' reads no config either. It writes the API key beside the
+  # config, whether or not the config exists.
+  if [ "${1-}" = login ]; then
+    shift
+    if command -v _jd_login >/dev/null 2>&1; then
+      _jd_login "$@"
+      return
+    fi
+    _jd_nav_err "lib/upgrade.sh is not loaded - run bin/jd, not lib/nav.sh"
+    return 1
+  fi
   # 'update' reads no config either. It updates jd, which a person with
   # a broken config may need.
   if [ "${1-}" = update ]; then
@@ -474,6 +491,19 @@ _jd_nav() {
       fi
       _jd_nav_err "lib/new.sh is not loaded - run bin/jd, not lib/nav.sh"
       return 1
+      ;;
+    upgrade)
+      if [ "$mode" = jdex ]; then
+        _jd_nav_err "'jd upgrade' reads the system and its JDex: run it without 'jdex'"
+        return 1
+      fi
+      if ! command -v _jd_upgrade >/dev/null 2>&1; then
+        _jd_nav_err "lib/upgrade.sh is not loaded - run bin/jd, not lib/nav.sh"
+        return 1
+      fi
+      shift
+      _jd_upgrade "$sys" "$root" "$jdex" "$@"
+      return
       ;;
     move | undo)
       # Both act on the filesystem. The JDex is an index, and a note is

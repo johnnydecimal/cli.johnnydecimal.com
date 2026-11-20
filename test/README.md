@@ -85,6 +85,8 @@ The last block totals every case run and prints `PASS` or `FAIL`.
 | `cases/theme-bash.sh` | The whole-prompt theme for bash, `lib/theme.bash`. |
 | `cases/regressions.sh` | One test for every bug in the changelog. |
 | `cases/update.sh` | The update check, and `jd update`. Uses no network. |
+| `cases/upgrade.sh` | `jd upgrade --dry-run` and `jd login`. Reads a synthetic history, and uses no network. |
+| `fixtures/upgrade-history.json` | The synthetic history that `cases/upgrade.sh` reads. The real history is for owners only. |
 | `cases/version-usage.sh` | `jd version` and `jd help`. |
 
 ## How the fixtures work

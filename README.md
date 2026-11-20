@@ -13,6 +13,7 @@ This repository documents installation. Usage is documented at [johnnydecimal.co
 - [Configuration file](https://johnnydecimal.com/documentation/configuration).
   - This repository contains a template.
 - [jq](https://jqlang.github.io/jq/).
+- [curl](https://curl.se/), for [`jd upgrade`](#jd-upgrade). macOS includes it.
 
 ## Installation
 
@@ -109,6 +110,7 @@ The tool is a program, `~/.local/share/johnnydecimal/cli/bin/jd`. Nothing has to
   ```
 
 - `jd move` and `jd undo move` take `--json` too. Refer to [`jd move`](#jd-move).
+- `jd upgrade --dry-run` takes `--json` too. Refer to [`jd upgrade`](#jd-upgrade).
 - `jd paths` prints the path of the configuration file, the path of the journal, and the folder that contains the program. `jd paths --json` prints one JSON object. A script or an agent that requires one of these paths must read the path from `jd paths`. Refer to [Where jd stores its files](#where-jd-stores-its-files).
 - The `source` line in [Installation](#installation) also adds `bin` to `$PATH`, so a program started from your shell can run `jd` by name.
 - If `~/.local/bin` is on your `$PATH`, you can create a link to the program there. The program follows the link to find its other files:
@@ -161,6 +163,7 @@ jd follows the [XDG Base Directory Specification](https://specifications.freedes
 | [The journal](#the-journal) | `~/.local/state/johnnydecimal/journal.jsonl` | `$XDG_STATE_HOME/johnnydecimal/journal.jsonl` |
 | This repository | `~/.local/share/johnnydecimal/cli` | `$XDG_DATA_HOME/johnnydecimal/cli` |
 | [The update check](#the-update-check) | `~/.cache/johnnydecimal/update-check` | `$XDG_CACHE_HOME/johnnydecimal/update-check` |
+| [The API key](#jd-upgrade) | `~/.config/johnnydecimal/api-key` | `$XDG_CONFIG_HOME/johnnydecimal/api-key` |
 
 - `$JD_CONFIG` is the path of the configuration file. If you set `$JD_CONFIG`, jd reads only that file.
 - A path in an XDG variable must start with `/`. If the path does not start with `/`, jd uses the default path.
@@ -359,9 +362,25 @@ Every move is one line in the journal, `~/.local/state/johnnydecimal/journal.jso
 - It exits with an error if the moved thing is no longer where jd moved it, code `moved_since`, or if something else is now at its original path, code `source_exists`.
 - An undo is never a candidate for undo.
 
+## `jd upgrade`
+
+`jd upgrade --dry-run` lists what an install of the Life Admin System or the Small Business System needs to reach the current release. It changes nothing.
+
+```sh
+jd login                  # store your API key
+jd upgrade --dry-run      # the list
+jd upgrade --dry-run --json
+```
+
+- jd reads the history of the system from the Johnny.Decimal API. The history needs Pro and the system. Generate an API key at [accounts.johnnydecimal.com/user/api-keys](https://accounts.johnnydecimal.com/user/api-keys), then run `jd login`. jd writes the key to `api-key`, beside the configuration file, with mode 600. `jd paths key` prints the path.
+- jd reads the installed release from `00.00/VERSION.json`. For an older install, it reads an older version file, or compares the folder names with each release. `--from <release>` names the release.
+- Each item is `todo`, `ask` or `done`. `ask` means that you decide: for example, the folder contains files, or you renamed it.
+- jd matches each folder and JDex note on its number, never on its full name.
+- Without `--dry-run`, jd changes nothing. A later version applies the list.
+
 ## Beta
 
-Some features are in beta. They may change, or be removed, without notice. One flag turns all of them on. No feature is in beta in this version.
+Some features are in beta. They may change, or be removed, without notice. One flag turns all of them on. In this version, [`jd upgrade`](#jd-upgrade) is in beta.
 
 ```sh
 jd beta          # print whether beta is on
