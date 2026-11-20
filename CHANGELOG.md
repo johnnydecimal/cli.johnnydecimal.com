@@ -7,6 +7,18 @@ every tool in it, because you update by pulling the whole repo.
 
 Run `jd version` to see which version you have.
 
+## 5.3.0 – 2026-11-20
+
+> AI generated. Reviewed by Johnny.
+
+This release adds `jd upgrade --dry-run`, a read-only command. It lists the changes that an install of the Life Admin System or the Small Business System needs to reach the current release.
+
+### Features
+
+- To use it, generate an API key at https://accounts.johnnydecimal.com/user/api-keys, and run `jd login`. The API key needs Pro and the system.
+- `jd upgrade --dry-run` reads the release of the installed system, and lists each change since that release. Each change is `todo`, `ask` or `done`. `ask` means that you decide: for example, the folder contains files, or you renamed it. `--json` prints one JSON object.
+- `jd login` writes the key to the file `api-key`, beside the configuration file, with mode 600. `jd paths key` prints the path.
+
 ## 5.2.0 – 2026-11-18
 
 > AI generated. Reviewed by Johnny.
